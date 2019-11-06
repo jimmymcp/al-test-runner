@@ -9,7 +9,12 @@ function Invoke-ALTestRunner {
         [int]$SelectionStart = 0
     )
     $ContainerName = Get-ServerFromLaunchJson
-    $CompanyName = 'My Company' #TODO
+
+    $CompanyName = Get-ValueFromALTestRunnerConfig -KeyName 'companyName'
+    if ($CompanyName -eq '') {
+        $CompanyName = Select-BCCompany -ContainerName $ContainerName        
+    }
+
     $ExtensionId = Get-ValueFromAppJson -KeyName 'id'
 
     $Params = @{

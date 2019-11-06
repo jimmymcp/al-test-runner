@@ -8,7 +8,8 @@ interface ALTestRunnerConfig {
 	launchConfigName: string,
 	containerResultPath: string,
 	userName: string,
-	securePassword: string;
+	securePassword: string,
+	companyName: string;
 }
 
 // this method is called when your extension is activated
@@ -83,9 +84,10 @@ function getALTestRunnerTerminal(terminalName: string): vscode.Terminal {
 function readyToRunTests(): Promise<boolean> {
 	return new Promise((resolve, reject) => {
 		if (!(launchConfigIsValid())) {
-			//clear the credentials if the launch config is not valid
+			//clear the credentials and company name if the launch config is not valid
 			setALTestRunnerConfig('userName','');
 			setALTestRunnerConfig('securePassword','');
+			setALTestRunnerConfig('companyName', '');
 			selectLaunchConfig();
 		}
 
@@ -185,7 +187,8 @@ function createALTestRunnerConfig() {
 		containerResultPath: "",
 		launchConfigName: "",
 		securePassword: "",
-		userName: ""
+		userName: "",
+		companyName: ""
 	};
 
 	mkdirSync(getALTestRunnerPath(), {recursive: true});
