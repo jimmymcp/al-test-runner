@@ -6,7 +6,7 @@
 	"repository": {
 		"url": "https://github.com/jimmymcp/al-test-runner"
 	},
-	"icon": "",	
+	"icon": "semicolon128.jpg",
 	"version": "0.0.1",
 	"engines": {
 		"vscode": "^1.39.0"
