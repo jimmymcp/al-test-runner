@@ -53,6 +53,7 @@ function Invoke-RunTests {
     Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath $ResultFile
     Merge-ALTestRunnerTestResults $ResultFile (Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) 'directory.xml')
     Remove-Item $ResultFile
+    Remove-Item $ContainerResultFile
 }
 
 Export-ModuleMember -Function Invoke-RunTests
