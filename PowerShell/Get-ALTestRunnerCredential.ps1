@@ -3,7 +3,7 @@ function Get-ALTestRunnerCredential {
     $SecurePwd = Get-ValueFromALTestRunnerConfig -KeyName 'securePassword'
 
     if (($UserName -eq '') -or ($SecurePwd -eq '')) {
-        $Credential = Get-Credential -UserName $UserName -Message 'Please enter the credential to connect to BC'
+        $Credential = Get-Credential -UserName $UserName -Message ('Please enter the credentials to connect to server {0}' -f (Get-ServerFromLaunchJson))
         Set-ALTestRunnerCredential -Credential $Credential
         return $Credential
     }
