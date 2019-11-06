@@ -12,6 +12,5 @@ function Select-ALTestRunnerConfig {
     }
     else {
         throw "Please enter the name of the launch configuration to use in the AL Test Runner config file."
-        #TODO improve selection of launch configuaration when there are multiple options
     }
 }
