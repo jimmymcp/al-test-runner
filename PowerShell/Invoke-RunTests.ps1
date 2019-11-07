@@ -14,7 +14,9 @@ function Invoke-RunTests {
         [Parameter(Mandatory=$false)]
         [string]$TestCodeunit = '',
         [Parameter(Mandatory=$false)]
-        [string]$TestFunction = ''
+        [string]$TestFunction = '',
+        [Parameter(Mandatory=$false)]
+        [string]$TestSuiteName = ''
     )
 
     Import-Module 'navcontainerhelper' -DisableNameChecking
@@ -23,12 +25,11 @@ function Invoke-RunTests {
     $ResultFile = Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) $ResultId
     $ContainerResultFile = Join-Path (Get-ContainerResultPath) $ResultId
     
-    $Message = "Running tests on $ContainerName, company $CompanyName, extension {0}" -f (Get-ValueFromAppJson -KeyName name)
+    $Message = "Running tests on $ContainerName, company $CompanyName"
 
     $Params = @{
         containerName = $ContainerName
-        companyName = $CompanyName
-        extensionId = $ExtensionId
+        companyName = $CompanyName 
         XUnitResultFileName = $ContainerResultFile
     }
     
@@ -46,6 +47,14 @@ function Invoke-RunTests {
         $Message += ", function $TestFunction"
     }
     
+    if ($TestSuiteName -ne '') {
+        $Params.Add('testSuite', $TestSuiteName)
+        $Message += ", suite $TestSuiteName"
+    }
+    else {
+        $Params.Add('extensionId', $ExtensionId)
+        $Message += ", extension {0}" -f (Get-ValueFromAppJson -KeyName name)
+    }
 
     Write-Host $Message -ForegroundColor Green
     Run-TestsInBCContainer @Params -detailed -Verbose

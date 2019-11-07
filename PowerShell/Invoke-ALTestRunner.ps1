@@ -21,6 +21,7 @@ function Invoke-ALTestRunner {
         ContainerName = $ContainerName
         CompanyName = $CompanyName
         ExtensionId = $ExtensionId
+        TestSuiteName = (Get-ValueFromALTestRunnerConfig -KeyName 'testSuiteName')
     }
     
     if ($FileName -ne '') {

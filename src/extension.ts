@@ -9,7 +9,8 @@ interface ALTestRunnerConfig {
 	containerResultPath: string,
 	userName: string,
 	securePassword: string,
-	companyName: string;
+	companyName: string,
+	testSuiteName: string;
 }
 
 // this method is called when your extension is activated
@@ -188,7 +189,8 @@ function createALTestRunnerConfig() {
 		launchConfigName: "",
 		securePassword: "",
 		userName: "",
-		companyName: ""
+		companyName: "",
+		testSuiteName: ""
 	};
 
 	mkdirSync(getALTestRunnerPath(), {recursive: true});
