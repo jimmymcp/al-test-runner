@@ -9,7 +9,14 @@ function Select-BCCompany {
         $CompanyName = $Companies.CompanyName
     }
     else {
-        $CompanyName = ($Companies | Out-GridView -Title 'Please select a company' -OutputMode Single).CompanyName
+        $Options = @()
+        foreach ($Company in $Companies) {
+            $Options += $Company.CompanyName
+        }
+        $CompanyName = Get-SelectionFromUser -Options $Options -Prompt "Please select a company to run tests in:"
+        if ($CompanyName -eq '') {
+            throw
+        }
     }
 
     Set-ALTestRunnerConfigValue -KeyName 'companyName' -KeyValue $CompanyName
