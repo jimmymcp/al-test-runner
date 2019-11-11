@@ -1,43 +1,39 @@
 ﻿function Merge-ALTestRunnerTestResults {
     Param(
         [Parameter(Mandatory=$true)]
-        [string]$FromFile,
-        [Parameter(Mandatory=$true)]
-        [string]$ToFile    
+        [string]$ResultsFile,
+        [Parameter(Mandatory=$false)]
+        [string]$ToPath = (Split-Path (Get-ALTestRunnerConfigPath) -Parent)  
     )
 
-    [xml]$FromResults = Get-Content $FromFile
+    if (!(Test-Path $ToPath)) {
+        New-Item -ItemType Directory -Path $ToPath | Out-Null
+    }
 
-    if (!(Test-Path $ToFile)) {
-        Copy-Item $FromFile $ToFile
-        return
-    }
-    else {
-        [xml]$ToResults = Get-Content $ToFile
-    }
+    [xml]$FromResults = Get-Content $ResultsFile -Raw
 
     foreach ($FromCodeunit in $FromResults.assemblies.assembly) {
-        $ToCodeunit = $ToResults.SelectSingleNode(("/assemblies/assembly[@name='{0}']" -f $FromCodeunit.name))
-        if ($null -eq $ToCodeunit) {
-            $ToCodeunit = $ToResults.ImportNode($FromCodeunit, $true)
-            $ToResults.DocumentElement.AppendChild($ToCodeunit) | Out-Null
-        }
-        else {
+        $ToResultFile = Join-Path $ToPath ($FromCodeunit.Attributes.GetNamedItem('name').Value + ".xml")
+        if (Test-Path $ToResultFile) {
+            [Xml]$ToCodeunit = Get-Content $ToResultFile
+        
             foreach ($FromTest in $FromCodeunit.collection.test) {
-                $OldToTest = $ToCodeunit.SelectSingleNode(("collection/test[@name='{0}']" -f $FromTest.name))
-                $NewToTest = $ToResults.ImportNode($FromTest, $true)
+                $OldToTest = $ToCodeunit.SelectSingleNode(("/assembly/collection/test[@name='{0}']" -f $FromTest.name))
+                $NewToTest = $ToCodeunit.ImportNode($FromTest, $true)
                 if ($null -eq $OldToTest) {
-                    $ToCodeunit.FirstChild.AppendChild($NewToTest) | Out-Null
+                    $ToCodeunit.FirstChild.FirstChild.AppendChild($NewToTest) | Out-Null
                 }
                 else {                    
-                    $ToCodeunit.FirstChild.InsertAfter($NewToTest, $OldToTest) | Out-Null
-                    $ToCodeunit.FirstChild.RemoveChild($OldToTest) | Out-Null
+                    $ToCodeunit.FirstChild.FirstChild.InsertAfter($NewToTest, $OldToTest) | Out-Null
+                    $ToCodeunit.FirstChild.FirstChild.RemoveChild($OldToTest) | Out-Null
                 }
-            }
+            }        
+            $ToCodeunit.Save($ToResultFile)
+        }
+        else {
+            Set-Content -Path $ToResultFile -Value $FromCodeunit.OuterXml
         }
     }
-
-    $ToResults.Save($ToFile)
 }
 
 Export-ModuleMember -Function Merge-ALTestRunnerTestResults
