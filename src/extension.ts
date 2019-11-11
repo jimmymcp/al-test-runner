@@ -2,7 +2,8 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { isUndefined } from 'util';
-import { readFileSync, writeFileSync, mkdirSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, watch, fstat, FSWatcher } from 'fs';
+import * as xml2js from 'xml2js';
 
 type ALTestRunnerConfig = {
 	launchConfigName: string;
@@ -13,9 +14,33 @@ type ALTestRunnerConfig = {
 	testSuiteName: string;
 };
 
+type ALTestResult = {
+	$: {
+		method: string;
+		name: string;
+		result: string;
+		time: string;
+	};
+	failure: [{
+		message: string;
+		'stack-trace': string
+	}]
+};
+
+const passingTestDecorationType = vscode.window.createTextEditorDecorationType({
+	backgroundColor: 'rgba(0,255,0,0.3)'
+});
+
+const failingTestDecorationType = vscode.window.createTextEditorDecorationType({
+	backgroundColor: 'rgba(255,97,97,0.3)'
+});
+
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+	let timeout: NodeJS.Timer | undefined = undefined;
+	let activeEditor = vscode.window.activeTextEditor;
+	let isTestCodeunit: boolean;
 
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
@@ -34,9 +59,9 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		});
 	});
-	
+
 	context.subscriptions.push(command);
-	
+
 	command = vscode.commands.registerCommand('altestrunner.runTestsCodeunit', async () => {
 		await readyToRunTests().then(ready => {
 			if (ready) {
@@ -46,9 +71,9 @@ export function activate(context: vscode.ExtensionContext) {
 			}
 		});
 	});
-	
+
 	context.subscriptions.push(command);
-	
+
 	command = vscode.commands.registerCommand('altestrunner.runTest', async () => {
 		await readyToRunTests().then(ready => {
 			if (ready) {
@@ -60,6 +85,86 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	context.subscriptions.push(command);
+
+	function updateDecoraions() {
+		let config = vscode.workspace.getConfiguration('al-test-runner');
+		if (!(config.decorateTestMethods)) {
+			return;
+		}
+
+		let resultFileName = getALTestRunnerPath() + '\\Results\\' + getDocumentIdAndName(activeEditor!.document) + '.xml';
+		if (!(existsSync(resultFileName))) {
+			return;
+		}
+		
+		const xmlParser = new xml2js.Parser();
+
+		let resultXml = readFileSync(resultFileName, {encoding: 'utf-8'});
+		xmlParser.parseStringPromise(resultXml).then(resultObj => {
+			const collection = resultObj.assembly.collection;
+			const tests = collection.shift()!.test as Array<ALTestResult>;
+			let passingTests: vscode.DecorationOptions[] = [];
+			let failingTests: vscode.DecorationOptions[] = [];
+			const documentText = activeEditor!.document.getText();
+			tests.forEach(test => {		
+				const matches = documentText.match('procedure ' + test.$.method + '\(\)');
+				if (!(matches === undefined)) {
+					const startPos = activeEditor!.document.positionAt(matches!.index! + 10);
+					const endPos = activeEditor!.document.positionAt(matches!.index! + matches![0].length);
+					if (test.$.result === 'Pass') {
+						const decoration: vscode.DecorationOptions = {range: new vscode.Range(startPos, endPos)};
+						passingTests.push(decoration);
+					}
+					else {
+						const hoverMessage: string = test.failure[0].message + "\n\n" + test.failure[0]["stack-trace"];
+						const decoration: vscode.DecorationOptions = {range: new vscode.Range(startPos, endPos), hoverMessage: hoverMessage};
+						failingTests.push(decoration);
+					}
+				}
+			});
+			activeEditor!.setDecorations(passingTestDecorationType, passingTests);
+			activeEditor!.setDecorations(failingTestDecorationType, failingTests);
+		})
+		.catch(err => {
+			vscode.window.showErrorMessage(err);
+		});		
+	}
+
+	function triggerUpdateDecorations() {
+		if (!isTestCodeunit) {
+			return;
+		}
+
+		if (timeout) {
+			clearTimeout(timeout);
+			timeout = undefined;
+		}
+
+		timeout = setTimeout(updateDecoraions, 500);
+	}
+
+	if (activeEditor) {
+		isTestCodeunit = getIsTestCodeunit(activeEditor.document);
+		triggerUpdateDecorations();
+	}
+
+	vscode.window.onDidChangeActiveTextEditor(editor => {
+		activeEditor = editor;
+		if (editor) {
+			isTestCodeunit = getIsTestCodeunit(activeEditor!.document);
+			triggerUpdateDecorations();
+		}
+	}, null, context.subscriptions);
+
+	vscode.workspace.onDidChangeTextDocument(event => {
+		if (activeEditor && event.document === activeEditor.document) {
+			triggerUpdateDecorations();
+		}
+	}, null, context.subscriptions);
+
+	watch(getALTestRunnerPath(), (event, fileName) => {
+		triggerUpdateDecorations();
+	});
 }
 
 function getTerminalName() {
@@ -69,7 +174,7 @@ function getTerminalName() {
 function getALTestRunnerTerminal(terminalName: string): vscode.Terminal {
 	let terminals = vscode.window.terminals.filter(element => element.name === terminalName);
 	let terminal = terminals.shift()!;
-	
+
 	if (!(isUndefined(terminal))) {
 		return terminal;
 	}
@@ -115,7 +220,7 @@ function launchConfigIsValid(): boolean {
 async function selectLaunchConfig() {
 	let debugConfigurations = getDebugConfigurationsFromLaunchJson(getLaunchJson());
 	let selectedConfig;
-	
+
 	if (debugConfigurations.length === 1) {
 		selectedConfig = debugConfigurations.shift()!.name;
 	}
@@ -133,6 +238,25 @@ async function selectLaunchConfig() {
 	setALTestRunnerConfig('launchConfigName', selectedConfig);
 }
 
+function getIsTestCodeunit(document: vscode.TextDocument): boolean {
+	if (document.fileName.substr(document.fileName.lastIndexOf('.')) !== '.al') {
+		return false;
+	}
+
+	const text = document.getText(new vscode.Range(0, 0, 10, 0));
+	return !(isUndefined(text.match('Subtype = Test;')));
+}
+
+function getDocumentIdAndName(document: vscode.TextDocument): string {
+	let firstLine = document.getText(new vscode.Range(0, 0, 0, 250));
+	let matches = firstLine.match('\\d+ .*');
+	if (!(isUndefined(matches))) {
+		return matches!.shift()!.replace(/"/g,'');
+	}
+	else {
+		return '';
+	}
+}
 
 //@ts-ignore
 function getDebugConfigurationsFromLaunchJson(launchJson) {
@@ -167,7 +291,7 @@ function getALTestRunnerConfig() {
 
 	try {
 		data = readFileSync(alTestRunnerConfigPath, { encoding: 'utf-8' });
-	} catch (error) {		
+	} catch (error) {
 		createALTestRunnerConfig();
 		data = readFileSync(alTestRunnerConfigPath, { encoding: 'utf-8' });
 	}

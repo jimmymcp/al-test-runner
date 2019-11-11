@@ -7,7 +7,9 @@
 		"url": "https://github.com/jimmymcp/al-test-runner"
 	},
 	"icon": "semicolon128.jpg",
-	"files": ["PowerShell/"],
+	"files": [
+		"PowerShell/"
+	],
 	"version": "0.0.1",
 	"engines": {
 		"vscode": "^1.39.0"
@@ -31,7 +33,7 @@
 			},
 			{
 				"command": "altestrunner.runTestsCodeunit",
-				"title": "Run Tests in Current Codeunit"			
+				"title": "Run Tests in Current Codeunit"
 			},
 			{
 				"command": "altestrunner.runTest",
@@ -47,7 +49,21 @@
 				"command": "altestrunner.runAllTests",
 				"key": "Ctrl+Alt+Shift+T"
 			}
-		]
+		],
+		"configuration": [
+			{
+				"title": "AL Test Runner",
+
+				"properties": {
+					"al-test-runner.decorateTestMethods": {
+						"type": "boolean",						
+						"scope": "resource",
+						"default": true,
+						"description": "Decorate test methods with test results. When this setting is enabled the AL Test Runner extension will decorate the names of test methods in test codeunits according to the result of running that test."
+					}
+				}	
+			}
+		]		
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
@@ -66,5 +82,9 @@
 		"typescript": "^3.3.1",
 		"tslint": "^5.12.1",
 		"vscode-test": "^1.2.0"
+	},
+	"dependencies": {
+		"@types/xml2js": "^0.4.5",
+		"xml2js": "^0.4.22"
 	}
 }
