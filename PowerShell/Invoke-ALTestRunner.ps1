@@ -14,6 +14,19 @@ function Invoke-ALTestRunner {
     if ($CompanyName -eq '') {
         $CompanyName = Select-BCCompany -ContainerName $ContainerName        
     }
+    
+    $TestSuiteName = (Get-ValueFromALTestRunnerConfig -KeyName 'testSuiteName')
+    
+    if (($null -eq $TestSuiteName) -or ($TestSuiteName -eq '')) {
+        [string]$NavVersionString = Get-BCContainerNavVersion -containerOrImageName $ContainerName
+        [version]$NavVersion = [version]::new()
+        if ([version]::TryParse($NavVersionString, [ref]$NavVersion)) {
+            if ($NavVersion -lt [version]::new('15.0.0.0')) {
+                $TestSuiteName = Select-BCTestSuite
+                Set-ALTestRunnerConfigValue -KeyName 'testSuiteName' -KeyValue $TestSuiteName
+            }
+        }
+    }
 
     $ExtensionId = Get-ValueFromAppJson -KeyName 'id'
 
@@ -21,7 +34,7 @@ function Invoke-ALTestRunner {
         ContainerName = $ContainerName
         CompanyName = $CompanyName
         ExtensionId = $ExtensionId
-        TestSuiteName = (Get-ValueFromALTestRunnerConfig -KeyName 'testSuiteName')
+        TestSuiteName = $TestSuiteName
     }
     
     if ($FileName -ne '') {
