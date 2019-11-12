@@ -5,7 +5,7 @@ function Select-BCCompany {
     )
     
     $Companies = Get-CompanyInBCContainer -containerName $ContainerName
-    if ($null -eq $Companies.Count) {
+    if (($null -eq $Companies.Count) -or ($Companies.Count -eq 1)) {
         $CompanyName = $Companies.CompanyName
     }
     else {
