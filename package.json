@@ -61,13 +61,99 @@
 		"configuration": [
 			{
 				"title": "AL Test Runner",
-
 				"properties": {
 					"al-test-runner.decorateTestMethods": {
 						"type": "boolean",						
 						"scope": "resource",
 						"default": true,
 						"description": "Decorate test methods with test results. When this setting is enabled the AL Test Runner extension will decorate the names of test methods in test codeunits according to the result of running that test."
+					},
+					"al-test-runner.passingTestsColor": {
+						"type": "object",
+						"description": "Background color for passing tests (rgba format)",
+						"scope": "resource",
+						"default": {
+							"red": 0,
+							"green": 255,
+							"blue": 0,
+							"alpha": 0.3
+						},
+						"properties": {
+							"red": {
+								"type": "number",
+								"description": "Red element of the color (0-255)"
+							},
+							"green": {
+								"type": "number",
+								"description": "Green element of the color (0-255)"
+							},
+							"blue": {
+								"type": "number",
+								"description": "Blue element of the color (0-255)"
+							},
+							"alpha": {
+								"type": "number",
+								"description": "Alpha (between 0 for transparent and 1 for opaque)"
+							}
+						}
+					},
+					"al-test-runner.failingTestsColor": {
+						"type": "object",
+						"description": "Background color for failing tests (rgba format)",
+						"scope": "resource",
+						"default": {
+							"red": 255,
+							"green": 97,
+							"blue": 97,
+							"alpha": 0.3
+						},
+						"properties": {
+							"red": {
+								"type": "number",
+								"description": "Red element of the color (0-255)"
+							},
+							"green": {
+								"type": "number",
+								"description": "Green element of the color (0-255)"
+							},
+							"blue": {
+								"type": "number",
+								"description": "Blue element of the color (0-255)"
+							},
+							"alpha": {
+								"type": "number",
+								"description": "Alpha (between 0 for transparent and 1 for opaque)"
+							}
+						}
+					},
+					"al-test-runner.untestedTestsColor": {
+						"type": "object",
+						"description": "Background color for untested tests (rgba format)",
+						"scope": "resource",
+						"default": {
+							"red": 250,
+							"green": 196,
+							"blue": 0,
+							"alpha": 0.3
+						},
+						"properties": {
+							"red": {
+								"type": "number",
+								"description": "Red element of the color (0-255)"
+							},
+							"green": {
+								"type": "number",
+								"description": "Green element of the color (0-255)"
+							},
+							"blue": {
+								"type": "number",
+								"description": "Blue element of the color (0-255)"
+							},
+							"alpha": {
+								"type": "number",
+								"description": "Alpha (between 0 for transparent and 1 for opaque)"
+							}
+						}
 					}
 				}	
 			}

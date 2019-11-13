@@ -31,18 +31,23 @@ type ALTestResult = {
 type ALTestMethodRange = {
 	name: string;
 	range: vscode.Range;
-}
+};
 
-const passingTestDecorationType = vscode.window.createTextEditorDecorationType({
-	backgroundColor: 'rgba(0,255,0,0.3)'
+const config = vscode.workspace.getConfiguration('al-test-runner');
+const passingTestColor = 'rgba(' + config.passingTestsColor.red + ',' + config.passingTestsColor.green + ',' + config.passingTestsColor.blue + ',' + config.passingTestsColor.alpha + ')';
+const failingTestColor = 'rgba(' + config.failingTestsColor.red + ',' + config.failingTestsColor.green + ',' + config.failingTestsColor.blue + ',' + config.failingTestsColor.alpha + ')';
+const untestedTestColor = 'rgba(' + config.untestedTestsColor.red + ',' + config.untestedTestsColor.green + ',' + config.untestedTestsColor.blue + ',' + config.untestedTestsColor.alpha + ')';
+
+const passingTestDecorationType = vscode.window.createTextEditorDecorationType({		
+	backgroundColor: passingTestColor
 });
 
 const failingTestDecorationType = vscode.window.createTextEditorDecorationType({
-	backgroundColor: 'rgba(255,97,97,0.3)'
+	backgroundColor: failingTestColor
 });
 
 const untestedTestDecorationType = vscode.window.createTextEditorDecorationType({
-	backgroundColor: 'rgba(252,154,42,0.3)'
+	backgroundColor: untestedTestColor
 });
 
 // this method is called when your extension is activated
@@ -111,7 +116,6 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(command);
 
 	function updateDecoraions() {
-		let config = vscode.workspace.getConfiguration('al-test-runner');
 		if (!(config.decorateTestMethods)) {
 			return;
 		}
