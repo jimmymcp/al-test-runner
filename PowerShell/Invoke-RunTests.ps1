@@ -56,13 +56,28 @@ function Invoke-RunTests {
         $Message += ", extension {0}" -f (Get-ValueFromAppJson -KeyName name)
     }
 
-    Write-Host $Message -ForegroundColor Green
-    Run-TestsInBCContainer @Params -detailed -Verbose
-
-    Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath $ResultFile
-    Merge-ALTestRunnerTestResults -ResultsFile $ResultFile -ToPath (Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) 'Results')
-    Remove-Item $ResultFile
-    Remove-Item $ContainerResultFile
+    [int]$AttemptNo = 1
+    [bool]$BreakTestLoop = $false
+    
+    while(!$BreakTestLoop) {
+        try {
+            Write-Host $Message -ForegroundColor Green
+            Run-TestsInBCContainer @Params -detailed -Verbose      
+        
+            Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath $ResultFile        
+            Merge-ALTestRunnerTestResults -ResultsFile $ResultFile -ToPath (Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) 'Results')
+            Remove-Item $ResultFile
+            Remove-Item $ContainerResultFile
+            $BreakTestLoop = $true
+        }
+        catch {
+            $AttemptNo++
+            Write-Host "Validation error occurred in test page, retrying..." -ForegroundColor Magenta
+            if ($AttemptNo -ge 3) {
+                $BreakTestLoop = $true
+            }
+        }
+    }    
 }
 
 Export-ModuleMember -Function Invoke-RunTests
