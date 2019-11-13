@@ -63,6 +63,12 @@
 					}
 				}	
 			}
+		],
+		"snippets": [
+			{
+				"path": "snippets.json",
+				"language": "al"
+			}
 		]		
 	},
 	"scripts": {
