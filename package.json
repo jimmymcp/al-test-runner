@@ -29,15 +29,18 @@
 		"commands": [
 			{
 				"command": "altestrunner.runAllTests",
-				"title": "Run All Tests"
+				"title": "Run All Tests",
+				"category": "AL Test Runner"
 			},
 			{
 				"command": "altestrunner.runTestsCodeunit",
-				"title": "Run Tests in Current Codeunit"
+				"title": "Run Tests in Current Codeunit",
+				"category": "AL Test Runner"
 			},
 			{
 				"command": "altestrunner.runTest",
-				"title": "Run Current Test"
+				"title": "Run Current Test",
+				"category": "AL Test Runner"
 			}
 		],
 		"keybindings": [
