@@ -106,8 +106,11 @@ export function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 
+		let testMethodRanges: ALTestMethodRange[] = getTestMethodRangesFromDocument(activeEditor!.document);
+
 		let resultFileName = getALTestRunnerPath() + '\\Results\\' + getDocumentIdAndName(activeEditor!.document) + '.xml';
 		if (!(existsSync(resultFileName))) {
+			setUntestedTestDecorations(testMethodRanges);
 			return;
 		}
 
@@ -118,9 +121,7 @@ export function activate(context: vscode.ExtensionContext) {
 			const collection = resultObj.assembly.collection;
 			const tests = collection.shift()!.test as Array<ALTestResult>;
 			let passingTests: vscode.DecorationOptions[] = [];
-			let failingTests: vscode.DecorationOptions[] = [];
-			let untestedTests: vscode.DecorationOptions[] = [];
-			let testMethodRanges: ALTestMethodRange[] = getTestMethodRangesFromDocument(activeEditor!.document);
+			let failingTests: vscode.DecorationOptions[] = [];			
 
 			const documentText = activeEditor!.document.getText();
 			tests.forEach(test => {
@@ -149,18 +150,23 @@ export function activate(context: vscode.ExtensionContext) {
 
 			activeEditor!.setDecorations(passingTestDecorationType, passingTests);
 			activeEditor!.setDecorations(failingTestDecorationType, failingTests);
-
-			if (testMethodRanges.length > 0) {
-				testMethodRanges.forEach(element => {
-					const decoration: vscode.DecorationOptions = { range: element.range, hoverMessage: 'There are no results for this test 🤷‍♀️' };
-					untestedTests.push(decoration);
-				});
-				activeEditor!.setDecorations(untestedTestDecorationType, untestedTests);
-			}
+			setUntestedTestDecorations(testMethodRanges);			
 		})
 			.catch(err => {
 				vscode.window.showErrorMessage(err);
 			});
+	}
+
+	function setUntestedTestDecorations(testMethodRanges: ALTestMethodRange[]) {
+		let untestedTests: vscode.DecorationOptions[] = [];
+
+		if (testMethodRanges.length > 0) {
+			testMethodRanges.forEach(element => {
+				const decoration: vscode.DecorationOptions = { range: element.range, hoverMessage: 'There are no results for this test 🤷‍♀️' };
+				untestedTests.push(decoration);
+			});
+			activeEditor!.setDecorations(untestedTestDecorationType, untestedTests);
+		}
 	}
 
 	function triggerUpdateDecorations() {
@@ -193,7 +199,7 @@ export function activate(context: vscode.ExtensionContext) {
 		if (activeEditor && event.document === activeEditor.document) {
 			triggerUpdateDecorations();
 		}
-	}, null, context.subscriptions);
+	}, null, context.subscriptions);	
 
 	watch(getALTestRunnerPath(), (event, fileName) => {
 		triggerUpdateDecorations();
