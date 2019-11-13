@@ -41,6 +41,11 @@
 				"command": "altestrunner.runTest",
 				"title": "Run Current Test",
 				"category": "AL Test Runner"
+			},
+			{
+				"command": "altestrunner.clearTestResults",
+				"title": "Clear Test Results",
+				"category": "AL Test Runner"
 			}
 		],
 		"keybindings": [

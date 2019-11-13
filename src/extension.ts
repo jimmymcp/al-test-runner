@@ -2,7 +2,7 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { isUndefined } from 'util';
-import { readFileSync, writeFileSync, mkdirSync, existsSync, watch, mkdir } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, watch, readdirSync, unlinkSync } from 'fs';
 import * as xml2js from 'xml2js';
 import { match } from 'minimatch';
 
@@ -96,6 +96,16 @@ export function activate(context: vscode.ExtensionContext) {
 				terminal.show(true);
 			}
 		});
+	});
+
+	context.subscriptions.push(command);
+
+	command = vscode.commands.registerCommand('altestrunner.clearTestResults', async () => {
+		if (existsSync(getALTestRunnerPath() + '\\Results')) {
+			readdirSync(getALTestRunnerPath() + '\\Results').forEach(e => unlinkSync(getALTestRunnerPath() + '\\Results\\' + e));
+		}
+		triggerUpdateDecorations();
+		vscode.window.showInformationMessage('AL Test Runner results cleared');
 	});
 
 	context.subscriptions.push(command);
