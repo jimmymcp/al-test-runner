@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import { isUndefined } from 'util';
 import { readFileSync, writeFileSync, mkdirSync, existsSync, watch, fstat, FSWatcher } from 'fs';
 import * as xml2js from 'xml2js';
+import { match } from 'minimatch';
 
 type ALTestRunnerConfig = {
 	launchConfigName: string;
@@ -27,12 +28,21 @@ type ALTestResult = {
 	}]
 };
 
+type ALTestMethodRange = {
+	name: string;
+	range: vscode.Range;
+}
+
 const passingTestDecorationType = vscode.window.createTextEditorDecorationType({
 	backgroundColor: 'rgba(0,255,0,0.3)'
 });
 
 const failingTestDecorationType = vscode.window.createTextEditorDecorationType({
 	backgroundColor: 'rgba(255,97,97,0.3)'
+});
+
+const untestedTestDecorationType = vscode.window.createTextEditorDecorationType({
+	backgroundColor: 'rgba(252,154,42,0.3)'
 });
 
 // this method is called when your extension is activated
@@ -96,38 +106,57 @@ export function activate(context: vscode.ExtensionContext) {
 		if (!(existsSync(resultFileName))) {
 			return;
 		}
-		
+
 		const xmlParser = new xml2js.Parser();
 
-		let resultXml = readFileSync(resultFileName, {encoding: 'utf-8'});
+		let resultXml = readFileSync(resultFileName, { encoding: 'utf-8' });
 		xmlParser.parseStringPromise(resultXml).then(resultObj => {
 			const collection = resultObj.assembly.collection;
 			const tests = collection.shift()!.test as Array<ALTestResult>;
 			let passingTests: vscode.DecorationOptions[] = [];
 			let failingTests: vscode.DecorationOptions[] = [];
+			let untestedTests: vscode.DecorationOptions[] = [];
+			let testMethodRanges: ALTestMethodRange[] = getTestMethodRangesFromDocument(activeEditor!.document);
+
 			const documentText = activeEditor!.document.getText();
-			tests.forEach(test => {		
-				const matches = documentText.match('procedure ' + test.$.method + '\(\)');
+			tests.forEach(test => {
+				const matches = documentText.match('(?<=procedure )' + test.$.method);
 				if (!(matches === undefined)) {
-					const startPos = activeEditor!.document.positionAt(matches!.index! + 10);
+					const startPos = activeEditor!.document.positionAt(matches!.index!);
 					const endPos = activeEditor!.document.positionAt(matches!.index! + matches![0].length);
+					let methodName = documentText.substr(matches!.index!, matches![0].length);
+
+					let arrayNo = testMethodRanges.findIndex(element => element.name === methodName);
+					if (arrayNo >= 0) {
+						testMethodRanges.splice(arrayNo, 1);
+					}
+
 					if (test.$.result === 'Pass') {
-						const decoration: vscode.DecorationOptions = {range: new vscode.Range(startPos, endPos)};
+						const decoration: vscode.DecorationOptions = { range: new vscode.Range(startPos, endPos), hoverMessage: 'Test passing 👍' };
 						passingTests.push(decoration);
 					}
 					else {
 						const hoverMessage: string = test.failure[0].message + "\n\n" + test.failure[0]["stack-trace"];
-						const decoration: vscode.DecorationOptions = {range: new vscode.Range(startPos, endPos), hoverMessage: hoverMessage};
+						const decoration: vscode.DecorationOptions = { range: new vscode.Range(startPos, endPos), hoverMessage: hoverMessage };
 						failingTests.push(decoration);
 					}
 				}
 			});
+
 			activeEditor!.setDecorations(passingTestDecorationType, passingTests);
 			activeEditor!.setDecorations(failingTestDecorationType, failingTests);
+
+			if (testMethodRanges.length > 0) {
+				testMethodRanges.forEach(element => {
+					const decoration: vscode.DecorationOptions = { range: element.range, hoverMessage: 'There are no results for this test 🤷‍♀️' };
+					untestedTests.push(decoration);
+				});
+				activeEditor!.setDecorations(untestedTestDecorationType, untestedTests);
+			}
 		})
-		.catch(err => {
-			vscode.window.showErrorMessage(err);
-		});		
+			.catch(err => {
+				vscode.window.showErrorMessage(err);
+			});
 	}
 
 	function triggerUpdateDecorations() {
@@ -165,6 +194,30 @@ export function activate(context: vscode.ExtensionContext) {
 	watch(getALTestRunnerPath(), (event, fileName) => {
 		triggerUpdateDecorations();
 	});
+}
+
+function getTestMethodRangesFromDocument(document: vscode.TextDocument): ALTestMethodRange[] {
+	const documentText = document.getText();
+	//const regEx = /\[Test\].*\n(^.*\n){0,3} *procedure .*\(/gm;
+	const regEx = /\[Test\]/g;
+	let testMethods: ALTestMethodRange[] = [];
+	let match;
+
+	while (match = regEx.exec(documentText)) {
+		let subDocumentText = documentText.substr(match.index, 300);
+		let methodMatch = subDocumentText.match('(?<=procedure ).*');
+		if (methodMatch !== undefined) {
+			const startPos = document.positionAt(match.index + methodMatch!.index!);
+			const endPos = document.positionAt(match.index + methodMatch!.index! + methodMatch![0].length - 2);
+			const testMethod: ALTestMethodRange = {
+				name: subDocumentText.substr(methodMatch!.index!, methodMatch![0].length - 2),
+				range: new vscode.Range(startPos, endPos)
+			};
+			testMethods.push(testMethod);
+		}
+	}
+
+	return testMethods;
 }
 
 function getTerminalName() {
@@ -251,7 +304,7 @@ function getDocumentIdAndName(document: vscode.TextDocument): string {
 	let firstLine = document.getText(new vscode.Range(0, 0, 0, 250));
 	let matches = firstLine.match('\\d+ .*');
 	if (!(isUndefined(matches))) {
-		return matches!.shift()!.replace(/"/g,'');
+		return matches!.shift()!.replace(/"/g, '');
 	}
 	else {
 		return '';
