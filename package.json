@@ -10,7 +10,7 @@
 	"files": [
 		"PowerShell/"
 	],
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"engines": {
 		"vscode": "^1.39.0"
 	},
@@ -103,8 +103,8 @@
 						"scope": "resource",
 						"default": {
 							"red": 255,
-							"green": 97,
-							"blue": 97,
+							"green": 0,
+							"blue": 0,
 							"alpha": 0.3
 						},
 						"properties": {
