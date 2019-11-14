@@ -32,23 +32,6 @@ type ALTestMethodRange = {
 	range: vscode.Range;
 };
 
-const config = vscode.workspace.getConfiguration('al-test-runner');
-const passingTestColor = 'rgba(' + config.passingTestsColor.red + ',' + config.passingTestsColor.green + ',' + config.passingTestsColor.blue + ',' + config.passingTestsColor.alpha + ')';
-const failingTestColor = 'rgba(' + config.failingTestsColor.red + ',' + config.failingTestsColor.green + ',' + config.failingTestsColor.blue + ',' + config.failingTestsColor.alpha + ')';
-const untestedTestColor = 'rgba(' + config.untestedTestsColor.red + ',' + config.untestedTestsColor.green + ',' + config.untestedTestsColor.blue + ',' + config.untestedTestsColor.alpha + ')';
-
-const passingTestDecorationType = vscode.window.createTextEditorDecorationType({		
-	backgroundColor: passingTestColor
-});
-
-const failingTestDecorationType = vscode.window.createTextEditorDecorationType({
-	backgroundColor: failingTestColor
-});
-
-const untestedTestDecorationType = vscode.window.createTextEditorDecorationType({
-	backgroundColor: untestedTestColor
-});
-
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
@@ -115,9 +98,21 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(command);
 
 	function updateDecoraions() {
+		const config = vscode.workspace.getConfiguration('al-test-runner');
 		if (!(config.decorateTestMethods)) {
 			return;
 		}
+
+		const passingTestColor = 'rgba(' + config.passingTestsColor.red + ',' + config.passingTestsColor.green + ',' + config.passingTestsColor.blue + ',' + config.passingTestsColor.alpha + ')';
+		const failingTestColor = 'rgba(' + config.failingTestsColor.red + ',' + config.failingTestsColor.green + ',' + config.failingTestsColor.blue + ',' + config.failingTestsColor.alpha + ')';		
+
+		const passingTestDecorationType = vscode.window.createTextEditorDecorationType({		
+			backgroundColor: passingTestColor
+		});
+
+		const failingTestDecorationType = vscode.window.createTextEditorDecorationType({
+			backgroundColor: failingTestColor
+		});
 
 		let testMethodRanges: ALTestMethodRange[] = getTestMethodRangesFromDocument(activeEditor!.document);
 
@@ -171,6 +166,12 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 
 	function setUntestedTestDecorations(testMethodRanges: ALTestMethodRange[]) {
+		const config = vscode.workspace.getConfiguration('al-test-runner');
+		const untestedTestColor = 'rgba(' + config.untestedTestsColor.red + ',' + config.untestedTestsColor.green + ',' + config.untestedTestsColor.blue + ',' + config.untestedTestsColor.alpha + ')';
+		const untestedTestDecorationType = vscode.window.createTextEditorDecorationType({
+			backgroundColor: untestedTestColor
+		});
+		
 		let untestedTests: vscode.DecorationOptions[] = [];
 
 		if (testMethodRanges.length > 0) {
