@@ -4,7 +4,6 @@ import * as vscode from 'vscode';
 import { isUndefined } from 'util';
 import { readFileSync, writeFileSync, mkdirSync, existsSync, watch, readdirSync, unlinkSync } from 'fs';
 import * as xml2js from 'xml2js';
-import { match } from 'minimatch';
 
 type ALTestRunnerConfig = {
 	launchConfigName: string;
@@ -218,184 +217,184 @@ export function activate(context: vscode.ExtensionContext) {
 	watch(getALTestRunnerPath(), (event, fileName) => {
 		triggerUpdateDecorations();
 	});
-}
 
-function getTestMethodRangesFromDocument(document: vscode.TextDocument): ALTestMethodRange[] {
-	const documentText = document.getText();
-	//const regEx = /\[Test\].*\n(^.*\n){0,3} *procedure .*\(/gm;
-	const regEx = /\[Test\]/g;
-	let testMethods: ALTestMethodRange[] = [];
-	let match;
+	function getTestMethodRangesFromDocument(document: vscode.TextDocument): ALTestMethodRange[] {
+		const documentText = document.getText();
+		//const regEx = /\[Test\].*\n(^.*\n){0,3} *procedure .*\(/gm;
+		const regEx = /\[Test\]/g;
+		let testMethods: ALTestMethodRange[] = [];
+		let match;
 
-	while (match = regEx.exec(documentText)) {
-		let subDocumentText = documentText.substr(match.index, 300);
-		let methodMatch = subDocumentText.match('(?<=procedure ).*');
-		if (methodMatch !== undefined) {
-			const startPos = document.positionAt(match.index + methodMatch!.index!);
-			const endPos = document.positionAt(match.index + methodMatch!.index! + methodMatch![0].length - 2);
-			const testMethod: ALTestMethodRange = {
-				name: subDocumentText.substr(methodMatch!.index!, methodMatch![0].length - 2),
-				range: new vscode.Range(startPos, endPos)
-			};
-			testMethods.push(testMethod);
-		}
-	}
-
-	return testMethods;
-}
-
-function getTerminalName() {
-	return 'al-test-runner';
-}
-
-function getALTestRunnerTerminal(terminalName: string): vscode.Terminal {
-	let terminals = vscode.window.terminals.filter(element => element.name === terminalName);
-	let terminal = terminals.shift()!;
-
-	if (!(isUndefined(terminal))) {
-		return terminal;
-	}
-	else {
-		terminal = vscode.window.createTerminal(terminalName);
-		let extension = vscode.extensions.getExtension('jamespearson.al-test-runner');
-		let PSPath = extension!.extensionPath + '\\PowerShell\\ALTestRunner.psm1';
-		terminal.sendText('Import-Module "' + PSPath + '" -DisableNameChecking');
-		return terminal;
-	}
-}
-
-function readyToRunTests(): Promise<boolean> {
-	return new Promise((resolve, reject) => {
-		if (!(launchConfigIsValid())) {
-			//clear the credentials and company name if the launch config is not valid
-			setALTestRunnerConfig('userName', '');
-			setALTestRunnerConfig('securePassword', '');
-			setALTestRunnerConfig('companyName', '');
-			selectLaunchConfig();
+		while (match = regEx.exec(documentText)) {
+			let subDocumentText = documentText.substr(match.index, 300);
+			let methodMatch = subDocumentText.match('(?<=procedure ).*');
+			if (methodMatch !== undefined) {
+				const startPos = document.positionAt(match.index + methodMatch!.index!);
+				const endPos = document.positionAt(match.index + methodMatch!.index! + methodMatch![0].length - 2);
+				const testMethod: ALTestMethodRange = {
+					name: subDocumentText.substr(methodMatch!.index!, methodMatch![0].length - 2),
+					range: new vscode.Range(startPos, endPos)
+				};
+				testMethods.push(testMethod);
+			}
 		}
 
-		if (launchConfigIsValid()) {
-			resolve(true);
+		return testMethods;
+	}
+
+	function getTerminalName() {
+		return 'al-test-runner';
+	}
+
+	function getALTestRunnerTerminal(terminalName: string): vscode.Terminal {
+		let terminals = vscode.window.terminals.filter(element => element.name === terminalName);
+		let terminal = terminals.shift()!;
+
+		if (!(isUndefined(terminal))) {
+			return terminal;
 		}
 		else {
-			reject();
+			terminal = vscode.window.createTerminal(terminalName);
+			let extension = vscode.extensions.getExtension('jamespearson.al-test-runner');
+			let PSPath = extension!.extensionPath + '\\PowerShell\\ALTestRunner.psm1';
+			terminal.sendText('Import-Module "' + PSPath + '" -DisableNameChecking');
+			return terminal;
 		}
-	});
-}
-
-function launchConfigIsValid(): boolean {
-	let alTestRunnerConfig = getALTestRunnerConfig();
-	if (alTestRunnerConfig.launchConfigName === '') {
-		return false;
 	}
-	else {
+
+	function readyToRunTests(): Promise<boolean> {
+		return new Promise((resolve, reject) => {
+			if (!(launchConfigIsValid())) {
+				//clear the credentials and company name if the launch config is not valid
+				setALTestRunnerConfig('userName', '');
+				setALTestRunnerConfig('securePassword', '');
+				setALTestRunnerConfig('companyName', '');
+				selectLaunchConfig();
+			}
+
+			if (launchConfigIsValid()) {
+				resolve(true);
+			}
+			else {
+				reject();
+			}
+		});
+	}
+
+	function launchConfigIsValid(): boolean {
+		let alTestRunnerConfig = getALTestRunnerConfig();
+		if (alTestRunnerConfig.launchConfigName === '') {
+			return false;
+		}
+		else {
+			let debugConfigurations = getDebugConfigurationsFromLaunchJson(getLaunchJson());
+			return debugConfigurations.filter(element => element.name === alTestRunnerConfig.launchConfigName).length === 1;
+		}
+	}
+
+	async function selectLaunchConfig() {
 		let debugConfigurations = getDebugConfigurationsFromLaunchJson(getLaunchJson());
-		return debugConfigurations.filter(element => element.name === alTestRunnerConfig.launchConfigName).length === 1;
-	}
-}
+		let selectedConfig;
 
-async function selectLaunchConfig() {
-	let debugConfigurations = getDebugConfigurationsFromLaunchJson(getLaunchJson());
-	let selectedConfig;
+		if (debugConfigurations.length === 1) {
+			selectedConfig = debugConfigurations.shift()!.name;
+		}
+		else if (debugConfigurations.length > 1) {
+			let configNames: Array<string> = debugConfigurations.map(element => element.name);
+			selectedConfig = await vscode.window.showQuickPick(configNames, { canPickMany: false, placeHolder: 'Please select a configuration to run tests against' });
+			if (isUndefined(selectedConfig)) {
+				vscode.window.showErrorMessage('Please select a configuration before running tests');
+			}
+			else {
+				vscode.window.showInformationMessage('"' + selectedConfig + '" selected. Please run the command again to run the test(s).');
+			}
+		}
 
-	if (debugConfigurations.length === 1) {
-		selectedConfig = debugConfigurations.shift()!.name;
+		setALTestRunnerConfig('launchConfigName', selectedConfig);
 	}
-	else if (debugConfigurations.length > 1) {
-		let configNames: Array<string> = debugConfigurations.map(element => element.name);
-		selectedConfig = await vscode.window.showQuickPick(configNames, { canPickMany: false, placeHolder: 'Please select a configuration to run tests against' });
-		if (isUndefined(selectedConfig)) {
-			vscode.window.showErrorMessage('Please select a configuration before running tests');
+
+	function getIsTestCodeunit(document: vscode.TextDocument): boolean {
+		if (document.fileName.substr(document.fileName.lastIndexOf('.')) !== '.al') {
+			return false;
+		}
+
+		const text = document.getText(new vscode.Range(0, 0, 10, 0));
+		return !(isUndefined(text.match('Subtype = Test;')));
+	}
+
+	function getDocumentIdAndName(document: vscode.TextDocument): string {
+		let firstLine = document.getText(new vscode.Range(0, 0, 0, 250));
+		let matches = firstLine.match('\\d+ .*');
+		if (!(isUndefined(matches))) {
+			return matches!.shift()!.replace(/"/g, '');
 		}
 		else {
-			vscode.window.showInformationMessage('"' + selectedConfig + '" selected. Please run the command again to run the test(s).');
+			return '';
 		}
 	}
 
-	setALTestRunnerConfig('launchConfigName', selectedConfig);
-}
-
-function getIsTestCodeunit(document: vscode.TextDocument): boolean {
-	if (document.fileName.substr(document.fileName.lastIndexOf('.')) !== '.al') {
-		return false;
-	}
-
-	const text = document.getText(new vscode.Range(0, 0, 10, 0));
-	return !(isUndefined(text.match('Subtype = Test;')));
-}
-
-function getDocumentIdAndName(document: vscode.TextDocument): string {
-	let firstLine = document.getText(new vscode.Range(0, 0, 0, 250));
-	let matches = firstLine.match('\\d+ .*');
-	if (!(isUndefined(matches))) {
-		return matches!.shift()!.replace(/"/g, '');
-	}
-	else {
-		return '';
-	}
-}
-
-//@ts-ignore
-function getDebugConfigurationsFromLaunchJson(launchJson) {
-	let configurations = launchJson.configurations as Array<vscode.DebugConfiguration>;
-	let debugConfigurations = configurations.filter(element => element.request === 'launch');
-	return debugConfigurations;
-}
-
-function getLaunchJson() {
-	let wsFolders = vscode.workspace.workspaceFolders!;
-	let rootFolder = wsFolders.shift();
-	let launchPath = rootFolder!.uri.fsPath + '\\.vscode\\launch.json';
-	let data = readFileSync(launchPath, { encoding: 'utf-8' });
-	let launchConfig = JSON.parse(data);
-	return launchConfig;
-}
-
-function getALTestRunnerPath(): string {
-	let wsFolders = vscode.workspace.workspaceFolders!;
-	let rootFolder = wsFolders.shift();
-	let alTestRunnerPath = rootFolder!.uri.fsPath + '\\.altestrunner';
-	return alTestRunnerPath;
-}
-
-function getALTestRunnerConfigPath(): string {
-	return getALTestRunnerPath() + '\\config.json';
-}
-
-function getALTestRunnerConfig() {
-	let alTestRunnerConfigPath = getALTestRunnerConfigPath();
-	let data: string;
-
-	try {
-		data = readFileSync(alTestRunnerConfigPath, { encoding: 'utf-8' });
-	} catch (error) {
-		createALTestRunnerConfig();
-		data = readFileSync(alTestRunnerConfigPath, { encoding: 'utf-8' });
-	}
-
-	let alTestRunnerConfig = JSON.parse(data);
-	return alTestRunnerConfig as ALTestRunnerConfig;
-}
-
-function setALTestRunnerConfig(keyName: string, keyValue: string | undefined) {
-	let config = getALTestRunnerConfig();
 	//@ts-ignore
-	config[keyName] = keyValue;
-	writeFileSync(getALTestRunnerConfigPath(), JSON.stringify(config), { encoding: 'utf-8' });
-}
+	function getDebugConfigurationsFromLaunchJson(launchJson) {
+		let configurations = launchJson.configurations as Array<vscode.DebugConfiguration>;
+		let debugConfigurations = configurations.filter(element => element.request === 'launch');
+		return debugConfigurations;
+	}
 
-function createALTestRunnerConfig() {
-	let config: ALTestRunnerConfig = {
-		containerResultPath: "",
-		launchConfigName: "",
-		securePassword: "",
-		userName: "",
-		companyName: "",
-		testSuiteName: ""
-	};
+	function getLaunchJson() {
+		let wsFolders = vscode.workspace.workspaceFolders!;
+		let rootFolder = wsFolders.shift();
+		let launchPath = rootFolder!.uri.fsPath + '\\.vscode\\launch.json';
+		let data = readFileSync(launchPath, { encoding: 'utf-8' });
+		let launchConfig = JSON.parse(data);
+		return launchConfig;
+	}
 
-	mkdirSync(getALTestRunnerPath(), { recursive: true });
-	writeFileSync(getALTestRunnerConfigPath(), JSON.stringify(config), { encoding: 'utf-8' });
+	function getALTestRunnerPath(): string {
+		let wsFolders = vscode.workspace.workspaceFolders!;
+		let rootFolder = wsFolders.shift();
+		let alTestRunnerPath = rootFolder!.uri.fsPath + '\\.altestrunner';
+		return alTestRunnerPath;
+	}
+
+	function getALTestRunnerConfigPath(): string {
+		return getALTestRunnerPath() + '\\config.json';
+	}
+
+	function getALTestRunnerConfig() {
+		let alTestRunnerConfigPath = getALTestRunnerConfigPath();
+		let data: string;
+
+		try {
+			data = readFileSync(alTestRunnerConfigPath, { encoding: 'utf-8' });
+		} catch (error) {
+			createALTestRunnerConfig();
+			data = readFileSync(alTestRunnerConfigPath, { encoding: 'utf-8' });
+		}
+
+		let alTestRunnerConfig = JSON.parse(data);
+		return alTestRunnerConfig as ALTestRunnerConfig;
+	}
+
+	function setALTestRunnerConfig(keyName: string, keyValue: string | undefined) {
+		let config = getALTestRunnerConfig();
+		//@ts-ignore
+		config[keyName] = keyValue;
+		writeFileSync(getALTestRunnerConfigPath(), JSON.stringify(config), { encoding: 'utf-8' });
+	}
+
+	function createALTestRunnerConfig() {
+		let config: ALTestRunnerConfig = {
+			containerResultPath: "",
+			launchConfigName: "",
+			securePassword: "",
+			userName: "",
+			companyName: "",
+			testSuiteName: ""
+		};
+
+		mkdirSync(getALTestRunnerPath(), { recursive: true });
+		writeFileSync(getALTestRunnerConfigPath(), JSON.stringify(config), { encoding: 'utf-8' });
+	}
 }
 
 
