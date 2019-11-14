@@ -3,6 +3,7 @@
 	"displayName": "AL Test Runner",
 	"description": "Test runner for AL tests for Business Central development",
 	"publisher": "jamespearson",
+	"preview": true,
 	"repository": {
 		"url": "https://github.com/jimmymcp/al-test-runner"
 	},
@@ -10,7 +11,7 @@
 	"files": [
 		"PowerShell/"
 	],
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"engines": {
 		"vscode": "^1.39.0"
 	},
