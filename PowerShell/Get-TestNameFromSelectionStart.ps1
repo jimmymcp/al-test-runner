@@ -21,6 +21,7 @@ function Get-TestNameFromSelectionStart {
             }
         }
     }
+    return ''
 }
 
 Export-ModuleMember -Function Get-TestNameFromSelectionStart

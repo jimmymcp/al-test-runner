@@ -38,11 +38,22 @@ function Invoke-ALTestRunner {
     }
     
     if ($FileName -ne '') {
+        if (Get-FileIsTestCodeunit -FileName $FileName) {
         $Params.Add('TestCodeunit', (Get-ObjectIdFromFile $FileName))
+    }
+        else {
+            throw "$FileName is not an AL test codeunit"
+        }
     }
 
     if ($SelectionStart -ne 0) {
-        $Params.Add('TestFunction', (Get-TestNameFromSelectionStart -Path $FileName -SelectionStart $SelectionStart))
+        $TestName = Get-TestNameFromSelectionStart -Path $FileName -SelectionStart $SelectionStart
+        if ($TestName -eq '') {
+            throw "Please place the cursor within the test method that you want to run and try again."
+        }
+        else {
+            $Params.Add('TestFunction', $TestName)
+        }
     }
 
     if ((Get-ValueFromLaunchJson -KeyName 'authentication') -eq 'UserPassword') {
