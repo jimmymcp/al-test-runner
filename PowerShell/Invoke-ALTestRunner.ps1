@@ -19,6 +19,10 @@ function Invoke-ALTestRunner {
     
     if (($null -eq $TestSuiteName) -or ($TestSuiteName -eq '')) {
         [string]$NavVersionString = Get-BCContainerNavVersion -containerOrImageName $ContainerName
+        if ($NavVersionString.IndexOf('-') -gt 0) {
+            $NavVersionString = $NavVersionString.Substring(0,$NavVersionString.IndexOf('-'))
+        }
+        
         [version]$NavVersion = [version]::new()
         if ([version]::TryParse($NavVersionString, [ref]$NavVersion)) {
             if ($NavVersion -lt [version]::new('15.0.0.0')) {
@@ -39,8 +43,8 @@ function Invoke-ALTestRunner {
     
     if ($FileName -ne '') {
         if (Get-FileIsTestCodeunit -FileName $FileName) {
-        $Params.Add('TestCodeunit', (Get-ObjectIdFromFile $FileName))
-    }
+            $Params.Add('TestCodeunit', (Get-ObjectIdFromFile $FileName))
+        }
         else {
             throw "$FileName is not an AL test codeunit"
         }
