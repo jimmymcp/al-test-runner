@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.1.3
+- Bug fix to clear decorations
+- Improved test selection for running current test and tests in current codeunit
+- Stop executing script when credentials required but not entered
+
 ## 0.1.2
 - Update readme
 - Fix for settings to apply without reloading window
