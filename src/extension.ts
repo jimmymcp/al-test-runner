@@ -43,6 +43,23 @@ export function activate(context: vscode.ExtensionContext) {
 		mkdirSync(getALTestRunnerPath());
 	}
 
+	const config = vscode.workspace.getConfiguration('al-test-runner');
+	const passingTestColor = 'rgba(' + config.passingTestsColor.red + ',' + config.passingTestsColor.green + ',' + config.passingTestsColor.blue + ',' + config.passingTestsColor.alpha + ')';
+	const failingTestColor = 'rgba(' + config.failingTestsColor.red + ',' + config.failingTestsColor.green + ',' + config.failingTestsColor.blue + ',' + config.failingTestsColor.alpha + ')';		
+	const untestedTestColor = 'rgba(' + config.untestedTestsColor.red + ',' + config.untestedTestsColor.green + ',' + config.untestedTestsColor.blue + ',' + config.untestedTestsColor.alpha + ')';
+
+	const passingTestDecorationType = vscode.window.createTextEditorDecorationType({		
+		backgroundColor: passingTestColor
+	});
+
+	const failingTestDecorationType = vscode.window.createTextEditorDecorationType({
+		backgroundColor: failingTestColor
+	});
+
+	const untestedTestDecorationType = vscode.window.createTextEditorDecorationType({
+		backgroundColor: untestedTestColor
+	});
+
 	// Use the console to output diagnostic information (console.log) and errors (console.error)
 	// This line of code will only be executed once when your extension is activated
 	console.log('jamespearson.al-test-runner extension is activated');
@@ -97,28 +114,26 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(command);
 
-	function updateDecoraions() {
+	function updateDecorations() {
 		const config = vscode.workspace.getConfiguration('al-test-runner');
+
+		let passingTests: vscode.DecorationOptions[] = [];
+		let failingTests: vscode.DecorationOptions[] = [];
+		let untestedTests: vscode.DecorationOptions[] = [];
+
+		//call with empty arrays to clear all the decorations
+		setDecorations(passingTests, failingTests, untestedTests);
+
 		if (!(config.decorateTestMethods)) {
+			setDecorations(passingTests, failingTests, untestedTests);
 			return;
 		}
-
-		const passingTestColor = 'rgba(' + config.passingTestsColor.red + ',' + config.passingTestsColor.green + ',' + config.passingTestsColor.blue + ',' + config.passingTestsColor.alpha + ')';
-		const failingTestColor = 'rgba(' + config.failingTestsColor.red + ',' + config.failingTestsColor.green + ',' + config.failingTestsColor.blue + ',' + config.failingTestsColor.alpha + ')';		
-
-		const passingTestDecorationType = vscode.window.createTextEditorDecorationType({		
-			backgroundColor: passingTestColor
-		});
-
-		const failingTestDecorationType = vscode.window.createTextEditorDecorationType({
-			backgroundColor: failingTestColor
-		});
 
 		let testMethodRanges: ALTestMethodRange[] = getTestMethodRangesFromDocument(activeEditor!.document);
 
 		let resultFileName = getALTestRunnerPath() + '\\Results\\' + getDocumentIdAndName(activeEditor!.document) + '.xml';
 		if (!(existsSync(resultFileName))) {
-			setUntestedTestDecorations(testMethodRanges);
+			setDecorations(passingTests, failingTests, getUntestedTestDecorations(testMethodRanges));
 			return;
 		}
 
@@ -128,8 +143,6 @@ export function activate(context: vscode.ExtensionContext) {
 		xmlParser.parseStringPromise(resultXml).then(resultObj => {
 			const collection = resultObj.assembly.collection;
 			const tests = collection.shift()!.test as Array<ALTestResult>;
-			let passingTests: vscode.DecorationOptions[] = [];
-			let failingTests: vscode.DecorationOptions[] = [];			
 
 			const documentText = activeEditor!.document.getText();
 			tests.forEach(test => {
@@ -156,31 +169,29 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 			});
 
-			activeEditor!.setDecorations(passingTestDecorationType, passingTests);
-			activeEditor!.setDecorations(failingTestDecorationType, failingTests);
-			setUntestedTestDecorations(testMethodRanges);			
+			setDecorations(passingTests, failingTests, getUntestedTestDecorations(testMethodRanges));			
 		})
 			.catch(err => {
 				vscode.window.showErrorMessage(err);
 			});
 	}
 
-	function setUntestedTestDecorations(testMethodRanges: ALTestMethodRange[]) {
-		const config = vscode.workspace.getConfiguration('al-test-runner');
-		const untestedTestColor = 'rgba(' + config.untestedTestsColor.red + ',' + config.untestedTestsColor.green + ',' + config.untestedTestsColor.blue + ',' + config.untestedTestsColor.alpha + ')';
-		const untestedTestDecorationType = vscode.window.createTextEditorDecorationType({
-			backgroundColor: untestedTestColor
-		});
-		
-		let untestedTests: vscode.DecorationOptions[] = [];
+	function setDecorations(passingTests: vscode.DecorationOptions[], failingTests: vscode.DecorationOptions[], untestedTests: vscode.DecorationOptions[]) {
+		activeEditor!.setDecorations(passingTestDecorationType, passingTests);
+		activeEditor!.setDecorations(failingTestDecorationType, failingTests);
+		activeEditor!.setDecorations(untestedTestDecorationType, untestedTests);
+	}
 
+	function getUntestedTestDecorations(testMethodRanges: ALTestMethodRange[]): vscode.DecorationOptions[] {
+		let untestedTests: vscode.DecorationOptions[] = [];
 		if (testMethodRanges.length > 0) {
 			testMethodRanges.forEach(element => {
 				const decoration: vscode.DecorationOptions = { range: element.range, hoverMessage: 'There are no results for this test 🤷‍♀️' };
 				untestedTests.push(decoration);
-			});
-			activeEditor!.setDecorations(untestedTestDecorationType, untestedTests);
+			});			
 		}
+
+		return untestedTests;
 	}
 
 	function triggerUpdateDecorations() {
@@ -193,7 +204,7 @@ export function activate(context: vscode.ExtensionContext) {
 			timeout = undefined;
 		}
 
-		timeout = setTimeout(updateDecoraions, 500);
+		timeout = setTimeout(updateDecorations, 500);
 	}
 
 	if (activeEditor) {
