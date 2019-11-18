@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.1.4
+- Command to clear credentials
+
 ## 0.1.3
 - Bug fix to clear decorations
 - Improved test selection for running current test and tests in current codeunit

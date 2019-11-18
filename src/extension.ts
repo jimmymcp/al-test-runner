@@ -45,10 +45,10 @@ export function activate(context: vscode.ExtensionContext) {
 
 	const config = vscode.workspace.getConfiguration('al-test-runner');
 	const passingTestColor = 'rgba(' + config.passingTestsColor.red + ',' + config.passingTestsColor.green + ',' + config.passingTestsColor.blue + ',' + config.passingTestsColor.alpha + ')';
-	const failingTestColor = 'rgba(' + config.failingTestsColor.red + ',' + config.failingTestsColor.green + ',' + config.failingTestsColor.blue + ',' + config.failingTestsColor.alpha + ')';		
+	const failingTestColor = 'rgba(' + config.failingTestsColor.red + ',' + config.failingTestsColor.green + ',' + config.failingTestsColor.blue + ',' + config.failingTestsColor.alpha + ')';
 	const untestedTestColor = 'rgba(' + config.untestedTestsColor.red + ',' + config.untestedTestsColor.green + ',' + config.untestedTestsColor.blue + ',' + config.untestedTestsColor.alpha + ')';
 
-	const passingTestDecorationType = vscode.window.createTextEditorDecorationType({		
+	const passingTestDecorationType = vscode.window.createTextEditorDecorationType({
 		backgroundColor: passingTestColor
 	});
 
@@ -114,6 +114,14 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(command);
 
+	command = vscode.commands.registerCommand('altestrunner.clearCredentials', async () => {
+		setALTestRunnerConfig('userName', '');
+		setALTestRunnerConfig('securePassword', '');
+		vscode.window.showInformationMessage('AL Test Runner credentials cleared');
+	});
+
+	context.subscriptions.push(command);
+
 	function updateDecorations() {
 		const config = vscode.workspace.getConfiguration('al-test-runner');
 
@@ -169,7 +177,7 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 			});
 
-			setDecorations(passingTests, failingTests, getUntestedTestDecorations(testMethodRanges));			
+			setDecorations(passingTests, failingTests, getUntestedTestDecorations(testMethodRanges));
 		})
 			.catch(err => {
 				vscode.window.showErrorMessage(err);
@@ -188,7 +196,7 @@ export function activate(context: vscode.ExtensionContext) {
 			testMethodRanges.forEach(element => {
 				const decoration: vscode.DecorationOptions = { range: element.range, hoverMessage: 'There are no results for this test 🤷‍♀️' };
 				untestedTests.push(decoration);
-			});			
+			});
 		}
 
 		return untestedTests;
@@ -224,7 +232,7 @@ export function activate(context: vscode.ExtensionContext) {
 		if (activeEditor && event.document === activeEditor.document) {
 			triggerUpdateDecorations();
 		}
-	}, null, context.subscriptions);	
+	}, null, context.subscriptions);
 
 	watch(getALTestRunnerPath(), (event, fileName) => {
 		triggerUpdateDecorations();

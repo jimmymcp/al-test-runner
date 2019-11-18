@@ -11,7 +11,7 @@
 	"files": [
 		"PowerShell/"
 	],
-	"version": "0.1.3",
+	"version": "0.1.4",
 	"engines": {
 		"vscode": "^1.39.0"
 	},
@@ -47,7 +47,12 @@
 				"command": "altestrunner.clearTestResults",
 				"title": "Clear Test Results",
 				"category": "AL Test Runner"
-			}
+			},
+			{
+				"command": "altestrunner.clearCredentials",
+				"title": "Clear Credentials",
+				"category": "AL Test Runner"
+			}			
 		],
 		"keybindings": [
 			{
