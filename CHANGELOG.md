@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.1.5
+- Write results of test run to output window for improved visibility
+- Test the Docker container is running before attempting to run tests
+
+![Results in Output Window](https://jpearsondotblog.files.wordpress.com/2019/11/test-results-in-output-window.jpg)
+
 ## 0.1.4
 - Command to clear credentials
 
