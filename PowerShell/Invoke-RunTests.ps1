@@ -19,10 +19,9 @@ function Invoke-RunTests {
         [string]$TestSuiteName = ''
     )
 
-    Import-Module 'navcontainerhelper' -DisableNameChecking
-    
     $ResultId = [Guid]::NewGuid().Guid + ".xml"
     $ResultFile = Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) $ResultId
+    $LastResultFile = Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) 'last.xml'
     $ContainerResultFile = Join-Path (Get-ContainerResultPath) $ResultId
     
     $Message = "Running tests on $ContainerName, company $CompanyName"
@@ -62,22 +61,29 @@ function Invoke-RunTests {
     while(!$BreakTestLoop) {
         try {
             Write-Host $Message -ForegroundColor Green
-            Run-TestsInBCContainer @Params -detailed -Verbose      
-        
-            Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath $ResultFile        
-            Merge-ALTestRunnerTestResults -ResultsFile $ResultFile -ToPath (Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) 'Results')
-            Remove-Item $ResultFile
-            Remove-Item $ContainerResultFile
-            $BreakTestLoop = $true
+            Run-TestsInBCContainer @Params -detailed -Verbose
+            
+            if (Test-Path $ContainerResultFile) {
+                Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath $LastResultFile
+                Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath $ResultFile
+                Merge-ALTestRunnerTestResults -ResultsFile $ResultFile -ToPath (Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) 'Results')
+                Remove-Item $ResultFile
+                Remove-Item $ContainerResultFile
+                $BreakTestLoop = $true
+            }
+            else {
+                throw 'Tests have not been run'
+            }
         }
         catch {
-            $AttemptNo++
-            Write-Host "Validation error occurred in test page, retrying..." -ForegroundColor Magenta
+            $AttemptNo++            
+            Write-Host "Error occurred, retrying..." -ForegroundColor Magenta
+
             if ($AttemptNo -ge 3) {
                 $BreakTestLoop = $true
             }
         }
-    }    
+    }
 }
 
 Export-ModuleMember -Function Invoke-RunTests
