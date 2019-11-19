@@ -8,7 +8,13 @@ function Invoke-ALTestRunner {
         [Parameter(Mandatory=$false)]
         [int]$SelectionStart = 0
     )
+
+    Import-Module 'navcontainerhelper' -DisableNameChecking
     $ContainerName = Get-ServerFromLaunchJson
+
+    if (!(Get-ContainerIsRunning $ContainerName)) {
+        throw "Container $ContainerName is not running. Please start the container and retry."
+    }
 
     $CompanyName = Get-ValueFromALTestRunnerConfig -KeyName 'companyName'
     if ($CompanyName -eq '') {
