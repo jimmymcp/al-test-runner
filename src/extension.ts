@@ -14,6 +14,33 @@ type ALTestRunnerConfig = {
 	testSuiteName: string;
 };
 
+type ALTestAssembly = {
+	$: {
+		time: string;
+		skipped: string;
+		failed: string;
+		passed: string;
+		total: string;
+		'run-time': string;
+		'run-date': string;
+		'test-framework': string;
+		name: string;
+	};
+	collection: ALTestCollection[];	
+};
+
+type ALTestCollection = {
+	$: {
+		time: string;
+		skipped: string;
+		failed: string;
+		passed: string;
+		total: string;
+		name: string;
+	};
+	test: ALTestResult[];
+};
+
 type ALTestResult = {
 	$: {
 		method: string;
@@ -32,8 +59,6 @@ type ALTestMethodRange = {
 	range: vscode.Range;
 };
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
 	let timeout: NodeJS.Timer | undefined = undefined;
 	let activeEditor = vscode.window.activeTextEditor;
@@ -60,20 +85,15 @@ export function activate(context: vscode.ExtensionContext) {
 		backgroundColor: untestedTestColor
 	});
 
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
+	const outputChannel = vscode.window.createOutputChannel(getTerminalName());
+	
 	console.log('jamespearson.al-test-runner extension is activated');
 	let terminal: vscode.Terminal;
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
 	let command = vscode.commands.registerCommand('altestrunner.runAllTests', async () => {
 		await readyToRunTests().then(ready => {
 			if (ready) {
-				terminal = getALTestRunnerTerminal(getTerminalName());
-				terminal.sendText('Invoke-ALTestRunner -Tests All');
-				terminal.show(true);
+				invokeTestRunner('Invoke-ALTestRunner -Tests All');
 			}
 		});
 	});
@@ -83,9 +103,7 @@ export function activate(context: vscode.ExtensionContext) {
 	command = vscode.commands.registerCommand('altestrunner.runTestsCodeunit', async () => {
 		await readyToRunTests().then(ready => {
 			if (ready) {
-				terminal = getALTestRunnerTerminal(getTerminalName());
-				terminal.sendText('Invoke-ALTestRunner -Tests Codeunit -FileName "' + vscode.window.activeTextEditor!.document.fileName + '"');
-				terminal.show(true);
+				invokeTestRunner('Invoke-ALTestRunner -Tests Codeunit -FileName "' + vscode.window.activeTextEditor!.document.fileName + '"');
 			}
 		});
 	});
@@ -95,9 +113,7 @@ export function activate(context: vscode.ExtensionContext) {
 	command = vscode.commands.registerCommand('altestrunner.runTest', async () => {
 		await readyToRunTests().then(ready => {
 			if (ready) {
-				terminal = getALTestRunnerTerminal(getTerminalName());
-				terminal.sendText('Invoke-ALTestRunner -Tests Test -FileName "' + vscode.window.activeTextEditor!.document.fileName + '" -SelectionStart ' + vscode.window.activeTextEditor!.selection.start.line);
-				terminal.show(true);
+				invokeTestRunner('Invoke-ALTestRunner -Tests Test -FileName "' + vscode.window.activeTextEditor!.document.fileName + '" -SelectionStart ' + vscode.window.activeTextEditor!.selection.start.line);
 			}
 		});
 	});
@@ -121,6 +137,13 @@ export function activate(context: vscode.ExtensionContext) {
 	});
 
 	context.subscriptions.push(command);
+
+	function invokeTestRunner(command: string) {
+		terminal = getALTestRunnerTerminal(getTerminalName());
+		terminal.sendText('cls');
+		terminal.sendText(command);
+		terminal.show(true);
+	}
 
 	function updateDecorations() {
 		const config = vscode.workspace.getConfiguration('al-test-runner');
@@ -235,7 +258,12 @@ export function activate(context: vscode.ExtensionContext) {
 	}, null, context.subscriptions);
 
 	watch(getALTestRunnerPath(), (event, fileName) => {
-		triggerUpdateDecorations();
+		if (fileName === 'last.xml') {
+			outputTestResults();
+		}
+		else {
+			triggerUpdateDecorations();
+		}
 	});
 
 	function getTestMethodRangesFromDocument(document: vscode.TextDocument): ALTestMethodRange[] {
@@ -350,6 +378,40 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 		else {
 			return '';
+		}
+	}
+
+	function outputTestResults() {
+		let resultFileName = getALTestRunnerPath() + '\\last.xml';
+		if (existsSync(resultFileName)) {
+			outputChannel.clear();
+			outputChannel.show(true);
+
+			const xmlParser = new xml2js.Parser();
+			let resultXml = readFileSync(resultFileName, { encoding: 'utf-8' });
+			xmlParser.parseStringPromise(resultXml).then(resultObj => {
+				const assemblies: ALTestAssembly[] = resultObj.assemblies.assembly;
+				assemblies.forEach(assembly => {
+					const failed = parseInt(assembly.$.failed);
+					if (failed > 0) {
+						outputChannel.appendLine('❌ ' + assembly.$.name);
+					}
+					else {
+						outputChannel.appendLine('✅ ' + assembly.$.name);
+					}					
+					assembly.collection[0].test.forEach(test => {
+						if (test.$.result === 'Pass') {
+							outputChannel.appendLine('\t✅ ' + test.$.method);
+						}
+						else {
+							outputChannel.appendLine('\t❌ ' + test.$.method);
+							outputChannel.appendLine('\t\t' + test.failure[0].message);
+						}
+					});
+				});
+			});
+			
+			unlinkSync(resultFileName);
 		}
 	}
 
