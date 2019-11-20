@@ -5,7 +5,7 @@ function Get-ContainerIsRunning {
     )
 
     try {
-    $StatusJson = docker inspect bc
+    $StatusJson = docker inspect $ContainerName
     $StatusJson = [String]::Join([Environment]::NewLine, $StatusJson)
     $Status = ConvertFrom-Json $StatusJson
     }
