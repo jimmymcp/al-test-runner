@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.1.6
+- Fix to Get-ContainerIsRunning - thanks to Christian Sell
+
 ## 0.1.5
 - Write results of test run to output window for improved visibility
 - Test the Docker container is running before attempting to run tests
