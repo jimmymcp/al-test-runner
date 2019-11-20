@@ -6,7 +6,7 @@ function Get-ServerFromLaunchJson {
     
     $Server = Get-ValueFromLaunchJson -KeyName server -ConfigName $ConfigName
     $Server = $Server.Substring($Server.IndexOf('://') + 3)
-    $Server
+    $Server.ToUpper()
 }
 
 Export-ModuleMember -Function Get-ServerFromLaunchJson
