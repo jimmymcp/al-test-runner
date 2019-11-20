@@ -178,7 +178,7 @@ export function activate(context: vscode.ExtensionContext) {
 			const documentText = activeEditor!.document.getText();
 			tests.forEach(test => {
 				const matches = documentText.match('(?<=procedure )' + test.$.method);
-				if (!(matches === undefined)) {
+				if (!(matches === undefined) && !(matches === null)) {
 					const startPos = activeEditor!.document.positionAt(matches!.index!);
 					const endPos = activeEditor!.document.positionAt(matches!.index! + matches![0].length);
 					let methodName = documentText.substr(matches!.index!, matches![0].length);

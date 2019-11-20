@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.1.7
+- Bug fix - results for tests in xml file that aren't present in test codeunit causes test decorations to fail
+
 ## 0.1.6
 - Fix to Get-ContainerIsRunning - thanks to Christian Sell
 
