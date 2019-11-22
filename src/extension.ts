@@ -4,60 +4,7 @@ import * as vscode from 'vscode';
 import { isUndefined } from 'util';
 import { readFileSync, writeFileSync, mkdirSync, existsSync, watch, readdirSync, unlinkSync } from 'fs';
 import * as xml2js from 'xml2js';
-
-type ALTestRunnerConfig = {
-	launchConfigName: string;
-	containerResultPath: string;
-	userName: string;
-	securePassword: string;
-	companyName: string;
-	testSuiteName: string;
-};
-
-type ALTestAssembly = {
-	$: {
-		time: string;
-		skipped: string;
-		failed: string;
-		passed: string;
-		total: string;
-		'run-time': string;
-		'run-date': string;
-		'test-framework': string;
-		name: string;
-	};
-	collection: ALTestCollection[];	
-};
-
-type ALTestCollection = {
-	$: {
-		time: string;
-		skipped: string;
-		failed: string;
-		passed: string;
-		total: string;
-		name: string;
-	};
-	test: ALTestResult[];
-};
-
-type ALTestResult = {
-	$: {
-		method: string;
-		name: string;
-		result: string;
-		time: string;
-	};
-	failure: [{
-		message: string;
-		'stack-trace': string
-	}]
-};
-
-type ALTestMethodRange = {
-	name: string;
-	range: vscode.Range;
-};
+import * as testTypes from './testTypes';
 
 export function activate(context: vscode.ExtensionContext) {
 	let timeout: NodeJS.Timer | undefined = undefined;
@@ -160,7 +107,7 @@ export function activate(context: vscode.ExtensionContext) {
 			return;
 		}
 
-		let testMethodRanges: ALTestMethodRange[] = getTestMethodRangesFromDocument(activeEditor!.document);
+		let testMethodRanges: testTypes.ALTestMethodRange[] = getTestMethodRangesFromDocument(activeEditor!.document);
 
 		let resultFileName = getALTestRunnerPath() + '\\Results\\' + getDocumentIdAndName(activeEditor!.document) + '.xml';
 		if (!(existsSync(resultFileName))) {
@@ -173,7 +120,7 @@ export function activate(context: vscode.ExtensionContext) {
 		let resultXml = readFileSync(resultFileName, { encoding: 'utf-8' });
 		xmlParser.parseStringPromise(resultXml).then(resultObj => {
 			const collection = resultObj.assembly.collection;
-			const tests = collection.shift()!.test as Array<ALTestResult>;
+			const tests = collection.shift()!.test as Array<testTypes.ALTestResult>;
 
 			const documentText = activeEditor!.document.getText();
 			tests.forEach(test => {
@@ -213,7 +160,7 @@ export function activate(context: vscode.ExtensionContext) {
 		activeEditor!.setDecorations(untestedTestDecorationType, untestedTests);
 	}
 
-	function getUntestedTestDecorations(testMethodRanges: ALTestMethodRange[]): vscode.DecorationOptions[] {
+	function getUntestedTestDecorations(testMethodRanges: testTypes.ALTestMethodRange[]): vscode.DecorationOptions[] {
 		let untestedTests: vscode.DecorationOptions[] = [];
 		if (testMethodRanges.length > 0) {
 			testMethodRanges.forEach(element => {
@@ -266,11 +213,11 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	});
 
-	function getTestMethodRangesFromDocument(document: vscode.TextDocument): ALTestMethodRange[] {
+	function getTestMethodRangesFromDocument(document: vscode.TextDocument): testTypes.ALTestMethodRange[] {
 		const documentText = document.getText();
 		//const regEx = /\[Test\].*\n(^.*\n){0,3} *procedure .*\(/gm;
 		const regEx = /\[Test\]/g;
-		let testMethods: ALTestMethodRange[] = [];
+		let testMethods: testTypes.ALTestMethodRange[] = [];
 		let match;
 
 		while (match = regEx.exec(documentText)) {
@@ -279,7 +226,7 @@ export function activate(context: vscode.ExtensionContext) {
 			if (methodMatch !== undefined) {
 				const startPos = document.positionAt(match.index + methodMatch!.index!);
 				const endPos = document.positionAt(match.index + methodMatch!.index! + methodMatch![0].length - 2);
-				const testMethod: ALTestMethodRange = {
+				const testMethod: testTypes.ALTestMethodRange = {
 					name: subDocumentText.substr(methodMatch!.index!, methodMatch![0].length - 2),
 					range: new vscode.Range(startPos, endPos)
 				};
@@ -383,7 +330,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	function outputTestResults() {
 		let resultFileName = getALTestRunnerPath() + '\\last.xml';
-		if (existsSync(resultFileName)) {
+		if (existsSync(resultFileName)) {			
 			outputChannel.clear();
 			outputChannel.show(true);
 
@@ -392,7 +339,7 @@ export function activate(context: vscode.ExtensionContext) {
 			let noOfTests: number = 0;
 			let totalTime: number = 0;
 			xmlParser.parseStringPromise(resultXml).then(resultObj => {
-				const assemblies: ALTestAssembly[] = resultObj.assemblies.assembly;
+				const assemblies: testTypes.ALTestAssembly[] = resultObj.assemblies.assembly;
 				assemblies.forEach(assembly => {
 					noOfTests += parseInt(assembly.$.total);
 					totalTime += parseFloat(assembly.$.time);
@@ -459,7 +406,7 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 
 		let alTestRunnerConfig = JSON.parse(data);
-		return alTestRunnerConfig as ALTestRunnerConfig;
+		return alTestRunnerConfig as testTypes.ALTestRunnerConfig;
 	}
 
 	function setALTestRunnerConfig(keyName: string, keyValue: string | undefined) {
@@ -470,7 +417,7 @@ export function activate(context: vscode.ExtensionContext) {
 	}
 
 	function createALTestRunnerConfig() {
-		let config: ALTestRunnerConfig = {
+		let config: testTypes.ALTestRunnerConfig = {
 			containerResultPath: "",
 			launchConfigName: "",
 			securePassword: "",
