@@ -389,26 +389,31 @@ export function activate(context: vscode.ExtensionContext) {
 
 			const xmlParser = new xml2js.Parser();
 			let resultXml = readFileSync(resultFileName, { encoding: 'utf-8' });
+			let noOfTests: number = 0;
+			let totalTime: number = 0;
 			xmlParser.parseStringPromise(resultXml).then(resultObj => {
 				const assemblies: ALTestAssembly[] = resultObj.assemblies.assembly;
 				assemblies.forEach(assembly => {
+					noOfTests += parseInt(assembly.$.total);
+					totalTime += parseFloat(assembly.$.time);
 					const failed = parseInt(assembly.$.failed);
 					if (failed > 0) {
-						outputChannel.appendLine('❌ ' + assembly.$.name);
+						outputChannel.appendLine('❌ ' + assembly.$.name + '\t' + assembly.$.time + 's');
 					}
 					else {
-						outputChannel.appendLine('✅ ' + assembly.$.name);
+						outputChannel.appendLine('✅ ' + assembly.$.name + '\t' + assembly.$.time + 's');
 					}					
 					assembly.collection[0].test.forEach(test => {
 						if (test.$.result === 'Pass') {
-							outputChannel.appendLine('\t✅ ' + test.$.method);
+							outputChannel.appendLine('\t✅ ' + test.$.method + '\t' + test.$.time + 's');
 						}
 						else {
-							outputChannel.appendLine('\t❌ ' + test.$.method);
+							outputChannel.appendLine('\t❌ ' + test.$.method + '\t' + test.$.time + 's');
 							outputChannel.appendLine('\t\t' + test.failure[0].message);
 						}
 					});
 				});
+				outputChannel.appendLine(noOfTests + ' test(s) run in ' + totalTime + 's');
 			});
 			
 			unlinkSync(resultFileName);
