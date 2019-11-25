@@ -4,7 +4,7 @@ import * as vscode from 'vscode';
 import { isUndefined } from 'util';
 import { readFileSync, writeFileSync, mkdirSync, existsSync, watch, readdirSync, unlinkSync } from 'fs';
 import * as xml2js from 'xml2js';
-import * as testTypes from './testTypes';
+import * as types from './types';
 import { getLatestInsidersMetadata } from 'vscode-test/out/util';
 
 let terminal: vscode.Terminal;
@@ -124,7 +124,7 @@ function updateDecorations() {
 		return;
 	}
 
-	let testMethodRanges: testTypes.ALTestMethodRange[] = getTestMethodRangesFromDocument(activeEditor!.document);
+	let testMethodRanges: types.ALTestMethodRange[] = getTestMethodRangesFromDocument(activeEditor!.document);
 
 	let resultFileName = getALTestRunnerPath() + '\\Results\\' + getDocumentIdAndName(activeEditor!.document) + '.xml';
 	if (!(existsSync(resultFileName))) {
@@ -137,7 +137,7 @@ function updateDecorations() {
 	let resultXml = readFileSync(resultFileName, { encoding: 'utf-8' });
 	xmlParser.parseStringPromise(resultXml).then(resultObj => {
 		const collection = resultObj.assembly.collection;
-		const tests = collection.shift()!.test as Array<testTypes.ALTestResult>;
+		const tests = collection.shift()!.test as Array<types.ALTestResult>;
 
 		const documentText = activeEditor!.document.getText();
 		tests.forEach(test => {
@@ -177,7 +177,7 @@ function setDecorations(passingTests: vscode.DecorationOptions[], failingTests: 
 	activeEditor!.setDecorations(untestedTestDecorationType, untestedTests);
 }
 
-function getUntestedTestDecorations(testMethodRanges: testTypes.ALTestMethodRange[]): vscode.DecorationOptions[] {
+function getUntestedTestDecorations(testMethodRanges: types.ALTestMethodRange[]): vscode.DecorationOptions[] {
 	let untestedTests: vscode.DecorationOptions[] = [];
 	if (testMethodRanges.length > 0) {
 		testMethodRanges.forEach(element => {
@@ -218,11 +218,11 @@ if (getALTestRunnerPath() !== '') {
 	});
 }
 
-export function getTestMethodRangesFromDocument(document: vscode.TextDocument): testTypes.ALTestMethodRange[] {
+export function getTestMethodRangesFromDocument(document: vscode.TextDocument): types.ALTestMethodRange[] {
 	const documentText = document.getText();
 	//const regEx = /\[Test\].*\n(^.*\n){0,3} *procedure .*\(/gm;
 	const regEx = /\[Test\]/g;
-	let testMethods: testTypes.ALTestMethodRange[] = [];
+	let testMethods: types.ALTestMethodRange[] = [];
 	let match;
 
 	while (match = regEx.exec(documentText)) {
@@ -231,7 +231,7 @@ export function getTestMethodRangesFromDocument(document: vscode.TextDocument): 
 		if (methodMatch !== undefined) {
 			const startPos = document.positionAt(match.index + methodMatch!.index!);
 			const endPos = document.positionAt(match.index + methodMatch!.index! + methodMatch![0].length - 2);
-			const testMethod: testTypes.ALTestMethodRange = {
+			const testMethod: types.ALTestMethodRange = {
 				name: subDocumentText.substr(methodMatch!.index!, methodMatch![0].length - 2),
 				range: new vscode.Range(startPos, endPos)
 			};
@@ -344,7 +344,7 @@ function outputTestResults() {
 		let noOfTests: number = 0;
 		let totalTime: number = 0;
 		xmlParser.parseStringPromise(resultXml).then(resultObj => {
-			const assemblies: testTypes.ALTestAssembly[] = resultObj.assemblies.assembly;
+			const assemblies: types.ALTestAssembly[] = resultObj.assemblies.assembly;
 			assemblies.forEach(assembly => {
 				noOfTests += parseInt(assembly.$.total);
 				totalTime += parseFloat(assembly.$.time);
@@ -416,7 +416,7 @@ function getALTestRunnerConfig() {
 	}
 
 	let alTestRunnerConfig = JSON.parse(data);
-	return alTestRunnerConfig as testTypes.ALTestRunnerConfig;
+	return alTestRunnerConfig as types.ALTestRunnerConfig;
 }
 
 function setALTestRunnerConfig(keyName: string, keyValue: string | undefined) {
@@ -427,7 +427,7 @@ function setALTestRunnerConfig(keyName: string, keyValue: string | undefined) {
 }
 
 function createALTestRunnerConfig() {
-	let config: testTypes.ALTestRunnerConfig = {
+	let config: types.ALTestRunnerConfig = {
 		containerResultPath: "",
 		launchConfigName: "",
 		securePassword: "",
