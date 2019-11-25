@@ -281,14 +281,21 @@ function readyToRunTests(): Promise<boolean> {
 	});
 }
 
-function launchConfigIsValid(): boolean {
-	let alTestRunnerConfig = getALTestRunnerConfig();
+export function launchConfigIsValid(alTestRunnerConfig?: types.ALTestRunnerConfig, launchJson?: object): boolean {
+	if (alTestRunnerConfig === undefined) {
+		alTestRunnerConfig = getALTestRunnerConfig();
+	}
+
+	if (launchJson === undefined) {
+		launchJson = getLaunchJson();
+	}
+
 	if (alTestRunnerConfig.launchConfigName === '') {
 		return false;
 	}
 	else {
-		let debugConfigurations = getDebugConfigurationsFromLaunchJson(getLaunchJson());
-		return debugConfigurations.filter(element => element.name === alTestRunnerConfig.launchConfigName).length === 1;
+		let debugConfigurations = getDebugConfigurationsFromLaunchJson(launchJson);
+		return debugConfigurations.filter(element => element.name === alTestRunnerConfig!.launchConfigName).length === 1;
 	}
 }
 
@@ -373,13 +380,13 @@ function outputTestResults() {
 }
 
 //@ts-ignore
-function getDebugConfigurationsFromLaunchJson(launchJson) {
+export function getDebugConfigurationsFromLaunchJson(launchJson) {
 	let configurations = launchJson.configurations as Array<vscode.DebugConfiguration>;
 	let debugConfigurations = configurations.filter(element => element.request === 'launch');
 	return debugConfigurations;
 }
 
-function getLaunchJson() {
+export function getLaunchJson() {
 	let wsFolders = vscode.workspace.workspaceFolders!;
 	let rootFolder = wsFolders.shift();
 	let launchPath = rootFolder!.uri.fsPath + '\\.vscode\\launch.json';
@@ -404,7 +411,7 @@ function getALTestRunnerConfigPath(): string {
 	return getALTestRunnerPath() + '\\config.json';
 }
 
-function getALTestRunnerConfig() {
+export function getALTestRunnerConfig() {
 	let alTestRunnerConfigPath = getALTestRunnerConfigPath();
 	let data: string;
 

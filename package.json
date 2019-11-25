@@ -52,7 +52,7 @@
 				"command": "altestrunner.clearCredentials",
 				"title": "Clear Credentials",
 				"category": "AL Test Runner"
-			}			
+			}
 		],
 		"keybindings": [
 			{
@@ -69,7 +69,7 @@
 				"title": "AL Test Runner",
 				"properties": {
 					"al-test-runner.decorateTestMethods": {
-						"type": "boolean",						
+						"type": "boolean",
 						"scope": "resource",
 						"default": true,
 						"description": "Decorate test methods with test results. When this setting is enabled the AL Test Runner extension will decorate the names of test methods in test codeunits according to the result of running that test."
@@ -161,7 +161,7 @@
 							}
 						}
 					}
-				}	
+				}
 			}
 		],
 		"snippets": [
@@ -169,7 +169,7 @@
 				"path": "snippets.json",
 				"language": "al"
 			}
-		]		
+		]
 	},
 	"scripts": {
 		"vscode:prepublish": "npm run compile",
@@ -183,8 +183,10 @@
 		"@types/mocha": "^5.2.6",
 		"@types/node": "^10.12.21",
 		"@types/vscode": "^1.39.0",
+		"@types/sinon": "^7.5.1",
 		"glob": "^7.1.4",
 		"mocha": "^6.1.4",
+		"sinon": "^7.5.0",
 		"typescript": "^3.3.1",
 		"tslint": "^5.12.1",
 		"vscode-test": "^1.2.0"
@@ -192,5 +194,5 @@
 	"dependencies": {
 		"@types/xml2js": "^0.4.5",
 		"xml2js": "^0.4.22"
-	}
+	}	
 }
