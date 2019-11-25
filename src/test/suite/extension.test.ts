@@ -167,4 +167,14 @@ suite('Extension Test Suite', () => {
 		const result = alTestRunner.documentIsTestCodeunit(doc);
 		assert.strictEqual(result, false);
 	});
+
+	test('getDocumentIdAndName returns a string with the id and name of the file', async () => {
+		const text = `codeunit 51234 "Some Amazing Tests"
+		{			
+		}`;
+
+		const doc = await createTextDocument('08.al', text);
+		const result = alTestRunner.getDocumentIdAndName(doc);
+		assert.strictEqual(result, '51234 Some Amazing Tests');
+	});
 });

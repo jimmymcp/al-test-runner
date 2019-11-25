@@ -329,7 +329,7 @@ export function documentIsTestCodeunit(document: vscode.TextDocument): boolean {
 	return (text.match('Subtype = Test;') !== null);
 }
 
-function getDocumentIdAndName(document: vscode.TextDocument): string {
+export function getDocumentIdAndName(document: vscode.TextDocument): string {
 	let firstLine = document.getText(new vscode.Range(0, 0, 0, 250));
 	let matches = firstLine.match('\\d+ .*');
 	if (!(isUndefined(matches))) {
