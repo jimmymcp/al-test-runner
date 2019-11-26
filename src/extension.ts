@@ -64,9 +64,7 @@ export function activate(context: vscode.ExtensionContext) {
 	let activeEditor = vscode.window.activeTextEditor;
 	let isTestCodeunit: boolean;
 
-	if (!(existsSync(getALTestRunnerPath()))) {
-		mkdirSync(getALTestRunnerPath());
-	}
+	createALTestRunnerDir();
 
 	const config = vscode.workspace.getConfiguration('al-test-runner');
 	const passingTestColor = 'rgba(' + config.passingTestsColor.red + ',' + config.passingTestsColor.green + ',' + config.passingTestsColor.blue + ',' + config.passingTestsColor.alpha + ')';
@@ -474,11 +472,16 @@ export function activate(context: vscode.ExtensionContext) {
 			testSuiteName: ""
 		};
 
-		mkdirSync(getALTestRunnerPath(), { recursive: true });
+		createALTestRunnerDir();
 		writeFileSync(getALTestRunnerConfigPath(), JSON.stringify(config), { encoding: 'utf-8' });
 	}
-}
 
+	function createALTestRunnerDir() {
+		if (!(existsSync(getALTestRunnerPath()))) {
+			mkdirSync(getALTestRunnerPath());
+		}
+	}
+}
 
 // this method is called when your extension is deactivated
 export function deactivate() { }
