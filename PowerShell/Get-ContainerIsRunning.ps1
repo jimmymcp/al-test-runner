@@ -4,6 +4,7 @@ function Get-ContainerIsRunning {
         [string]$ContainerName
     )
 
+    Import-PowerShellModule 'navcontainerhelper'
     try {
     $StatusJson = docker inspect $ContainerName
     $StatusJson = [String]::Join([Environment]::NewLine, $StatusJson)

@@ -1,5 +1,6 @@
-Describe Invoke-ALTestRunner {
+Describe Invoke-ALTestRunner {    
     InModuleScope ALTestRunner {
+        Import-PowerShellModule 'navcontainerhelper'
         Mock Get-ServerFromLaunchJson {'bc'}
         Mock Get-ValueFromAppJson {return [Guid]::NewGuid().Guid} -ParameterFilter {$KeyName -eq 'id'}
         Mock Get-ValueFromALTestRunnerConfig {'My Company'} {$KeyName -eq 'companyName'}
@@ -10,6 +11,7 @@ Describe Invoke-ALTestRunner {
             Mock Get-ValueFromLaunchJson {}
             Mock Select-BCTestSuite {'DEFAULT'}
             Mock Get-ValueFromAppJson {}
+            Mock Get-ContainerIsRunning {$true}
             Mock Get-BCContainerNavVersion {return '14.5.0.0-W1'}
             Mock Invoke-RunTests {}
 
@@ -18,5 +20,5 @@ Describe Invoke-ALTestRunner {
                 Assert-MockCalled Select-BCTestSuite                
             }
         }
-    }
+    }    
 }

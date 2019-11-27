@@ -9,7 +9,8 @@ function Invoke-ALTestRunner {
         [int]$SelectionStart = 0
     )
 
-    Import-Module 'navcontainerhelper' -DisableNameChecking
+    Import-PowerShellModule 'navcontainerhelper'
+    
     $ContainerName = Get-ServerFromLaunchJson
 
     if (!(Get-ContainerIsRunning $ContainerName)) {
