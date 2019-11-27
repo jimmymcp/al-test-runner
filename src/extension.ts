@@ -5,7 +5,6 @@ import { isUndefined } from 'util';
 import { readFileSync, writeFileSync, mkdirSync, existsSync, watch, readdirSync, unlinkSync } from 'fs';
 import * as xml2js from 'xml2js';
 import * as types from './types';
-import { getLatestInsidersMetadata } from 'vscode-test/out/util';
 
 let terminal: vscode.Terminal;
 let activeEditor = vscode.window.activeTextEditor;
@@ -443,10 +442,15 @@ function createALTestRunnerConfig() {
 		testSuiteName: ""
 	};
 
-	mkdirSync(getALTestRunnerPath(), { recursive: true });
+	createALTestRunnerDir();
 	writeFileSync(getALTestRunnerConfigPath(), JSON.stringify(config), { encoding: 'utf-8' });
 }
 
+function createALTestRunnerDir() {
+	if (!(existsSync(getALTestRunnerPath()))) {
+		mkdirSync(getALTestRunnerPath());
+	}
+}
 
 // this method is called when your extension is deactivated
 export function deactivate() { }
