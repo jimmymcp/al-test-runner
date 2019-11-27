@@ -5,10 +5,14 @@ function Get-ContainerIsRunning {
     )
 
     Import-PowerShellModule 'navcontainerhelper'
+    if (!(Test-BCContainer $ContainerName)) {
+        throw "Container $ContainerName does not exist. Note that container names are case-sensitive."    
+    }
+
     try {
-    $StatusJson = docker inspect $ContainerName
-    $StatusJson = [String]::Join([Environment]::NewLine, $StatusJson)
-    $Status = ConvertFrom-Json $StatusJson
+        $StatusJson = docker inspect $ContainerName
+        $StatusJson = [String]::Join([Environment]::NewLine, $StatusJson)
+        $Status = ConvertFrom-Json $StatusJson
     }
     catch {
         return $false
