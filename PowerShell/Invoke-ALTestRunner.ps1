@@ -14,7 +14,7 @@ function Invoke-ALTestRunner {
     $ContainerName = Get-ServerFromLaunchJson
 
     if (!(Get-ContainerIsRunning $ContainerName)) {
-        throw "Container $ContainerName is not running. Please start the container and retry."
+        throw "Container $ContainerName is not running. Please start the container and retry. Please note that container names are case-sensitive."
     }
 
     $CompanyName = Get-ValueFromALTestRunnerConfig -KeyName 'companyName'
