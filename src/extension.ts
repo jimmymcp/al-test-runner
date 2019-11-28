@@ -30,12 +30,6 @@ let timeout: NodeJS.Timer | undefined = undefined;
 let isTestCodeunit: boolean;
 
 export function activate(context: vscode.ExtensionContext) {
-	if (getALTestRunnerPath() !== '') {
-		if (!(existsSync(getALTestRunnerPath()))) {
-			mkdirSync(getALTestRunnerPath());
-		}
-	}
-	
 	console.log('jamespearson.al-test-runner extension is activated');	
 
 	let command = vscode.commands.registerCommand('altestrunner.runAllTests', async () => {
@@ -207,6 +201,7 @@ if (activeEditor) {
 }
 
 if (getALTestRunnerPath() !== '') {
+	createALTestRunnerDir();
 	watch(getALTestRunnerPath(), (event, fileName) => {
 		if (fileName === 'last.xml') {
 			outputTestResults();
@@ -447,6 +442,10 @@ function createALTestRunnerConfig() {
 }
 
 function createALTestRunnerDir() {
+	if (getALTestRunnerPath() === '') {
+		return;	
+	}
+
 	if (!(existsSync(getALTestRunnerPath()))) {
 		mkdirSync(getALTestRunnerPath());
 	}
