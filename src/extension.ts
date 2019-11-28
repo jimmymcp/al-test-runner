@@ -108,7 +108,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 function invokeTestRunner(command: string) {
 	terminal = getALTestRunnerTerminal(getTerminalName());
-	terminal.sendText('cls');
+	terminal.sendText(' ');
 	terminal.sendText(command);
 	terminal.show(true);
 }
