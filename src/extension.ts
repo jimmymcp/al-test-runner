@@ -42,20 +42,31 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(command);
 
-	command = vscode.commands.registerCommand('altestrunner.runTestsCodeunit', async () => {
+	command = vscode.commands.registerCommand('altestrunner.runTestsCodeunit', async (filename?: string) => {
 		await readyToRunTests().then(ready => {
 			if (ready) {
-				invokeTestRunner('Invoke-ALTestRunner -Tests Codeunit -FileName "' + vscode.window.activeTextEditor!.document.fileName + '"');
+				if (filename === undefined) {
+					filename = vscode.window.activeTextEditor!.document.fileName;
+				}
+
+				invokeTestRunner('Invoke-ALTestRunner -Tests Codeunit -FileName "' + filename + '"');
 			}
 		});
 	});
 
 	context.subscriptions.push(command);
 
-	command = vscode.commands.registerCommand('altestrunner.runTest', async () => {
+	command = vscode.commands.registerCommand('altestrunner.runTest', async (filename?: string, selectionStart?: number) => {
 		await readyToRunTests().then(ready => {
 			if (ready) {
-				invokeTestRunner('Invoke-ALTestRunner -Tests Test -FileName "' + vscode.window.activeTextEditor!.document.fileName + '" -SelectionStart ' + vscode.window.activeTextEditor!.selection.start.line);
+				if (filename === undefined) {
+					filename = vscode.window.activeTextEditor!.document.fileName;
+				}
+				if (selectionStart === undefined) {
+					selectionStart = vscode.window.activeTextEditor!.selection.start.line;
+				}
+
+				invokeTestRunner('Invoke-ALTestRunner -Tests Test -FileName "' + filename + '" -SelectionStart ' + selectionStart);
 			}
 		});
 	});
