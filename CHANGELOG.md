@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.1.11
+- Bug fix - creating .altestrunner directory when it already exists
+- Test containers exist and are running before attempting to run tests
+- Add parameters to commands
+- Don't decorate untested methods that have been commented out
+
 ## 0.1.7
 - Bug fix - results for tests in xml file that aren't present in test codeunit causes test decorations to fail
 
