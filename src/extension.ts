@@ -236,11 +236,30 @@ export function getTestMethodRangesFromDocument(document: vscode.TextDocument): 
 		if (methodMatch !== undefined) {
 			const startPos = document.positionAt(match.index + methodMatch!.index!);
 			const endPos = document.positionAt(match.index + methodMatch!.index! + methodMatch![0].length - 2);
-			const testMethod: types.ALTestMethodRange = {
-				name: subDocumentText.substr(methodMatch!.index!, methodMatch![0].length - 2),
-				range: new vscode.Range(startPos, endPos)
-			};
-			testMethods.push(testMethod);
+			let procedureCommentedOut = false;
+
+			//if the line has a double slash before the method name then it has been commented out, don't include in the results
+			const textLine = document.lineAt(startPos.line);
+			if (textLine.text.substr(textLine.firstNonWhitespaceCharacterIndex,2) === '//') {
+				procedureCommentedOut = true;
+			}
+
+			//otherwise if there is a /* present before the procedure and */ afterwards then it has been commented out
+			const commentStart = documentText.lastIndexOf('/*', match.index);
+			if (commentStart !== -1) {
+				const commentEnd = documentText.indexOf('*/', match.index);
+				if (commentEnd !== -1) {
+					procedureCommentedOut = true;
+				}
+			}
+
+			if (procedureCommentedOut !== true) {
+				const testMethod: types.ALTestMethodRange = {
+					name: subDocumentText.substr(methodMatch!.index!, methodMatch![0].length - 2),
+					range: new vscode.Range(startPos, endPos)
+				};
+				testMethods.push(testMethod);
+			}
 		}
 	}
 
