@@ -16,7 +16,9 @@ function Invoke-RunTests {
         [Parameter(Mandatory=$false)]
         [string]$TestFunction = '',
         [Parameter(Mandatory=$false)]
-        [string]$TestSuiteName = ''
+        [string]$TestSuiteName = '',
+        [Parameter(Mandatory=$false)]
+        [string]$ExtensionName
     )
 
     $ResultId = [Guid]::NewGuid().Guid + ".xml"
@@ -52,7 +54,7 @@ function Invoke-RunTests {
     }
     else {
         $Params.Add('extensionId', $ExtensionId)
-        $Message += ", extension {0}" -f (Get-ValueFromAppJson -KeyName name)
+        $Message += ", extension {0}" -f $ExtensionName
     }
 
     [int]$AttemptNo = 1

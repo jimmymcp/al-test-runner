@@ -32,31 +32,45 @@ let isTestCodeunit: boolean;
 export function activate(context: vscode.ExtensionContext) {
 	console.log('jamespearson.al-test-runner extension is activated');	
 
-	let command = vscode.commands.registerCommand('altestrunner.runAllTests', async () => {
+	let command = vscode.commands.registerCommand('altestrunner.runAllTests', async (extensionId?: string, extensionName?: string) => {
 		await readyToRunTests().then(ready => {
 			if (ready) {
-				invokeTestRunner('Invoke-ALTestRunner -Tests All');
+				if (extensionId === undefined) {
+					extensionId = getAppJsonKey('id');
+				}
+
+				if (extensionName === undefined) {
+					extensionName = getAppJsonKey('name');
+				}
+
+				invokeTestRunner('Invoke-ALTestRunner -Tests All -ExtensionId ' + extensionId + ' -ExtensionName "' + extensionName + '"');
 			}
 		});
 	});
 
 	context.subscriptions.push(command);
 
-	command = vscode.commands.registerCommand('altestrunner.runTestsCodeunit', async (filename?: string) => {
+	command = vscode.commands.registerCommand('altestrunner.runTestsCodeunit', async (filename?: string, extensionId?: string, extensionName?: string) => {
 		await readyToRunTests().then(ready => {
 			if (ready) {
 				if (filename === undefined) {
 					filename = vscode.window.activeTextEditor!.document.fileName;
 				}
+				if (extensionId === undefined) {
+					extensionId = getAppJsonKey('id');
+				}
+				if (extensionName === undefined) {
+					extensionName = getAppJsonKey('name');
+				}
 
-				invokeTestRunner('Invoke-ALTestRunner -Tests Codeunit -FileName "' + filename + '"');
+				invokeTestRunner('Invoke-ALTestRunner -Tests Codeunit -ExtensionId ' + extensionId  + ' -ExtensionName "' + extensionName + '" -FileName "' + filename + '"');
 			}
 		});
 	});
 
 	context.subscriptions.push(command);
 
-	command = vscode.commands.registerCommand('altestrunner.runTest', async (filename?: string, selectionStart?: number) => {
+	command = vscode.commands.registerCommand('altestrunner.runTest', async (filename?: string, selectionStart?: number, extensionId?: string, extensionName?: string) => {
 		await readyToRunTests().then(ready => {
 			if (ready) {
 				if (filename === undefined) {
@@ -65,8 +79,14 @@ export function activate(context: vscode.ExtensionContext) {
 				if (selectionStart === undefined) {
 					selectionStart = vscode.window.activeTextEditor!.selection.start.line;
 				}
+				if (extensionId === undefined) {
+					extensionId = getAppJsonKey('id');
+				}
+				if (extensionName === undefined) {
+					extensionName = getAppJsonKey('name');
+				}
 
-				invokeTestRunner('Invoke-ALTestRunner -Tests Test -FileName "' + filename + '" -SelectionStart ' + selectionStart);
+				invokeTestRunner('Invoke-ALTestRunner -Tests Test -ExtensionId ' + extensionId  + ' -ExtensionName "' + extensionName + '" -FileName "' + filename + '" -SelectionStart ' + selectionStart);
 			}
 		});
 	});

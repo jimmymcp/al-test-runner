@@ -6,8 +6,12 @@ function Invoke-ALTestRunner {
         [Parameter(Mandatory=$false)]
         [string]$FileName = '',
         [Parameter(Mandatory=$false)]
-        [int]$SelectionStart = 0
-    )
+        [int]$SelectionStart = 0,
+        [Parameter(Mandatory=$false)]
+        [string]$ExtensionId,
+        [Parameter(Mandatory=$false)]
+        [string]$ExtensionName
+        )    
 
     Import-PowerShellModule 'navcontainerhelper'
     
@@ -39,13 +43,12 @@ function Invoke-ALTestRunner {
         }
     }
 
-    $ExtensionId = Get-ValueFromAppJson -KeyName 'id'
-
     $Params = @{
         ContainerName = $ContainerName
         CompanyName = $CompanyName
         ExtensionId = $ExtensionId
         TestSuiteName = $TestSuiteName
+        ExtensionName = $ExtensionName
     }
     
     if ($FileName -ne '') {
