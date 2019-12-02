@@ -387,25 +387,28 @@ function outputTestResults() {
 			const assemblies: types.ALTestAssembly[] = resultObj.assemblies.assembly;
 			assemblies.forEach(assembly => {
 				noOfTests += parseInt(assembly.$.total);
-				totalTime += parseFloat(assembly.$.time);
+				const assemblyTime = parseFloat(assembly.$.time);
+				totalTime += assemblyTime;
 				const failed = parseInt(assembly.$.failed);
 				if (failed > 0) {
-					outputChannel.appendLine('❌ ' + assembly.$.name + '\t' + assembly.$.time + 's');
+					outputChannel.appendLine('❌ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
 				}
 				else {
-					outputChannel.appendLine('✅ ' + assembly.$.name + '\t' + assembly.$.time + 's');
+					outputChannel.appendLine('✅ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
 				}					
 				assembly.collection[0].test.forEach(test => {
+					const testTime = parseFloat(test.$.time);
 					if (test.$.result === 'Pass') {
-						outputChannel.appendLine('\t✅ ' + test.$.method + '\t' + test.$.time + 's');
+						outputChannel.appendLine('\t✅ ' + test.$.method + '\t' + testTime.toFixed(2) + 's');
 					}
 					else {
-						outputChannel.appendLine('\t❌ ' + test.$.method + '\t' + test.$.time + 's');
+						outputChannel.appendLine('\t❌ ' + test.$.method + '\t' + testTime.toFixed(2) + 's');
 						outputChannel.appendLine('\t\t' + test.failure[0].message);
 					}
 				});
 			});
-			outputChannel.appendLine(noOfTests + ' test(s) run in ' + totalTime + 's');
+			
+			outputChannel.appendLine(noOfTests + ' test(s) run in ' + totalTime.toFixed(2) + 's');
 		});
 		
 		unlinkSync(resultFileName);
