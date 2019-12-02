@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.1.12
+- Support for multi-root workspaces
+-- Run All Tests command will require an open editor to determine which folder (and extension) to run the tests in
+- Optional parameters included for commands to allow them to be called from other VS Code extensions
+- Round test execution times to 2 decimal places in output window
+
 ## 0.1.11
 - Bug fix - creating .altestrunner directory when it already exists
 - Test containers exist and are running before attempting to run tests
