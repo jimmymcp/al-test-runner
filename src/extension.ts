@@ -8,6 +8,7 @@ import * as types from './types';
 
 let terminal: vscode.Terminal;
 let activeEditor = vscode.window.activeTextEditor;
+let watchedFolders: string[] = [];
 const config = vscode.workspace.getConfiguration('al-test-runner');
 const passingTestColor = 'rgba(' + config.passingTestsColor.red + ',' + config.passingTestsColor.green + ',' + config.passingTestsColor.blue + ',' + config.passingTestsColor.alpha + ')';
 const failingTestColor = 'rgba(' + config.failingTestsColor.red + ',' + config.failingTestsColor.green + ',' + config.failingTestsColor.blue + ',' + config.failingTestsColor.alpha + ')';
@@ -231,18 +232,6 @@ if (activeEditor) {
 	triggerUpdateDecorations();
 }
 
-if (getALTestRunnerPath() !== '') {
-	createALTestRunnerDir();
-	watch(getALTestRunnerPath(), (event, fileName) => {
-		if (fileName === 'last.xml') {
-			outputTestResults();
-		}
-		else {
-			triggerUpdateDecorations();
-		}
-	});
-}
-
 export function getTestMethodRangesFromDocument(document: vscode.TextDocument): types.ALTestMethodRange[] {
 	const documentText = document.getText();
 	//const regEx = /\[Test\].*\n(^.*\n){0,3} *procedure .*\(/gm;
@@ -431,23 +420,56 @@ export function getDebugConfigurationsFromLaunchJson(launchJson) {
 }
 
 export function getLaunchJson() {
-	let wsFolders = vscode.workspace.workspaceFolders!;
-	let rootFolder = wsFolders.shift();
-	let launchPath = rootFolder!.uri.fsPath + '\\.vscode\\launch.json';
-	let data = readFileSync(launchPath, { encoding: 'utf-8' });
-	let launchConfig = JSON.parse(data);
-	return launchConfig;
+	const launchPath = getWorkspaceFolder() + '\\.vscode\\launch.json';
+	const data = readFileSync(launchPath, { encoding: 'utf-8' });
+	return JSON.parse(data);
+}
+
+function getAppJsonKey(keyName: string) {
+	const appJsonPath = getWorkspaceFolder() + '\\app.json';
+	const data = readFileSync(appJsonPath, { encoding: 'utf-8'});
+	const appJson =  JSON.parse(data);
+	return appJson[keyName];
 }
 
 function getALTestRunnerPath(): string {	
-	let wsFolders = vscode.workspace.workspaceFolders!;
-	if (wsFolders === undefined) {
-		return '';
+	const alTestRunnerPath = getWorkspaceFolder() + '\\.altestrunner';
+	watchALTestRunnerPath(alTestRunnerPath);
+	return alTestRunnerPath;
+}
+
+function watchALTestRunnerPath(path: string) {
+	const filteredFolders = watchedFolders.filter(element => {
+		return element === path;
+	});
+
+	if (filteredFolders.length === 0) {
+		if (existsSync(path)) {
+			watch(path, (event, filename) => {
+				onWatchEvent(event, filename);
+			});
+			watchedFolders.push(path);
+		}
+	}
+}
+
+function getWorkspaceFolder() {	
+	const wsFolders = vscode.workspace.workspaceFolders!;
+	if (wsFolders !== undefined) {
+		if (wsFolders.length === 1) {
+			return wsFolders.shift()!.uri.fsPath;
+		}
+	}
+	
+	if (activeEditor === undefined || activeEditor === null) {
+		throw new Error('Please open a file in the project you want to run the tests for.');
 	}
 	else {
-		let rootFolder = wsFolders.shift();
-		let alTestRunnerPath = rootFolder!.uri.fsPath + '\\.altestrunner';
-		return alTestRunnerPath;
+		const workspace = vscode.workspace.getWorkspaceFolder(activeEditor!.document.uri);
+		if (workspace === undefined) {
+			throw new Error('Please open a file in the project you want to run the tests for.');
+		}
+		return workspace!.uri.fsPath;			
 	}
 }
 
@@ -498,6 +520,18 @@ function createALTestRunnerDir() {
 
 	if (!(existsSync(getALTestRunnerPath()))) {
 		mkdirSync(getALTestRunnerPath());
+		watch(getALTestRunnerPath(), (event, filename) => {
+			onWatchEvent(event, filename);
+		});
+	}
+}
+
+function onWatchEvent(event: string, filename: string): any {
+	if (filename === 'last.xml') {
+		outputTestResults();
+	}
+	else {
+		triggerUpdateDecorations();
 	}
 }
 
