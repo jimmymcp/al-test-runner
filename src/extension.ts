@@ -382,6 +382,7 @@ function outputTestResults() {
 		const xmlParser = new xml2js.Parser();
 		let resultXml = readFileSync(resultFileName, { encoding: 'utf-8' });
 		let noOfTests: number = 0;
+		let noOfFailures: number = 0;
 		let totalTime: number = 0;
 		xmlParser.parseStringPromise(resultXml).then(resultObj => {
 			const assemblies: types.ALTestAssembly[] = resultObj.assemblies.assembly;
@@ -390,6 +391,7 @@ function outputTestResults() {
 				const assemblyTime = parseFloat(assembly.$.time);
 				totalTime += assemblyTime;
 				const failed = parseInt(assembly.$.failed);
+				noOfFailures += failed;
 				if (failed > 0) {
 					outputChannel.appendLine('❌ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
 				}
@@ -408,7 +410,12 @@ function outputTestResults() {
 				});
 			});
 			
-			outputChannel.appendLine(noOfTests + ' test(s) run in ' + totalTime.toFixed(2) + 's');
+			if (noOfFailures === 0) {
+				outputChannel.appendLine('✅ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's');
+			}
+			else {
+				outputChannel.appendLine('❌ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's - ' + noOfFailures + ' test(s) failed');
+			}
 		});
 		
 		unlinkSync(resultFileName);
