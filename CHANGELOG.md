@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.1.13
+- Bug fix - remove trailing characters from test method names - could result in both untested and pass/fail decoration for the same test
+- Show number of failing tests in output window summary
+
 ## 0.1.12
 - Support for multi-root workspaces
 -- Run All Tests command will require an open editor to determine which folder (and extension) to run the tests in
