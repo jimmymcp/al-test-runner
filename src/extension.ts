@@ -241,10 +241,10 @@ export function getTestMethodRangesFromDocument(document: vscode.TextDocument): 
 
 	while (match = regEx.exec(documentText)) {
 		let subDocumentText = documentText.substr(match.index, 300);
-		let methodMatch = subDocumentText.match('(?<=procedure ).*');
+		let methodMatch = subDocumentText.match('(?<=procedure ).*\\(');
 		if (methodMatch !== undefined) {
 			const startPos = document.positionAt(match.index + methodMatch!.index!);
-			const endPos = document.positionAt(match.index + methodMatch!.index! + methodMatch![0].length - 2);
+			const endPos = document.positionAt(match.index + methodMatch!.index! + methodMatch![0].length - 1);
 			let procedureCommentedOut = false;
 
 			//if the line has a double slash before the method name then it has been commented out, don't include in the results
@@ -264,7 +264,7 @@ export function getTestMethodRangesFromDocument(document: vscode.TextDocument): 
 
 			if (procedureCommentedOut !== true) {
 				const testMethod: types.ALTestMethodRange = {
-					name: subDocumentText.substr(methodMatch!.index!, methodMatch![0].length - 2),
+					name: subDocumentText.substr(methodMatch!.index!, methodMatch![0].length - 1),
 					range: new vscode.Range(startPos, endPos)
 				};
 				testMethods.push(testMethod);

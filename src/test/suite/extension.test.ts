@@ -113,6 +113,34 @@ suite('Extension Test Suite', () => {
 		assert.strictEqual(testMethodRanges.length, 2);
 	});
 
+	test('getTestMethodRanges removes trailing characters from method name', async () => {
+		const text = `codeunit 50100 "Test Codeunit"
+		{
+			[Test]
+			procedure ThisIsATestMethodWithATrailingSemicolon();
+			begin
+			end;
+		}`;
+
+		const doc = await createTextDocument('04a.al', text);
+		const testMethodRanges = alTestRunner.getTestMethodRangesFromDocument(doc);
+		assert.strictEqual(testMethodRanges.shift()!.name, 'ThisIsATestMethodWithATrailingSemicolon');
+	});
+
+	test('getTestMethodRanges removes trailing spaces from method name', async () => {
+		const text = `codeunit 50100 "Test Codeunit"
+		{
+			[Test]
+			procedure ThisIsATestMethodWithTrailingSpaces()  
+			begin
+			end;
+		}`;
+
+		const doc = await createTextDocument('04b.al', text);
+		const testMethodRanges = alTestRunner.getTestMethodRangesFromDocument(doc);
+		assert.strictEqual(testMethodRanges.shift()!.name, 'ThisIsATestMethodWithTrailingSpaces');
+	});
+
 	test('launchConfigIsValid is true when test runner config holds a valid launch conifg', () => {
 		const result = alTestRunner.launchConfigIsValid({launchConfigName: "someLaunchConfig", companyName: "", containerResultPath: "", securePassword: "", testSuiteName: "", userName: ""},
 			{configurations: [{type: "al", request: "launch", name: "someLaunchConfig"}]});
