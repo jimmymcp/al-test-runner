@@ -1,8 +1,8 @@
 ﻿function Merge-ALTestRunnerTestResults {
     Param(
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]$ResultsFile,
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [string]$ToPath = (Split-Path (Get-ALTestRunnerConfigPath) -Parent)  
     )
 
@@ -12,8 +12,8 @@
 
     [xml]$FromResults = Get-Content $ResultsFile -Raw
 
-    foreach ($FromCodeunit in $FromResults.assemblies.assembly) {
-        $ToResultFile = Join-Path $ToPath ($FromCodeunit.Attributes.GetNamedItem('name').Value + ".xml")
+    foreach ($FromCodeunit in $FromResults.assemblies.assembly) {        
+        $ToResultFile = Join-Path $ToPath (($FromCodeunit.Attributes.GetNamedItem('name').Value + ".xml").Split([IO.Path]::GetInvalidFileNameChars()) -join '')
         if (Test-Path $ToResultFile) {
             [Xml]$ToCodeunit = Get-Content $ToResultFile
         

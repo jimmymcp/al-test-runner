@@ -31,7 +31,7 @@ let timeout: NodeJS.Timer | undefined = undefined;
 let isTestCodeunit: boolean;
 
 export function activate(context: vscode.ExtensionContext) {
-	console.log('jamespearson.al-test-runner extension is activated');	
+	console.log('jamespearson.al-test-runner extension is activated');
 
 	let command = vscode.commands.registerCommand('altestrunner.runAllTests', async (extensionId?: string, extensionName?: string) => {
 		await readyToRunTests().then(ready => {
@@ -64,7 +64,7 @@ export function activate(context: vscode.ExtensionContext) {
 					extensionName = getAppJsonKey('name');
 				}
 
-				invokeTestRunner('Invoke-ALTestRunner -Tests Codeunit -ExtensionId ' + extensionId  + ' -ExtensionName "' + extensionName + '" -FileName "' + filename + '"');
+				invokeTestRunner('Invoke-ALTestRunner -Tests Codeunit -ExtensionId ' + extensionId + ' -ExtensionName "' + extensionName + '" -FileName "' + filename + '"');
 			}
 		});
 	});
@@ -87,7 +87,7 @@ export function activate(context: vscode.ExtensionContext) {
 					extensionName = getAppJsonKey('name');
 				}
 
-				invokeTestRunner('Invoke-ALTestRunner -Tests Test -ExtensionId ' + extensionId  + ' -ExtensionName "' + extensionName + '" -FileName "' + filename + '" -SelectionStart ' + selectionStart);
+				invokeTestRunner('Invoke-ALTestRunner -Tests Test -ExtensionId ' + extensionId + ' -ExtensionName "' + extensionName + '" -FileName "' + filename + '" -SelectionStart ' + selectionStart);
 			}
 		});
 	});
@@ -119,7 +119,7 @@ export function activate(context: vscode.ExtensionContext) {
 			triggerUpdateDecorations();
 		}
 	}, null, context.subscriptions);
-	
+
 	vscode.workspace.onDidChangeTextDocument(event => {
 		if (activeEditor && event.document === activeEditor.document) {
 			triggerUpdateDecorations();
@@ -141,6 +141,8 @@ function updateDecorations() {
 	let failingTests: vscode.DecorationOptions[] = [];
 	let untestedTests: vscode.DecorationOptions[] = [];
 
+	var sanitize = require("sanitize-filename");
+
 	//call with empty arrays to clear all the decorations
 	setDecorations(passingTests, failingTests, untestedTests);
 
@@ -151,7 +153,7 @@ function updateDecorations() {
 
 	let testMethodRanges: types.ALTestMethodRange[] = getTestMethodRangesFromDocument(activeEditor!.document);
 
-	let resultFileName = getALTestRunnerPath() + '\\Results\\' + getDocumentIdAndName(activeEditor!.document) + '.xml';
+	let resultFileName = getALTestRunnerPath() + '\\Results\\' + sanitize(getDocumentIdAndName(activeEditor!.document)) + '.xml';
 	if (!(existsSync(resultFileName))) {
 		setDecorations(passingTests, failingTests, getUntestedTestDecorations(testMethodRanges));
 		return;
@@ -249,7 +251,7 @@ export function getTestMethodRangesFromDocument(document: vscode.TextDocument): 
 
 			//if the line has a double slash before the method name then it has been commented out, don't include in the results
 			const textLine = document.lineAt(startPos.line);
-			if (textLine.text.substr(textLine.firstNonWhitespaceCharacterIndex,2) === '//') {
+			if (textLine.text.substr(textLine.firstNonWhitespaceCharacterIndex, 2) === '//') {
 				procedureCommentedOut = true;
 			}
 
@@ -375,7 +377,7 @@ export function getDocumentIdAndName(document: vscode.TextDocument): string {
 
 function outputTestResults() {
 	let resultFileName = getALTestRunnerPath() + '\\last.xml';
-	if (existsSync(resultFileName)) {			
+	if (existsSync(resultFileName)) {
 		outputChannel.clear();
 		outputChannel.show(true);
 
@@ -397,7 +399,7 @@ function outputTestResults() {
 				}
 				else {
 					outputChannel.appendLine('✅ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
-				}					
+				}
 				assembly.collection[0].test.forEach(test => {
 					const testTime = parseFloat(test.$.time);
 					if (test.$.result === 'Pass') {
@@ -409,7 +411,7 @@ function outputTestResults() {
 					}
 				});
 			});
-			
+
 			if (noOfFailures === 0) {
 				outputChannel.appendLine('✅ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's');
 			}
@@ -417,7 +419,7 @@ function outputTestResults() {
 				outputChannel.appendLine('❌ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's - ' + noOfFailures + ' test(s) failed');
 			}
 		});
-		
+
 		unlinkSync(resultFileName);
 	}
 }
@@ -437,12 +439,12 @@ export function getLaunchJson() {
 
 function getAppJsonKey(keyName: string) {
 	const appJsonPath = getWorkspaceFolder() + '\\app.json';
-	const data = readFileSync(appJsonPath, { encoding: 'utf-8'});
-	const appJson =  JSON.parse(data);
+	const data = readFileSync(appJsonPath, { encoding: 'utf-8' });
+	const appJson = JSON.parse(data);
 	return appJson[keyName];
 }
 
-function getALTestRunnerPath(): string {	
+function getALTestRunnerPath(): string {
 	const alTestRunnerPath = getWorkspaceFolder() + '\\.altestrunner';
 	watchALTestRunnerPath(alTestRunnerPath);
 	return alTestRunnerPath;
@@ -463,14 +465,14 @@ function watchALTestRunnerPath(path: string) {
 	}
 }
 
-function getWorkspaceFolder() {	
+function getWorkspaceFolder() {
 	const wsFolders = vscode.workspace.workspaceFolders!;
 	if (wsFolders !== undefined) {
 		if (wsFolders.length === 1) {
 			return wsFolders.shift()!.uri.fsPath;
 		}
 	}
-	
+
 	if (activeEditor === undefined || activeEditor === null) {
 		throw new Error('Please open a file in the project you want to run the tests for.');
 	}
@@ -479,7 +481,7 @@ function getWorkspaceFolder() {
 		if (workspace === undefined) {
 			throw new Error('Please open a file in the project you want to run the tests for.');
 		}
-		return workspace!.uri.fsPath;			
+		return workspace!.uri.fsPath;
 	}
 }
 
@@ -525,7 +527,7 @@ function createALTestRunnerConfig() {
 
 function createALTestRunnerDir() {
 	if (getALTestRunnerPath() === '') {
-		return;	
+		return;
 	}
 
 	if (!(existsSync(getALTestRunnerPath()))) {
