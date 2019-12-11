@@ -8,7 +8,7 @@ function Get-TestNameFromSelectionStart {
     
     $Lines = Get-Content $Path
     for ($i = ($SelectionStart - 1); $i -ge 0; $i--) {
-        if ($Lines.Item($i).Contains('[Test]')) {
+        if ($Lines.Item($i).ToUpper().Contains('[TEST]')) {
             # search forwards for the procedure declaration (it might not be the following line)
             for ($j = $i; $j -le $Lines.Count; $j++)
             {
