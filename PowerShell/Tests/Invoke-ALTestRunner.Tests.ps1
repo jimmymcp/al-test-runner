@@ -2,7 +2,6 @@ Describe Invoke-ALTestRunner {
     InModuleScope ALTestRunner {
         Import-PowerShellModule 'navcontainerhelper'
         Mock Get-ServerFromLaunchJson {'bc'}
-        Mock Get-ValueFromAppJson {return [Guid]::NewGuid().Guid} -ParameterFilter {$KeyName -eq 'id'}
         Mock Get-ValueFromALTestRunnerConfig {'My Company'} {$KeyName -eq 'companyName'}
         Mock Set-ALTestRunnerConfigValue {}
 
@@ -16,7 +15,7 @@ Describe Invoke-ALTestRunner {
             Mock Invoke-RunTests {}
 
             It 'should prompt the user to enter the test suite' {
-                Invoke-ALTestRunner -Tests All
+                Invoke-ALTestRunner -Tests All -ExtensionId ([Guid]::NewGuid().Guid)
                 Assert-MockCalled Select-BCTestSuite                
             }
         }
