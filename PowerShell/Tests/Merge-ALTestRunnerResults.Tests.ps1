@@ -11,6 +11,10 @@ Describe Merge-ALTestRunnerTestResults {
         return '<assemblies><assembly name="9093548 Licensing Test CDLTMN" test-framework="PS Test Runner" run-date="2019-11-12" run-time="09:16:44" total="1" passed="0" failed="1" skipped="0" time="0.802"><collection name="Licensing Test CDLTMN" total="1" passed="0" failed="1" skipped="0" time="0.802" Skipped="0"><test name="Licensing Test CDLTMN:ExpiredLicenseErrorsOnUpload" method="ExpiredLicenseErrorsOnUpload" time="0.414" result="Fail"><failure><message>There was an error</message><stack-trace>This was the stack trace</stack-trace></failure></test></collection></assembly></assemblies>'
     }
 
+    function Get-TestResultWithIllegalFilenameCharacters {
+        return '<assemblies><assembly name="9093548 A/B\C?DE|:F Test" test-framework="PS Test Runner" run-date="2019-11-12" run-time="09:16:44" total="1" passed="0" failed="1" skipped="0" time="0.802"><collection name="Licensing Test CDLTMN" total="1" passed="0" failed="1" skipped="0" time="0.802" Skipped="0"><test name="Licensing Test CDLTMN:ExpiredLicenseErrorsOnUpload" method="ExpiredLicenseErrorsOnUpload" time="0.414" result="Fail"><failure><message>There was an error</message><stack-trace>This was the stack trace</stack-trace></failure></test></collection></assembly></assemblies>'
+    }
+
     Context 'Results file with single assembly (results from single test codeunit' {
         It 'should create a single file in the results folder named after the test codeunit' {
             $ResultsFile = Join-Path $TestDrive 'Results.xml'
@@ -46,5 +50,14 @@ Describe Merge-ALTestRunnerTestResults {
             $Node.result | should be 'Fail'
             $Node.failure.message | should be 'There was an error'
         }
-    }    
+    }
+
+    Context 'Results file with test assembly with illegal filename characters' {
+        It 'should remove the illegal characters from the filename' {
+            $ResultsFile = Join-Path $TestDrive 'Results.xml'
+            Set-Content -Path $ResultsFile -Value (Get-TestResultWithIllegalFilenameCharacters)
+            Merge-ALTestRunnerTestResults -ResultsFile $ResultsFile -ToPath (Join-Path $TestDrive 'Results')
+            Test-Path (Join-Path (Join-Path $TestDrive 'Results') '9093548 ABCDEF Test.xml') | should be $true
+        }
+    }
 }
