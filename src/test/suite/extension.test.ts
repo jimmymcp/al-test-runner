@@ -141,6 +141,35 @@ suite('Extension Test Suite', () => {
 		assert.strictEqual(testMethodRanges.shift()!.name, 'ThisIsATestMethodWithTrailingSpaces');
 	});
 
+	test('getTestMethodRanges includes test attributes in different cases', async () => {
+		const text = `codeunit 50100 "Test Codeunit"
+		{
+			[Test]
+			procedure TestOne()
+			begin
+			end;
+			
+			[test]
+			procedure TestTwo()
+			begin
+			end;
+			
+			[TEST]
+			procedure TestThree()
+			begin
+			end;
+			
+			[tESt]
+			procedure TestFour()
+			begin
+			end;
+		}`;
+
+		const doc = await createTextDocument('04c.al', text);
+		const testMethodRanges = alTestRunner.getTestMethodRangesFromDocument(doc);
+		assert.strictEqual(testMethodRanges.length, 4);
+	});
+
 	test('launchConfigIsValid is true when test runner config holds a valid launch conifg', () => {
 		const result = alTestRunner.launchConfigIsValid({launchConfigName: "someLaunchConfig", companyName: "", containerResultPath: "", securePassword: "", testSuiteName: "", userName: ""},
 			{configurations: [{type: "al", request: "launch", name: "someLaunchConfig"}]});

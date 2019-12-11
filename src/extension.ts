@@ -237,7 +237,7 @@ if (activeEditor) {
 export function getTestMethodRangesFromDocument(document: vscode.TextDocument): types.ALTestMethodRange[] {
 	const documentText = document.getText();
 	//const regEx = /\[Test\].*\n(^.*\n){0,3} *procedure .*\(/gm;
-	const regEx = /\[Test\]/g;
+	const regEx = /\[Test\]/gi;
 	let testMethods: types.ALTestMethodRange[] = [];
 	let match;
 
