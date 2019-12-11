@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.1.14
+- Sanitize filenames (for test codeunits that have illegal file name chars) - thanks Leon
+- Handle [test] declarations case-insensitively
+
 ## 0.1.13
 - Bug fix - remove trailing characters from test method names - could result in both untested and pass/fail decoration for the same test
 - Show number of failing tests in output window summary
