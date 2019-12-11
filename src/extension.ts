@@ -141,7 +141,7 @@ function updateDecorations() {
 	let failingTests: vscode.DecorationOptions[] = [];
 	let untestedTests: vscode.DecorationOptions[] = [];
 
-	var sanitize = require("sanitize-filename");
+	const sanitize = require("sanitize-filename");
 
 	//call with empty arrays to clear all the decorations
 	setDecorations(passingTests, failingTests, untestedTests);
