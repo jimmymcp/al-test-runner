@@ -193,9 +193,9 @@ function updateDecorations() {
 
 		setDecorations(passingTests, failingTests, getUntestedTestDecorations(testMethodRanges));
 	})
-		.catch(err => {
-			vscode.window.showErrorMessage(err);
-		});
+	.catch(err => {
+		vscode.window.showErrorMessage(err);
+	});
 }
 
 function setDecorations(passingTests: vscode.DecorationOptions[], failingTests: vscode.DecorationOptions[], untestedTests: vscode.DecorationOptions[]) {
