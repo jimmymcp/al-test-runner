@@ -160,6 +160,16 @@
 								"description": "Alpha (between 0 for transparent and 1 for opaque)"
 							}
 						}
+					},
+					"al-test-runner.publishBeforeTest": {
+						"enum": [
+							"None",
+							"Publish",
+							"Rapid application publish"
+						],
+						"description": "The AL publishing command to call before running tests",
+						"scope": "resource",
+						"default": "None"
 					}
 				}
 			}

@@ -129,6 +129,17 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 function invokeTestRunner(command: string) {
+	const config = vscode.workspace.getConfiguration('al-test-runner');
+
+	switch (config.publishBeforeTest) {
+		case 'Publish':
+			vscode.commands.executeCommand('al.publishNoDebug');
+			break;
+		case 'Rapid application publish':
+			vscode.commands.executeCommand('al.incrementalPublishNoDebug');
+			break;
+	}
+
 	terminal = getALTestRunnerTerminal(getTerminalName());
 	terminal.sendText(' ');
 	terminal.sendText('cd "' + getWorkspaceFolder() + '"');
