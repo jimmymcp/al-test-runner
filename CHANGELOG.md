@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.1.15
+- Set PowerShell location before running tests (to work correctly with multi-root workspaces)
+- Optionally call AL command to publish / rapid publish app before running tests 
+
 ## 0.1.14
 - Sanitize filenames (for test codeunits that have illegal file name chars) - thanks Leon
 - Handle [test] declarations case-insensitively
