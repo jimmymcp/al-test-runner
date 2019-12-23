@@ -95,8 +95,9 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(command);
 
 	command = vscode.commands.registerCommand('altestrunner.clearTestResults', async () => {
-		if (existsSync(getALTestRunnerPath() + '\\Results')) {
-			readdirSync(getALTestRunnerPath() + '\\Results').forEach(e => unlinkSync(getALTestRunnerPath() + '\\Results\\' + e));
+		const resultsPath = getALTestRunnerPath() + '\\Results';
+		if (existsSync(resultsPath)) {
+			readdirSync(resultsPath).forEach(e => unlinkSync(resultsPath + '\\' + e));
 		}
 		triggerUpdateDecorations();
 		vscode.window.showInformationMessage('AL Test Runner results cleared');
@@ -130,6 +131,7 @@ export function activate(context: vscode.ExtensionContext) {
 function invokeTestRunner(command: string) {
 	terminal = getALTestRunnerTerminal(getTerminalName());
 	terminal.sendText(' ');
+	terminal.sendText('cd "' + getWorkspaceFolder() + '"');
 	terminal.sendText(command);
 	terminal.show(true);
 }
