@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.1.16
+- Optionally highlight the line that caused an error in a failing test
+- Include links to failing test method file:line number in output window. Uses the testCodeunitGlobPattern setting to search for AL test codeunits. By default this looks for any .al files in the workspace. Setting a more specific [glob pattern](https://en.wikipedia.org/wiki/Glob_(programming)) to find test codeunits will improve performance in large workspaces.
+
 ## 0.1.15
 - Set PowerShell location before running tests (to work correctly with multi-root workspaces)
 - Optionally call AL command to publish / rapid publish app before running tests 

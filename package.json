@@ -3,7 +3,7 @@
 	"displayName": "AL Test Runner",
 	"description": "Test runner for AL tests for Business Central development",
 	"publisher": "jamespearson",
-	"preview": true,
+	"preview": false,
 	"repository": {
 		"url": "https://github.com/jimmymcp/al-test-runner"
 	},
@@ -11,7 +11,7 @@
 	"files": [
 		"PowerShell/"
 	],
-	"version": "0.1.15",
+	"version": "0.1.16",
 	"engines": {
 		"vscode": "^1.39.0"
 	},
@@ -170,6 +170,24 @@
 						"description": "The AL publishing command to call before running tests",
 						"scope": "resource",
 						"default": "None"
+					},
+					"al-test-runner.highlightFailingLine": {
+						"type": "boolean",
+						"scope": "resource",
+						"description": "Highlight the line in the test method that has failed",
+						"default": true
+					},
+					"al-test-runner.failingLineDecoration": {
+						"type": "string",
+						"scope": "resource",
+						"description": "TextDecoration CSS to decorate failing lines with",
+						"default": "underline wavy red"
+					},
+					"al-test-runner.testCodeunitGlobPattern": {
+						"type": "string",
+						"scope": "resource",
+						"description": "The glob pattern that identifies test codeunit .al files in the workspace e.g. **/Tests/*.codeunit.al specifies file names that end in codeunit.al in a Tests folder",
+						"default": "**/*.al"
 					}
 				}
 			}

@@ -34,6 +34,10 @@ This extension is to help run tests on a **local** Docker container i.e. VS Code
 - passingTestsColor: the background color to decorate passing tests with
 - failingTestsColor: the background color to decorate failing tests with
 - untestedTestsColor: the background color to decorate untested tests with
+- publishBeforeTest: determines whether to publish the app to the container before running the test(s) - select between publishing and rapid application publishing
+- highlightFailingLine: whether to decorate the line of code in a test method that has resulted in an error
+- failingLineDecoration: the decoration to apply to the failing line in a test method
+- testCodeunitGlobPattern: the glob pattern that identifies test codeunits e.g. **/Tests/*.codeunit.al will search for files ending in .codeunit.al in a folder called Tests. By default the extension will search through all .al files in the workspace. Enter a more specific glob pattern here to improve performance or remove altogether.
 
 ## Known Issues
 - When running tests for the first time after loading the extension the terminal that is created to execute the PowerShell commands doesn't show any output - not sure why - the command is running in the background though

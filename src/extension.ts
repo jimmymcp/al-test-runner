@@ -186,8 +186,8 @@ function updateDecorations() {
 
 		const documentText = activeEditor!.document.getText();
 		tests.forEach(test => {
-			const matches = documentText.match('(?<=procedure )' + test.$.method);
-			if (!(matches === undefined) && !(matches === null)) {
+			const matches = documentText.match('(?<=procedure )' + test.$.method + '\(\)');
+			if ((matches !== undefined) && (matches !== null)) {
 				const startPos = activeEditor!.document.positionAt(matches!.index!);
 				const endPos = activeEditor!.document.positionAt(matches!.index! + matches![0].length);
 				let methodName = documentText.substr(matches!.index!, matches![0].length);
@@ -214,6 +214,7 @@ function updateDecorations() {
 						}
 					}
 				}
+			}
 		});
 
 		setDecorations(passingTests, failingTests, getUntestedTestDecorations(testMethodRanges), failingLines);
@@ -418,48 +419,94 @@ export function getRangeOfFailingLineFromCallstack(callstack: string, method: st
 	}
 }
 
+export function getLineNumberOfMethodDeclaration(method: string, document: vscode.TextDocument): number {
+	const text = document.getText();
+	const match = text.match('procedure.+' + method + '\(.*\)');
+	if ((match === undefined) || (match === null)) {
+		return -1;
+	}
+
+	return document.positionAt(match!.index!).line;
+}
+
+export async function getFilePathByCodeunitId(codeunitId: number, method?: string): Promise<string> {
+	return new Promise(async (resolve, reject) => {
+		const config = vscode.workspace.getConfiguration('al-test-runner');
+		const globPattern = config.testCodeunitGlobPattern;
+		if ((globPattern === '') || (globPattern === undefined)) {
+			resolve('');
+		}
+
+		const files = await vscode.workspace.findFiles(globPattern);
+		for (let file of files) {
+			const text = readFileSync(file.fsPath, {encoding: 'utf-8'});
+			if (text.startsWith('codeunit ' + codeunitId)) {
+				let filePath = file.fsPath;
+				if (method !== undefined) {
+					const matches = text.match('procedure.*' + method + '\(\)');
+					if (matches !== undefined) {
+						const document = await vscode.workspace.openTextDocument(file.fsPath);
+						const lineNo = document.positionAt(matches!.index!).line + 1;
+						filePath += ':' + lineNo;
+					}
+				}
+				resolve(filePath);
+			}
+		}
+	});
+}
+
+export function getCodeunitIdFromAssemblyName(assemblyName: string): number {
+	const matches = assemblyName.match('\\d+');
+	return parseInt(matches!.shift()!);
+}
+
+async function outputTestResults() {
+	const resultFileName = getALTestRunnerPath() + '\\last.xml';
 	if (existsSync(resultFileName)) {
 		outputChannel.clear();
 		outputChannel.show(true);
 
 		const xmlParser = new xml2js.Parser();
-		let resultXml = readFileSync(resultFileName, { encoding: 'utf-8' });
+		const resultXml = readFileSync(resultFileName, { encoding: 'utf-8' });
 		let noOfTests: number = 0;
 		let noOfFailures: number = 0;
 		let totalTime: number = 0;
-		xmlParser.parseStringPromise(resultXml).then(resultObj => {
-			const assemblies: types.ALTestAssembly[] = resultObj.assemblies.assembly;
-			assemblies.forEach(assembly => {
-				noOfTests += parseInt(assembly.$.total);
-				const assemblyTime = parseFloat(assembly.$.time);
-				totalTime += assemblyTime;
-				const failed = parseInt(assembly.$.failed);
-				noOfFailures += failed;
-				if (failed > 0) {
-					outputChannel.appendLine('❌ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
-				}
-				else {
-					outputChannel.appendLine('✅ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
-				}
-				assembly.collection[0].test.forEach(test => {
-					const testTime = parseFloat(test.$.time);
-					if (test.$.result === 'Pass') {
-						outputChannel.appendLine('\t✅ ' + test.$.method + '\t' + testTime.toFixed(2) + 's');
-					}
-					else {
-						outputChannel.appendLine('\t❌ ' + test.$.method + '\t' + testTime.toFixed(2) + 's');
-						outputChannel.appendLine('\t\t' + test.failure[0].message);
-					}
-				});
-			});
+		const resultObj = await xmlParser.parseStringPromise(resultXml);
+		const assemblies: types.ALTestAssembly[] = resultObj.assemblies.assembly;
 
-			if (noOfFailures === 0) {
-				outputChannel.appendLine('✅ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's');
+		for (let assembly of assemblies) {
+			noOfTests += parseInt(assembly.$.total);
+			const assemblyTime = parseFloat(assembly.$.time);
+			totalTime += assemblyTime;
+			const failed = parseInt(assembly.$.failed);
+			noOfFailures += failed;
+			if (failed > 0) {
+				outputChannel.appendLine('❌ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
 			}
 			else {
-				outputChannel.appendLine('❌ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's - ' + noOfFailures + ' test(s) failed');
+				outputChannel.appendLine('✅ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
 			}
-		});
+			for (let test of assembly.collection[0].test) {
+				const testTime = parseFloat(test.$.time);
+				if (test.$.result === 'Pass') {
+					outputChannel.appendLine('\t✅ ' + test.$.method + '\t' + testTime.toFixed(2) + 's');
+				}
+				else {
+					const filePath = await getFilePathByCodeunitId(getCodeunitIdFromAssemblyName(assembly.$.name), test.$.method);
+					outputChannel.appendLine('\t❌ ' + test.$.method + '\t' + testTime.toFixed(2) + "s " + filePath);
+					outputChannel.appendLine('\t\t' + test.failure[0].message);
+				}
+			}
+		}
+
+		if (noOfFailures === 0) {
+			outputChannel.appendLine('✅ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's');
+		}
+		else {
+			outputChannel.appendLine('❌ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's - ' + noOfFailures + ' test(s) failed');
+		}
+		
 
 		unlinkSync(resultFileName);
 	}

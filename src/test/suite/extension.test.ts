@@ -283,4 +283,33 @@ suite('Extension Test Suite', () => {
 		assert.strictEqual(undefined, result);
 	});
 
+	test('getLineNumberOfMethodDeclaration returns -1 for a method that cannot be found in the document', async () => {
+		const text = `codeunit 51234 "Some Tests"
+		{
+			[Test]
+			procedure ThisIsATest()
+			begin
+			end;
+		}`;
+
+		const doc = await createTextDocument('10.al', text);
+		assert.strictEqual(alTestRunner.getLineNumberOfMethodDeclaration('DoesNotExist', doc), -1);
+	});
+
+	test('getLineNumberOfMethodDeclaration returns the line number of a method in the document', async () => {
+		const text = `codeunit 51234 "Some Tests"
+		{
+			[Test]
+			procedure ThisIsATest()
+			begin
+			end;
+		}`;
+
+		const doc = await createTextDocument('10a.al', text);
+		assert.strictEqual(alTestRunner.getLineNumberOfMethodDeclaration('ThisIsATest', doc), 3);
+	});
+
+	test('getCodeunitIdFromAssemblyName returns the numeric part of the assembly name', () => {
+		assert.strictEqual(50116, alTestRunner.getCodeunitIdFromAssemblyName('50116 Config Tests CACTMN'));
+	});
 });
