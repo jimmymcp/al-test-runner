@@ -234,4 +234,53 @@ suite('Extension Test Suite', () => {
 		const result = alTestRunner.getDocumentIdAndName(doc);
 		assert.strictEqual(result, '51234 Some Amazing Tests');
 	});
+
+	test('getRangeOfFailingLineFromCallstack returns a range', async () => {
+		const callstack = '"Some Tests CHWWTMN"(CodeUnit 9059385).ThisIsAFailingTest line 5 - Clever Handheld for Warehousing by Clever Dynamics "Test Runner - Mgt"(CodeUnit 130454).RunTests - Test Runner by Microsoft "Test Runner - Isol. Codeunit"(CodeUnit 130450).OnRun - Test Runner by Microsoft "Test Suite Mgt."(CodeUnit 130456).RunTests - Test Runner by Microsoft "Test Suite Mgt."(CodeUnit 130456).RunSelectedTests - Test Runner by Microsoft "Command Line Test Tool"(Page 130455).OnAction - Test Runner by Microsoft';
+		const text = `codeunit 51234 "Some More Tests
+		{
+			[Test]
+			procedure ThisIsAPassingTest()
+			begin
+				//blah blah
+				Message('blah');
+			end;
+
+			[Test]
+			procedure ThisIsAnotherPassingTest()
+			begin
+				//blah blah
+				Message('blah');
+			end;
+
+			[Test]
+			procedure ThisIsAFailingTest()
+			begin
+				//GIVEN an error is thrown
+				Error('some error');
+			end;
+		}`;
+		const doc = await createTextDocument('09.al', text);
+
+		const result = alTestRunner.getRangeOfFailingLineFromCallstack(callstack, 'ThisIsAFailingTest', doc) as vscode.Range;
+		assert.strictEqual(result.start.line, 22);
+		assert.strictEqual(result.end.line, 22);
+	});
+
+	test('getRangeOfFailingLineFromCallstack return undefined for a method that does not exist', async () => {
+		const callstack = '"Some Tests CHWWTMN"(CodeUnit 9059385).ThisIsAFailingTest line 3 - Clever Handheld for Warehousing by Clever Dynamics "Test Runner - Mgt"(CodeUnit 130454).RunTests - Test Runner by Microsoft "Test Runner - Isol. Codeunit"(CodeUnit 130450).OnRun - Test Runner by Microsoft "Test Suite Mgt."(CodeUnit 130456).RunTests - Test Runner by Microsoft "Test Suite Mgt."(CodeUnit 130456).RunSelectedTests - Test Runner by Microsoft "Command Line Test Tool"(Page 130455).OnAction - Test Runner by Microsoft';
+		const text = `codeunit 51234 "Even More Tests"
+		{
+			[Test]
+			procedure ThisIsATest()
+			begin
+			end;
+		}`;
+
+		const doc = await createTextDocument('09a.al', text);
+
+		const result = alTestRunner.getRangeOfFailingLineFromCallstack(callstack, 'NonexistentMethod', doc);
+		assert.strictEqual(undefined, result);
+	});
+
 });

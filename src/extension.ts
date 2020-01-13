@@ -26,6 +26,10 @@ const untestedTestDecorationType = vscode.window.createTextEditorDecorationType(
 	backgroundColor: untestedTestColor
 });
 
+const failingLineDecorationType = vscode.window.createTextEditorDecorationType({
+	textDecoration: config.failingLineDecoration
+});
+
 const outputChannel = vscode.window.createOutputChannel(getTerminalName());
 let timeout: NodeJS.Timer | undefined = undefined;
 let isTestCodeunit: boolean;
@@ -153,11 +157,12 @@ function updateDecorations() {
 	let passingTests: vscode.DecorationOptions[] = [];
 	let failingTests: vscode.DecorationOptions[] = [];
 	let untestedTests: vscode.DecorationOptions[] = [];
+	let failingLines: vscode.DecorationOptions[] = [];
 
 	const sanitize = require("sanitize-filename");
 
 	//call with empty arrays to clear all the decorations
-	setDecorations(passingTests, failingTests, untestedTests);
+	setDecorations(passingTests, failingTests, untestedTests, failingLines);
 
 	if (!(config.decorateTestMethods)) {
 		setDecorations(passingTests, failingTests, untestedTests);
@@ -200,21 +205,32 @@ function updateDecorations() {
 					const hoverMessage: string = test.failure[0].message + "\n\n" + test.failure[0]["stack-trace"];
 					const decoration: vscode.DecorationOptions = { range: new vscode.Range(startPos, endPos), hoverMessage: hoverMessage };
 					failingTests.push(decoration);
+					
+					if (config.highlightFailingLine) {
+						const failingLineRange = getRangeOfFailingLineFromCallstack(test.failure[0]["stack-trace"][0], methodName, activeEditor!.document);
+						if (failingLineRange !== undefined) {
+							const decoration: vscode.DecorationOptions = {range: failingLineRange, hoverMessage: hoverMessage};
+							failingLines.push(decoration);
+						}
+					}
 				}
-			}
 		});
 
-		setDecorations(passingTests, failingTests, getUntestedTestDecorations(testMethodRanges));
+		setDecorations(passingTests, failingTests, getUntestedTestDecorations(testMethodRanges), failingLines);
 	})
 	.catch(err => {
 		vscode.window.showErrorMessage(err);
 	});
 }
 
-function setDecorations(passingTests: vscode.DecorationOptions[], failingTests: vscode.DecorationOptions[], untestedTests: vscode.DecorationOptions[]) {
+function setDecorations(passingTests: vscode.DecorationOptions[], failingTests: vscode.DecorationOptions[], untestedTests: vscode.DecorationOptions[], failingLines?: vscode.DecorationOptions[]) {
 	activeEditor!.setDecorations(passingTestDecorationType, passingTests);
 	activeEditor!.setDecorations(failingTestDecorationType, failingTests);
 	activeEditor!.setDecorations(untestedTestDecorationType, untestedTests);
+
+	if (failingLines !== undefined) {
+		activeEditor!.setDecorations(failingLineDecorationType, failingLines);
+	}
 }
 
 function getUntestedTestDecorations(testMethodRanges: types.ALTestMethodRange[]): vscode.DecorationOptions[] {
@@ -388,8 +404,20 @@ export function getDocumentIdAndName(document: vscode.TextDocument): string {
 	}
 }
 
-function outputTestResults() {
-	let resultFileName = getALTestRunnerPath() + '\\last.xml';
+export function getRangeOfFailingLineFromCallstack(callstack: string, method: string, document: vscode.TextDocument): vscode.Range | void {	
+	const methodStartLineForCallstack = getLineNumberOfMethodDeclaration(method, document);
+	if (methodStartLineForCallstack === -1) {
+		return;
+	}
+	
+	const matches = callstack.match(method + ' line (\\d+)');
+	if ((matches !== undefined) && (matches !== null)) {
+		const lineNo = parseInt(matches[1]);
+		const line = document.lineAt(lineNo + methodStartLineForCallstack);
+		return new vscode.Range(new vscode.Position(line.lineNumber, line.firstNonWhitespaceCharacterIndex), new vscode.Position(line.lineNumber, line.text.length));
+	}
+}
+
 	if (existsSync(resultFileName)) {
 		outputChannel.clear();
 		outputChannel.show(true);
