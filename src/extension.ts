@@ -132,15 +132,15 @@ export function activate(context: vscode.ExtensionContext) {
 	}, null, context.subscriptions);
 }
 
-function invokeTestRunner(command: string) {
+async function invokeTestRunner(command: string) {
 	const config = vscode.workspace.getConfiguration('al-test-runner');
 
 	switch (config.publishBeforeTest) {
 		case 'Publish':
-			vscode.commands.executeCommand('al.publishNoDebug');
+			await vscode.commands.executeCommand('al.publishNoDebug');
 			break;
 		case 'Rapid application publish':
-			vscode.commands.executeCommand('al.incrementalPublishNoDebug');
+			await vscode.commands.executeCommand('al.incrementalPublishNoDebug');
 			break;
 	}
 
