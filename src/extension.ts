@@ -606,7 +606,10 @@ function createALTestRunnerConfig() {
 		securePassword: "",
 		userName: "",
 		companyName: "",
-		testSuiteName: ""
+		testSuiteName: "",
+		remoteContainerName: "",
+		remotePort: 0,
+		executionPreference: "",
 	};
 
 	createALTestRunnerDir();

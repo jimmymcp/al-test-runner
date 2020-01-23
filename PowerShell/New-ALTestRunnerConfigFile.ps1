@@ -12,7 +12,10 @@ function New-ALTestRunnerConfigFile {
         "launchConfigName": "",
         "containerResultPath": "",
         "userName": "",
-        "securePassword": ""
+        "securePassword": "",
+        "remoteContainerName": "",
+        "remotePort": 0,
+        "executionPreference": ""
     }'
 }
 

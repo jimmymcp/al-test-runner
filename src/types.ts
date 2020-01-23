@@ -7,6 +7,9 @@ export type ALTestRunnerConfig = {
 	securePassword: string;
 	companyName: string;
 	testSuiteName: string;
+	remoteContainerName: string;
+	remotePort: number;
+	executionPreference: string;
 };
 
 export type ALTestAssembly = {
