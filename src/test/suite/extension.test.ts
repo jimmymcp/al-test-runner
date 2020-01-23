@@ -171,19 +171,19 @@ suite('Extension Test Suite', () => {
 	});
 
 	test('launchConfigIsValid is true when test runner config holds a valid launch conifg', () => {
-		const result = alTestRunner.launchConfigIsValid({launchConfigName: "someLaunchConfig", companyName: "", containerResultPath: "", securePassword: "", testSuiteName: "", userName: ""},
+		const result = alTestRunner.launchConfigIsValid({launchConfigName: "someLaunchConfig", companyName: "", containerResultPath: "", securePassword: "", testSuiteName: "", userName: "",vmUserName: "", vmSecurePassword: "", remoteContainerName: "", remotePort: 0, executionPreference: ""},
 			{configurations: [{type: "al", request: "launch", name: "someLaunchConfig"}]});
 		assert.strictEqual(result, true);
 	});
 
 	test('launchConfigIsValid is false when the test runner has a blank launch config', () => {
-		const result = alTestRunner.launchConfigIsValid({launchConfigName: "", companyName: "", containerResultPath: "", securePassword: "", testSuiteName: "", userName: ""},
+		const result = alTestRunner.launchConfigIsValid({launchConfigName: "", companyName: "", containerResultPath: "", securePassword: "", testSuiteName: "", userName: "",vmUserName: "", vmSecurePassword: "",  remoteContainerName: "", remotePort: 0, executionPreference: ""},
 			{configurations: [{type: "al", request: "launch", name: "launchConfig"}]});
 			assert.strictEqual(result, false);
 	});
 
 	test('launchConfigIsValid is false when the test runner has a launch config not in launch.json', () => {
-		const result = alTestRunner.launchConfigIsValid({launchConfigName: "does not exist", companyName: "", containerResultPath: "", securePassword: "", testSuiteName: "", userName: ""},
+		const result = alTestRunner.launchConfigIsValid({launchConfigName: "does not exist", companyName: "", containerResultPath: "", securePassword: "", testSuiteName: "", userName: "",vmUserName: "", vmSecurePassword: "",  remoteContainerName: "", remotePort: 0, executionPreference: ""},
 			{configurations: [{type: "al", request: "launch", name: "launchConfig"}]});
 			assert.strictEqual(result, false);
 	});
