@@ -13,3 +13,5 @@ function Select-ExecutionMethod {
     		return $ExecutionMethod
 		}
 }
+
+Export-ModuleMember -Function Select-ExecutionMethod

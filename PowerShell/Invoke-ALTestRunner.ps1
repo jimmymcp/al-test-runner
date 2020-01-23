@@ -25,21 +25,34 @@ function Invoke-ALTestRunner {
         if ($remotePort -eq 0) {
             Write-Host "Please enter the port used for PowerShell Remoting:" -ForegroundColor DarkYellow
             $remotePort = Read-Host
+            Set-ALTestRunnerConfigValue -KeyName 'remotePort' -KeyValue $remotePort
         }
 
         $Credential = Get-ALTestRunnerCredential
         $Session = New-PSSession -ComputerName $(Get-ServerFromLaunchJson) -Credential $Credential -Port $remotePort -UseSSL -SessionOption (New-PSSessionOption -SkipCACheck -SkipCNCheck)
+
+        $ContainerName = Get-ValueFromALTestRunnerConfig -KeyName 'remoteContainerName' 
+        if ([string]::IsNullOrEmpty($ContainerName)) {
+            Write-Host "Please enter the name of the remote container:" -ForegroundColor DarkYellow
+            $ContainerName = Read-Host
+            Set-ALTestRunnerConfigValue -KeyName 'remoteContainerName' -KeyValue $ContainerName
+        }
     } else {
         $ContainerName = Get-ServerFromLaunchJson
     }
 
-    if (!(Get-ContainerIsRunning $ContainerName)) {
+    $ContainerRunningParams = @{'ContainerName'= $ContainerName; 'ExecutionMethod'= $ExecutionMethod}
+    if ($ExecutionMethod -eq "Remote") {
+        $ContainerRunningParams.Add('Session',$Session)
+    } 
+
+    if (!(Get-ContainerIsRunning @ContainerRunningParams)) {
         throw "Container $ContainerName is not running. Please start the container and retry. Please note that container names are case-sensitive."
     }
 
     $CompanyName = Get-ValueFromALTestRunnerConfig -KeyName 'companyName'
     if ($CompanyName -eq '') {
-        $CompanyName = Select-BCCompany -ContainerName $ContainerName        
+        $CompanyName = Select-BCCompany @ContainerRunningParams    
     }
     
     $TestSuiteName = (Get-ValueFromALTestRunnerConfig -KeyName 'testSuiteName')
