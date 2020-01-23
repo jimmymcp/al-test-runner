@@ -17,7 +17,7 @@ function Get-ALTestRunnerCredential {
             return $Credential
         }
         else {        
-            return [pscredential]::new($UserName, (ConvertTo-SecureString $SecurePwd))
+            return [pscredential]::new($VMUserName, (ConvertTo-SecureString $VMSecurePassword))
         }
     } else {
         $UserName = Get-ValueFromALTestRunnerConfig -KeyName 'userName'

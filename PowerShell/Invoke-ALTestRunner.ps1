@@ -28,8 +28,8 @@ function Invoke-ALTestRunner {
             Set-ALTestRunnerConfigValue -KeyName 'remotePort' -KeyValue $remotePort
         }
 
-        $Credential = Get-ALTestRunnerCredential -VM
-        $Session = New-PSSession -ComputerName $(Get-ServerFromLaunchJson) -Credential $Credential -Port $remotePort -UseSSL -SessionOption (New-PSSessionOption -SkipCACheck -SkipCNCheck)
+        $VmCredential = Get-ALTestRunnerCredential -VM
+        $Session = New-PSSession -ComputerName $(Get-ServerFromLaunchJson) -Credential $VmCredential -Port $remotePort -UseSSL -SessionOption (New-PSSessionOption -SkipCACheck -SkipCNCheck)
 
         $ContainerName = Get-ValueFromALTestRunnerConfig -KeyName 'remoteContainerName' 
         if ([string]::IsNullOrEmpty($ContainerName)) {
@@ -89,6 +89,7 @@ function Invoke-ALTestRunner {
         ExtensionId = $ExtensionId
         TestSuiteName = $TestSuiteName
         ExtensionName = $ExtensionName
+        ExecutionMethod = $ExecutionMethod
     }
     
     if ($FileName -ne '') {
@@ -114,7 +115,11 @@ function Invoke-ALTestRunner {
         $Credential = Get-ALTestRunnerCredential
         $Params.Add('Credential', $Credential)
     }
-    break
+    
+    if ($ExecutionMethod -eq "Remote") {
+        $Params.Add('Session', $Session)
+    }
+    
     Invoke-RunTests @Params
 }
 
