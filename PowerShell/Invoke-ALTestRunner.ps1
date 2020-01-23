@@ -28,7 +28,7 @@ function Invoke-ALTestRunner {
             Set-ALTestRunnerConfigValue -KeyName 'remotePort' -KeyValue $remotePort
         }
 
-        $Credential = Get-ALTestRunnerCredential
+        $Credential = Get-ALTestRunnerCredential -VM
         $Session = New-PSSession -ComputerName $(Get-ServerFromLaunchJson) -Credential $Credential -Port $remotePort -UseSSL -SessionOption (New-PSSessionOption -SkipCACheck -SkipCNCheck)
 
         $ContainerName = Get-ValueFromALTestRunnerConfig -KeyName 'remoteContainerName' 
@@ -37,28 +37,39 @@ function Invoke-ALTestRunner {
             $ContainerName = Read-Host
             Set-ALTestRunnerConfigValue -KeyName 'remoteContainerName' -KeyValue $ContainerName
         }
+
+        $ContainerFunctionsParams = @{'ContainerName'= $ContainerName; 'ExecutionMethod'= $ExecutionMethod;'Session'= $Session}
     } else {
         $ContainerName = Get-ServerFromLaunchJson
+        $ContainerFunctionsParams = @{'ContainerName'= $ContainerName; 'ExecutionMethod'= $ExecutionMethod}
     }
 
-    $ContainerRunningParams = @{'ContainerName'= $ContainerName; 'ExecutionMethod'= $ExecutionMethod}
-    if ($ExecutionMethod -eq "Remote") {
-        $ContainerRunningParams.Add('Session',$Session)
-    } 
-
-    if (!(Get-ContainerIsRunning @ContainerRunningParams)) {
+    if (!(Get-ContainerIsRunning @ContainerFunctionsParams)) {
         throw "Container $ContainerName is not running. Please start the container and retry. Please note that container names are case-sensitive."
     }
 
     $CompanyName = Get-ValueFromALTestRunnerConfig -KeyName 'companyName'
     if ($CompanyName -eq '') {
-        $CompanyName = Select-BCCompany @ContainerRunningParams    
+        $CompanyName = Select-BCCompany @ContainerFunctionsParams    
     }
     
     $TestSuiteName = (Get-ValueFromALTestRunnerConfig -KeyName 'testSuiteName')
     
     if (($null -eq $TestSuiteName) -or ($TestSuiteName -eq '')) {
-        [string]$NavVersionString = Get-BCContainerNavVersion -containerOrImageName $ContainerName
+        if($ExecutionMethod -eq "Remote") {
+            $getVersion={
+                param(
+                    $ContainerName = $args[0]
+                )
+
+                return (Get-BCContainerNavVersion -containerOrImageName $ContainerName)
+            }
+
+            $VersionJob = Invoke-Command -Session $Session -ScriptBlock $getVersion -ArgumentList $ContainerName -AsJob
+            [string]$NavVersionString = Receive-Job -Job $VersionJob -Wait
+        } else {
+            [string]$NavVersionString = Get-BCContainerNavVersion -containerOrImageName $ContainerName
+        }
         if ($NavVersionString.IndexOf('-') -gt 0) {
             $NavVersionString = $NavVersionString.Substring(0,$NavVersionString.IndexOf('-'))
         }
@@ -103,7 +114,7 @@ function Invoke-ALTestRunner {
         $Credential = Get-ALTestRunnerCredential
         $Params.Add('Credential', $Credential)
     }
-
+    break
     Invoke-RunTests @Params
 }
 

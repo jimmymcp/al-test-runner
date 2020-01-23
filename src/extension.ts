@@ -607,6 +607,8 @@ function createALTestRunnerConfig() {
 		userName: "",
 		companyName: "",
 		testSuiteName: "",
+		vmUserName: "",
+		vmSecurePassword: "",
 		remoteContainerName: "",
 		remotePort: 0,
 		executionPreference: "",

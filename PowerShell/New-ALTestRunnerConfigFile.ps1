@@ -13,6 +13,8 @@ function New-ALTestRunnerConfigFile {
         "containerResultPath": "",
         "userName": "",
         "securePassword": "",
+        "vmUserName": "",
+        "vmSecurePassword": "",
         "remoteContainerName": "",
         "remotePort": 0,
         "executionPreference": ""
