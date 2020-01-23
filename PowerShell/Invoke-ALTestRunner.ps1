@@ -15,7 +15,23 @@ function Invoke-ALTestRunner {
 
     Import-PowerShellModule 'navcontainerhelper'
     
-    $ContainerName = Get-ServerFromLaunchJson
+    $ExecutionMethod = Get-ValueFromALTestRunnerConfig -KeyName 'executionPreference' 
+    if ($ExecutionMethod -eq '') {
+        $ExecutionMethod = Select-ExecutionMethod      
+    }
+
+    if ($ExecutionMethod -eq "Remote") {
+        $remotePort = Get-ValueFromALTestRunnerConfig -KeyName 'remotePort'
+        if ($remotePort -eq 0) {
+            Write-Host "Please enter the port used for PowerShell Remoting:" -ForegroundColor DarkYellow
+            $remotePort = Read-Host
+        }
+
+        $Credential = Get-ALTestRunnerCredential
+        $Session = New-PSSession -ComputerName $(Get-ServerFromLaunchJson) -Credential $Credential -Port $remotePort -UseSSL -SessionOption (New-PSSessionOption -SkipCACheck -SkipCNCheck)
+    } else {
+        $ContainerName = Get-ServerFromLaunchJson
+    }
 
     if (!(Get-ContainerIsRunning $ContainerName)) {
         throw "Container $ContainerName is not running. Please start the container and retry. Please note that container names are case-sensitive."
