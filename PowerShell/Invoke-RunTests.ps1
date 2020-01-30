@@ -18,23 +18,13 @@ function Invoke-RunTests {
         [Parameter(Mandatory=$false)]
         [string]$TestSuiteName = '',
         [Parameter(Mandatory=$false)]
-        [string]$ExtensionName,
-        [Parameter(Mandatory=$true)]
-        [ValidateSet("Local","Remote")]
-        [string]$ExecutionMethod,
-        [Parameter(Mandatory=$false)]
-        [System.Management.Automation.Runspaces.PSSession]$Session
+        [string]$ExtensionName
     )
-
-    $ContainerFunctionsParams = @{'ContainerName'= $ContainerName; 'ExecutionMethod'= $ExecutionMethod}
-    if($ExecutionMethod -eq "Remote") {
-        $ContainerFunctionsParams.Add('Session', $Session);
-    }
 
     $ResultId = [Guid]::NewGuid().Guid + ".xml"
     $ResultFile = Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) $ResultId
     $LastResultFile = Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) 'last.xml'
-    $ContainerResultFile = Join-Path (Get-ContainerResultPath @ContainerFunctionsParams) $ResultId
+    $ContainerResultFile = Join-Path (Get-ContainerResultPath $ContainerName) $ResultId
     
     $Message = "Running tests on $ContainerName, company $CompanyName"
 
@@ -74,53 +64,45 @@ function Invoke-RunTests {
         try {
             Write-Host $Message -ForegroundColor Green
 
-            if ($ExecutionMethod -eq "Remote") {
-                $testBlock={
-                    param
-                    (
-                        $Params = $args[0],
-                        $ContainerResultFile = $args[1],
-                        $ResultId = $args[2]
-                    )
+            Invoke-CommandOnDockerHost {Param($Params) Run-TestsInBCContainer @Params -detailed -Verbose} -Parameters $Params
+            $Session = Get-DockerHostSession
 
-                    Run-TestsInBCContainer @Params -detailed -Verbose
+            if (Get-DockerHostIsRemote) {
+                Invoke-CommandOnDockerHost {
+                    Param($ContainerResultFile, $ResultId, $LastResultFile, $ResultFile)
                     if (Test-Path $ContainerResultFile) {
                         if (-not (Test-Path 'C:\BCContainerTests\')){
                             New-Item -Path 'C:\' -Name BCContainerTests -ItemType Directory -Force | Out-Null
                         }
-    
-                        $lastResultRemotePath = Join-Path -Path 'C:\BCContainerTests' -ChildPath 'last.xml'
-                        $resultRemotePath = Join-Path -Path 'C:\BCContainerTests' -ChildPath "$($ResultId).xml"
-    
-                        Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath $lastResultRemotePath
-                        Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath $resultRemotePath
-                    }    
-                }
 
-                $testJob = Invoke-Command -Session $Session -ScriptBlock $testBlock -ArgumentList $Params,$ContainerResultFile, $ResultId -AsJob
-                $testsRun = Receive-Job -Job $testJob -Wait
+                        Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath (Join-Path 'C:\BCContainerTests' $ResultId)
 
-                Copy-Item -FromSession $Session -Path "C:\BCContainerTests\last.xml" -Destination $LastResultFile
-                Copy-Item -FromSession $Session -Path "C:\BCContainerTests\$($ResultId).xml" -Destination $ResultFile
-            } else {
-                Run-TestsInBCContainer @Params -detailed -Verbose
+                    }
+                    else {
+                        throw 'Tests have not been run'
+                    }
+                } -Parameters ($ContainerResultFile, $ResultId, $LastResultFile, $ResultFile)
 
+                Copy-Item -FromSession $Session -Path "C:\BCContainerTests\$($ResultId)" -Destination $LastResultFile
+                Copy-Item -FromSession $Session -Path "C:\BCContainerTests\$($ResultId)" -Destination $ResultFile
+            }
+            else {
                 if (Test-Path $ContainerResultFile) {
                     Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath $LastResultFile
                     Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath $ResultFile
-                    
                 }
                 else {
                     throw 'Tests have not been run'
                 }
-            }        
+            }
+                    
             Merge-ALTestRunnerTestResults -ResultsFile $ResultFile -ToPath (Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) 'Results')
             Remove-Item $ResultFile
             Remove-Item $ContainerResultFile
-            $BreakTestLoop = $true    
+            $BreakTestLoop = $true
         }
         catch {
-            $AttemptNo++            
+            $AttemptNo++
             Write-Host "Error occurred, retrying..." -ForegroundColor Magenta
 
             if ($AttemptNo -ge 3) {
