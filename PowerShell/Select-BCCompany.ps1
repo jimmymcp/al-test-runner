@@ -1,29 +1,10 @@
 function Select-BCCompany {
     param (
         [Parameter(Mandatory=$false)]
-        $ContainerName = (Get-ServerFromLaunchJson),
-        [Parameter(Mandatory=$true)]
-        [ValidateSet("Local","Remote")]
-        [string]$ExecutionMethod,
-        [Parameter(Mandatory=$false)]
-        [System.Management.Automation.Runspaces.PSSession]$Session
+        $ContainerName = (Get-ContainerName)
     )
     
-    if ($ExecutionMethod -eq "Local") {
-        $Companies = Get-CompanyInBCContainer -containerName $ContainerName
-    } else {
-        $getCompanies={
-            param(
-                $ContainerName = $args[0]
-            )
-            
-            return (Get-CompanyInBCContainer -containerName $ContainerName)
-        }
-
-        $CompaniesJob = Invoke-Command -Session $Session -ScriptBlock $getCompanies -ArgumentList $ContainerName -AsJob
-        $Companies = Receive-Job -Job $CompaniesJob -Wait
-    }
-
+    $Companies = Invoke-CommandOnDockerHost {Param($ContainerName) Get-CompanyInBCContainer -containerName $ContainerName} -Parameters $ContainerName
 
     if (($null -eq $Companies.Count) -or ($Companies.Count -eq 1)) {
         $CompanyName = $Companies.CompanyName
