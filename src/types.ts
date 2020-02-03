@@ -10,8 +10,8 @@ export type ALTestRunnerConfig = {
 	vmUserName: string;
 	vmSecurePassword: string;
 	remoteContainerName: string;
-	remotePort: number;
-	executionPreference: string;
+	dockerHost: string;
+	newPSSessionOptions: string;
 };
 
 export type ALTestAssembly = {

@@ -610,8 +610,8 @@ function createALTestRunnerConfig() {
 		vmUserName: "",
 		vmSecurePassword: "",
 		remoteContainerName: "",
-		remotePort: 0,
-		executionPreference: "",
+		dockerHost: "",
+		newPSSessionOptions: ""
 	};
 
 	createALTestRunnerDir();
