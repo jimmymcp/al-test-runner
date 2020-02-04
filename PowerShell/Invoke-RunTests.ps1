@@ -83,8 +83,9 @@ function Invoke-RunTests {
                     }
                 } -Parameters ($ContainerResultFile, $ResultId)
 
-                Copy-Item -FromSession $Session -Path "C:\BCContainerTests\$($ResultId)" -Destination $LastResultFile
-                Copy-Item -FromSession $Session -Path "C:\BCContainerTests\$($ResultId)" -Destination $ResultFile
+                Write-Host "Copy C:\BCContainerTests\$ResultId to $LastResultFile"
+                Copy-Item -FromSession $Session -Path "C:\BCContainerTests\$ResultId" -Destination $ResultFile
+                Copy-Item -Path $ResultFile -Destination $LastResultFile
             }
             else {
                 if (Test-Path $ContainerResultFile) {
