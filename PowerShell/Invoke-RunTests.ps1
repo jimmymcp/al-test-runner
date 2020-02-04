@@ -69,7 +69,7 @@ function Invoke-RunTests {
 
             if (Get-DockerHostIsRemote) {
                 Invoke-CommandOnDockerHost {
-                    Param($ContainerResultFile, $ResultId, $LastResultFile, $ResultFile)
+                    Param($ContainerResultFile, $ResultId)
                     if (Test-Path $ContainerResultFile) {
                         if (-not (Test-Path 'C:\BCContainerTests\')){
                             New-Item -Path 'C:\' -Name BCContainerTests -ItemType Directory -Force | Out-Null
@@ -81,7 +81,7 @@ function Invoke-RunTests {
                     else {
                         throw 'Tests have not been run'
                     }
-                } -Parameters ($ContainerResultFile, $ResultId, $LastResultFile, $ResultFile)
+                } -Parameters ($ContainerResultFile, $ResultId)
 
                 Copy-Item -FromSession $Session -Path "C:\BCContainerTests\$($ResultId)" -Destination $LastResultFile
                 Copy-Item -FromSession $Session -Path "C:\BCContainerTests\$($ResultId)" -Destination $ResultFile
