@@ -22,6 +22,8 @@
 		"onCommand:altestrunner.runAllTests",
 		"onCommand:altestrunner.runTestsCodeunit",
 		"onCommand:altestrunner.runTest",
+		"onCommand:altestrunner.setContainerCredential",
+		"onCommand:altestrunner.setVMCredential",
 		"workspaceContains:.altestrunner",
 		"onLanguage:al"
 	],
@@ -51,6 +53,16 @@
 			{
 				"command": "altestrunner.clearCredentials",
 				"title": "Clear Credentials",
+				"category": "AL Test Runner"
+			},
+			{
+				"command": "altestrunner.setContainerCredential",
+				"title": "Set Container Credential",
+				"category": "AL Test Runner"
+			},
+			{
+				"command": "altestrunner.setVMCredential",
+				"title": "Set VM Credential",
 				"category": "AL Test Runner"
 			}
 		],
