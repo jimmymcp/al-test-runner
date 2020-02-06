@@ -22,7 +22,7 @@ function Invoke-ALTestRunner {
 
     $CompanyName = Get-ValueFromALTestRunnerConfig -KeyName 'companyName'
     if ($CompanyName -eq '') {
-        $CompanyName = Select-BCCompany @ContainerFunctionsParams    
+        $CompanyName = Select-BCCompany $ContainerName    
     }
     
     $TestSuiteName = (Get-ValueFromALTestRunnerConfig -KeyName 'testSuiteName')
