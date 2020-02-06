@@ -99,7 +99,10 @@ function Invoke-RunTests {
                     
             Merge-ALTestRunnerTestResults -ResultsFile $ResultFile -ToPath (Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) 'Results')
             Remove-Item $ResultFile
-            Remove-Item $ContainerResultFile
+
+            if (!Get-DockerHostIsRemote) {
+                Remove-Item $ContainerResultFile
+            }
             $BreakTestLoop = $true
         }
         catch {
