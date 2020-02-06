@@ -14,62 +14,21 @@ function Invoke-ALTestRunner {
         )    
 
     Import-PowerShellModule 'navcontainerhelper'
-    
-    $ExecutionMethod = Get-ValueFromALTestRunnerConfig -KeyName 'executionPreference' 
-    if ($ExecutionMethod -eq '') {
-        $ExecutionMethod = Select-ExecutionMethod      
-    }
 
-    if ($ExecutionMethod -eq "Remote") {
-        $remotePort = Get-ValueFromALTestRunnerConfig -KeyName 'remotePort'
-        if ($remotePort -eq 0) {
-            Write-Host "Please enter the port used for PowerShell Remoting:" -ForegroundColor DarkYellow
-            $remotePort = Read-Host
-            Set-ALTestRunnerConfigValue -KeyName 'remotePort' -KeyValue $remotePort
-        }
-
-        $VmCredential = Get-ALTestRunnerCredential -VM
-        $Session = New-PSSession -ComputerName $(Get-ServerFromLaunchJson) -Credential $VmCredential -Port $remotePort -UseSSL -SessionOption (New-PSSessionOption -SkipCACheck -SkipCNCheck)
-
-        $ContainerName = Get-ValueFromALTestRunnerConfig -KeyName 'remoteContainerName' 
-        if ([string]::IsNullOrEmpty($ContainerName)) {
-            Write-Host "Please enter the name of the remote container:" -ForegroundColor DarkYellow
-            $ContainerName = Read-Host
-            Set-ALTestRunnerConfigValue -KeyName 'remoteContainerName' -KeyValue $ContainerName
-        }
-
-        $ContainerFunctionsParams = @{'ContainerName'= $ContainerName; 'ExecutionMethod'= $ExecutionMethod;'Session'= $Session}
-    } else {
-        $ContainerName = Get-ServerFromLaunchJson
-        $ContainerFunctionsParams = @{'ContainerName'= $ContainerName; 'ExecutionMethod'= $ExecutionMethod}
-    }
-
-    if (!(Get-ContainerIsRunning @ContainerFunctionsParams)) {
+    $ContainerName = Get-ContainerName
+    if (!(Get-ContainerIsRunning $ContainerName)) {
         throw "Container $ContainerName is not running. Please start the container and retry. Please note that container names are case-sensitive."
     }
 
     $CompanyName = Get-ValueFromALTestRunnerConfig -KeyName 'companyName'
     if ($CompanyName -eq '') {
-        $CompanyName = Select-BCCompany @ContainerFunctionsParams    
+        $CompanyName = Select-BCCompany $ContainerName    
     }
     
     $TestSuiteName = (Get-ValueFromALTestRunnerConfig -KeyName 'testSuiteName')
     
     if (($null -eq $TestSuiteName) -or ($TestSuiteName -eq '')) {
-        if($ExecutionMethod -eq "Remote") {
-            $getVersion={
-                param(
-                    $ContainerName = $args[0]
-                )
-
-                return (Get-BCContainerNavVersion -containerOrImageName $ContainerName)
-            }
-
-            $VersionJob = Invoke-Command -Session $Session -ScriptBlock $getVersion -ArgumentList $ContainerName -AsJob
-            [string]$NavVersionString = Receive-Job -Job $VersionJob -Wait
-        } else {
-            [string]$NavVersionString = Get-BCContainerNavVersion -containerOrImageName $ContainerName
-        }
+        [string]$NavVersionString = Invoke-CommandOnDockerHost {Param($ContainerName) Get-BCContainerNavVersion -containerOrImageName $ContainerName} -Parameters $ContainerName
         if ($NavVersionString.IndexOf('-') -gt 0) {
             $NavVersionString = $NavVersionString.Substring(0,$NavVersionString.IndexOf('-'))
         }
@@ -89,7 +48,6 @@ function Invoke-ALTestRunner {
         ExtensionId = $ExtensionId
         TestSuiteName = $TestSuiteName
         ExtensionName = $ExtensionName
-        ExecutionMethod = $ExecutionMethod
     }
     
     if ($FileName -ne '') {
@@ -114,10 +72,6 @@ function Invoke-ALTestRunner {
     if ((Get-ValueFromLaunchJson -KeyName 'authentication') -eq 'UserPassword') {
         $Credential = Get-ALTestRunnerCredential
         $Params.Add('Credential', $Credential)
-    }
-    
-    if ($ExecutionMethod -eq "Remote") {
-        $Params.Add('Session', $Session)
     }
     
     Invoke-RunTests @Params
