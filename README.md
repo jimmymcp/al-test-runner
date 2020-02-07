@@ -1,6 +1,6 @@
 # AL Test Runner
 
-The AL Test Runner extension adds features to help run your Business Central tests and digest the results in VS Code. Run specified tests against your local Business Central Docker container and save the results. Test methods are decorated according to the test results. Hover over the method name for more information.
+The AL Test Runner extension adds features to help run your Business Central tests and digest the results in VS Code. Run specified tests against your Business Central Docker container and save the results. Test methods are decorated according to the test results. Hover over the method name for more information.
 
 ## Features
 
@@ -24,8 +24,8 @@ Adds new commands to easily run:
 ![Snippet for Test Methods](https://jpearsondotblog.files.wordpress.com/2019/11/test-procedure-snippet.gif)
 
 ## Requirements
-This extension is to help run tests on a **local** Docker container i.e. VS Code must be running on the Docker host.
-- A local Business Central Docker container that you can publish your extension into and run your tests against
+- A Business Central Docker container that you can publish your extension into and run your tests against. As of v0.2.0, Docker can either be running locally or on a remote server. If remote, you must be able to execute PowerShell commands against the host with ps-remoting.
+- Alternatively you can use VS Code remote development to execute local PowerShell commands on the host with this extension installed on the host 
 - [AL Language extension](https://marketplace.visualstudio.com/items?itemName=ms-dynamics-smb.al) for VS Code
 - [navcontainerhelper PowerShell module](https://freddysblog.com/category/navcontainerhelper/) (minimum version 0.6.4.18)
 
