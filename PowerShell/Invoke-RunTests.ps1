@@ -65,9 +65,9 @@ function Invoke-RunTests {
             Write-Host $Message -ForegroundColor Green
 
             Invoke-CommandOnDockerHost {Param($Params) Run-TestsInBCContainer @Params -detailed -Verbose} -Parameters $Params
-            $Session = Get-DockerHostSession
-
+            
             if (Get-DockerHostIsRemote) {
+                $Session = Get-DockerHostSession
                 Invoke-CommandOnDockerHost {
                     Param($ContainerResultFile, $ResultId)
                     if (Test-Path $ContainerResultFile) {
