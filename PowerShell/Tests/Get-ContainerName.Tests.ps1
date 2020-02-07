@@ -1,5 +1,6 @@
 Describe Get-ContainerName {
     InModuleScope 'ALTestRunner' {
+        Mock Set-ALTestRunnerConfigValue {}
         Context 'Docker host is not remote' {
             Mock Get-DockerHostIsRemote {$false}
             Mock Get-ServerFromLaunchJson {'launchJsonServer'}
