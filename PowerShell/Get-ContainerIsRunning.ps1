@@ -7,7 +7,7 @@ function Get-ContainerIsRunning {
     Invoke-CommandOnDockerHost {
         Param($ContainerName)
         try {
-            $StatusJson = docker inspect $using:ContainerName
+            $StatusJson = docker inspect $ContainerName
             $StatusJson = [String]::Join([Environment]::NewLine, $StatusJson)
             $Status = ConvertFrom-Json $StatusJson
 
