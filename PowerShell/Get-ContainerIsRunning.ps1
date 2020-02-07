@@ -4,18 +4,21 @@ function Get-ContainerIsRunning {
         [string]$ContainerName
     )
 
-    try {
-        $StatusJson = docker inspect $ContainerName
-        $StatusJson = [String]::Join([Environment]::NewLine, $StatusJson)
-        $Status = ConvertFrom-Json $StatusJson
+    Invoke-CommandOnDockerHost {
+        Param($ContainerName)
+        try {
+            $StatusJson = docker inspect $ContainerName
+            $StatusJson = [String]::Join([Environment]::NewLine, $StatusJson)
+            $Status = ConvertFrom-Json $StatusJson
 
-        if ($Status.Get(0).State.Running -eq 'True') {
-            return $true
+            if ($Status.Get(0).State.Running -eq 'True') {
+                return $true
+            }
         }
-    }
-    catch {
-        return $false
-    }
+        catch {
+            return $false
+        }
+    } -Parameters $ContainerName
 }
 
 Export-ModuleMember -Function Get-ContainerIsRunning

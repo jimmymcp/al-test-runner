@@ -7,6 +7,11 @@ export type ALTestRunnerConfig = {
 	securePassword: string;
 	companyName: string;
 	testSuiteName: string;
+	vmUserName: string;
+	vmSecurePassword: string;
+	remoteContainerName: string;
+	dockerHost: string;
+	newPSSessionOptions: string;
 };
 
 export type ALTestAssembly = {

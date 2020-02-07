@@ -1,10 +1,11 @@
 function Select-BCCompany {
     param (
         [Parameter(Mandatory=$false)]
-        $ContainerName = (Get-ServerFromLaunchJson)
+        $ContainerName = (Get-ContainerName)
     )
     
-    $Companies = Get-CompanyInBCContainer -containerName $ContainerName
+    $Companies = Invoke-CommandOnDockerHost {Param($ContainerName) Get-CompanyInBCContainer -containerName $ContainerName} -Parameters $ContainerName
+
     if (($null -eq $Companies.Count) -or ($Companies.Count -eq 1)) {
         $CompanyName = $Companies.CompanyName
     }

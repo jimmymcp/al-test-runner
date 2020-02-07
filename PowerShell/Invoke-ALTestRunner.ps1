@@ -14,22 +14,21 @@ function Invoke-ALTestRunner {
         )    
 
     Import-PowerShellModule 'navcontainerhelper'
-    
-    $ContainerName = Get-ServerFromLaunchJson
 
+    $ContainerName = Get-ContainerName
     if (!(Get-ContainerIsRunning $ContainerName)) {
         throw "Container $ContainerName is not running. Please start the container and retry. Please note that container names are case-sensitive."
     }
 
     $CompanyName = Get-ValueFromALTestRunnerConfig -KeyName 'companyName'
     if ($CompanyName -eq '') {
-        $CompanyName = Select-BCCompany -ContainerName $ContainerName        
+        $CompanyName = Select-BCCompany $ContainerName    
     }
     
     $TestSuiteName = (Get-ValueFromALTestRunnerConfig -KeyName 'testSuiteName')
     
     if (($null -eq $TestSuiteName) -or ($TestSuiteName -eq '')) {
-        [string]$NavVersionString = Get-BCContainerNavVersion -containerOrImageName $ContainerName
+        [string]$NavVersionString = Invoke-CommandOnDockerHost {Param($ContainerName) Get-BCContainerNavVersion -containerOrImageName $ContainerName} -Parameters $ContainerName
         if ($NavVersionString.IndexOf('-') -gt 0) {
             $NavVersionString = $NavVersionString.Substring(0,$NavVersionString.IndexOf('-'))
         }
@@ -74,7 +73,7 @@ function Invoke-ALTestRunner {
         $Credential = Get-ALTestRunnerCredential
         $Params.Add('Credential', $Credential)
     }
-
+    
     Invoke-RunTests @Params
 }
 

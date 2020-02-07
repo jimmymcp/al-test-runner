@@ -117,6 +117,26 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(command);
 
+	command = vscode.commands.registerCommand('altestrunner.setContainerCredential', () => {
+		setALTestRunnerConfig('userName', '');
+		setALTestRunnerConfig('securePassword', '');
+		terminal = getALTestRunnerTerminal(getTerminalName());
+		terminal.sendText(' ');
+		terminal.sendText('Get-ALTestRunnerCredential')
+	});
+
+	context.subscriptions.push(command);
+
+	command = vscode.commands.registerCommand('altestrunner.setVMCredential', () => {
+		setALTestRunnerConfig('vmUserName', '');
+		setALTestRunnerConfig('vmSecurePassword', '');
+		terminal = getALTestRunnerTerminal(getTerminalName());
+		terminal.sendText(' ');
+		terminal.sendText('Get-ALTestRunnerCredential -VM')
+	});
+
+	context.subscriptions.push(command);
+
 	vscode.window.onDidChangeActiveTextEditor(editor => {
 		activeEditor = editor;
 		if (editor) {
@@ -606,7 +626,12 @@ function createALTestRunnerConfig() {
 		securePassword: "",
 		userName: "",
 		companyName: "",
-		testSuiteName: ""
+		testSuiteName: "",
+		vmUserName: "",
+		vmSecurePassword: "",
+		remoteContainerName: "",
+		dockerHost: "",
+		newPSSessionOptions: ""
 	};
 
 	createALTestRunnerDir();

@@ -63,22 +63,50 @@ function Invoke-RunTests {
     while(!$BreakTestLoop) {
         try {
             Write-Host $Message -ForegroundColor Green
-            Run-TestsInBCContainer @Params -detailed -Verbose
+
+            Invoke-CommandOnDockerHost {Param($Params) Run-TestsInBCContainer @Params -detailed -Verbose} -Parameters $Params
             
-            if (Test-Path $ContainerResultFile) {
-                Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath $LastResultFile
-                Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath $ResultFile
-                Merge-ALTestRunnerTestResults -ResultsFile $ResultFile -ToPath (Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) 'Results')
-                Remove-Item $ResultFile
-                Remove-Item $ContainerResultFile
-                $BreakTestLoop = $true
+            if (Get-DockerHostIsRemote) {
+                $Session = Get-DockerHostSession
+                Invoke-CommandOnDockerHost {
+                    Param($ContainerResultFile, $ResultId)
+                    if (Test-Path $ContainerResultFile) {
+                        if (-not (Test-Path 'C:\BCContainerTests\')){
+                            New-Item -Path 'C:\' -Name BCContainerTests -ItemType Directory -Force | Out-Null
+                        }
+
+                        Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath (Join-Path 'C:\BCContainerTests' $ResultId)
+
+                    }
+                    else {
+                        throw 'Tests have not been run'
+                    }
+                } -Parameters ($ContainerResultFile, $ResultId)
+
+                Write-Host "Copy C:\BCContainerTests\$ResultId to $LastResultFile"
+                Copy-Item -FromSession $Session -Path "C:\BCContainerTests\$ResultId" -Destination $ResultFile
+                Copy-Item -Path $ResultFile -Destination $LastResultFile
             }
             else {
-                throw 'Tests have not been run'
+                if (Test-Path $ContainerResultFile) {
+                    Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath $LastResultFile
+                    Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath $ResultFile
+                }
+                else {
+                    throw 'Tests have not been run'
+                }
             }
+                    
+            Merge-ALTestRunnerTestResults -ResultsFile $ResultFile -ToPath (Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) 'Results')
+            Remove-Item $ResultFile
+
+            if (!Get-DockerHostIsRemote) {
+                Remove-Item $ContainerResultFile
+            }
+            $BreakTestLoop = $true
         }
         catch {
-            $AttemptNo++            
+            $AttemptNo++
             Write-Host "Error occurred, retrying..." -ForegroundColor Magenta
 
             if ($AttemptNo -ge 3) {
