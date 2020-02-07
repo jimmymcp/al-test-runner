@@ -89,8 +89,8 @@ function Invoke-RunTests {
             }
             else {
                 if (Test-Path $ContainerResultFile) {
-                    Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath $LastResultFile
                     Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath $ResultFile
+                    Copy-Item -Path $ResultFile -Destination $LastResultFile
                 }
                 else {
                     throw 'Tests have not been run'
@@ -100,7 +100,7 @@ function Invoke-RunTests {
             Merge-ALTestRunnerTestResults -ResultsFile $ResultFile -ToPath (Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) 'Results')
             Remove-Item $ResultFile
 
-            if (!Get-DockerHostIsRemote) {
+            if (!(Get-DockerHostIsRemote)) {
                 Remove-Item $ContainerResultFile
             }
             $BreakTestLoop = $true
