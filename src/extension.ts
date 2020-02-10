@@ -635,7 +635,7 @@ function createALTestRunnerConfig() {
 	};
 
 	createALTestRunnerDir();
-	writeFileSync(getALTestRunnerConfigPath(), JSON.stringify(config), { encoding: 'utf-8' });
+	writeFileSync(getALTestRunnerConfigPath(), JSON.stringify(config, null, 2), { encoding: 'utf-8' });
 }
 
 function createALTestRunnerDir() {
