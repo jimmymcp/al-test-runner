@@ -11,7 +11,7 @@
 	"files": [
 		"PowerShell/"
 	],
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"engines": {
 		"vscode": "^1.39.0"
 	},
@@ -63,6 +63,11 @@
 			{
 				"command": "altestrunner.setVMCredential",
 				"title": "Set VM Credential",
+				"category": "AL Test Runner"
+			},
+			{
+				"command": "altestrunner.openConfigFile",
+				"title": "Open Config File",
 				"category": "AL Test Runner"
 			}
 		],

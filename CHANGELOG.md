@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.2.1
+- New "Open Config File" command opens/creates a AL Test Runner Config file
+- Config file created like this is more human-readable - now includes line breaks
+
 ## 0.2.0
 - Support for executing tests on remote Docker host with PS Remoting - big thanks to MaxBelohoubek for submitting the initial changes and testing
 - New keys in config.json file to support remote host:
