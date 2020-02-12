@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.2.3
+- Remove last.xml result file before test run, if it exists - prevents the results from being output otherwise
+
 ## 0.2.2
 - Bug fix for screwy test results in output window. Finding the file and line number for a failing tests causes a watch event, which triggers the test results to be output again and all kinds of hell break loose
 

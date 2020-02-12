@@ -25,6 +25,10 @@ function Invoke-RunTests {
     $ResultFile = Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) $ResultId
     $LastResultFile = Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) 'last.xml'
     $ContainerResultFile = Join-Path (Get-ContainerResultPath) $ResultId
+
+    if (Test-Path $LastResultFile) {
+        Remove-Item $LastResultFile
+    }
     
     $Message = "Running tests on $ContainerName, company $CompanyName"
 
