@@ -659,7 +659,7 @@ function createALTestRunnerDir() {
 }
 
 function onWatchEvent(event: string, filename: string): any {
-	if (filename === 'last.xml') {
+	if ((filename === 'last.xml') && (event !== "change")) {
 		outputTestResults();
 	}
 	else {

@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.2.2
+- Bug fix for screwy test results in output window. Finding the file and line number for a failing tests causes a watch event, which triggers the test results to be output again and all kinds of hell break loose
+
 ## 0.2.1
 - New "Open Config File" command opens/creates a AL Test Runner Config file
 - Config file created like this is more human-readable - now includes line breaks
