@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.2.4
+- Bug fix, do not error if a test codeunit cannot be found using the glob pattern in settings
+- Retry outputting test results if the promise is rejected e.g. because the result file cannot be read
+
 ## 0.2.3
 - Remove last.xml result file before test run, if it exists - prevents the results from being output otherwise
 
