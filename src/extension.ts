@@ -480,6 +480,8 @@ export async function getFilePathByCodeunitId(codeunitId: number, method?: strin
 				resolve(filePath);
 			}
 		}
+		
+		resolve('could not find codeunit ' + codeunitId + ' with pattern ' + globPattern);
 	});
 }
 
