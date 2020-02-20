@@ -498,12 +498,14 @@ async function outputTestResults() {
 
 		const xmlParser = new xml2js.Parser();
 		const resultXml = readFileSync(resultFileName, { encoding: 'utf-8' });
+		unlinkSync(resultFileName);
+		
 		let noOfTests: number = 0;
 		let noOfFailures: number = 0;
 		let totalTime: number = 0;
 		const resultObj = await xmlParser.parseStringPromise(resultXml);
 		const assemblies: types.ALTestAssembly[] = resultObj.assemblies.assembly;
-
+		
 		for (let assembly of assemblies) {
 			noOfTests += parseInt(assembly.$.total);
 			const assemblyTime = parseFloat(assembly.$.time);
@@ -535,9 +537,6 @@ async function outputTestResults() {
 		else {
 			outputChannel.appendLine('❌ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's - ' + noOfFailures + ' test(s) failed');
 		}
-		
-
-		unlinkSync(resultFileName);
 	}
 }
 
@@ -662,7 +661,10 @@ function createALTestRunnerDir() {
 
 function onWatchEvent(event: string, filename: string): any {
 	if ((filename === 'last.xml') && (event !== "change")) {
-		outputTestResults();
+		outputTestResults().catch(reason => {			
+			outputTestResults();
+		});
+		triggerUpdateDecorations();
 	}
 	else {
 		triggerUpdateDecorations();
