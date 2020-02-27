@@ -3,6 +3,11 @@
 	"displayName": "AL Test Runner",
 	"description": "Test runner for AL tests for Business Central development",
 	"publisher": "jamespearson",
+	"bugs": {
+		"email": "james@jpearson.blog",
+		"url": "https://github.com/jimmymcp/al-test-runner/issues"
+	},
+	"homepage": "https://jpearson.blog/al-test-runner-for-visual-studio-code/",
 	"preview": false,
 	"repository": {
 		"url": "https://github.com/jimmymcp/al-test-runner"
@@ -11,7 +16,7 @@
 	"files": [
 		"PowerShell/"
 	],
-	"version": "0.2.4",
+	"version": "0.2.5",
 	"engines": {
 		"vscode": "^1.39.0"
 	},
@@ -205,6 +210,16 @@
 						"scope": "resource",
 						"description": "The glob pattern that identifies test codeunit .al files in the workspace e.g. **/Tests/*.codeunit.al specifies file names that end in codeunit.al in a Tests folder",
 						"default": "**/*.al"
+					},
+					"al-test-runner.preTestCommand": {
+						"type": "string",
+						"scope": "resource",
+						"description": "A PowerShell command to execute prior to running tests"
+					},
+					"al-test-runner.postTestCommand": {
+						"type": "string",
+						"scope": "resource",
+						"description": "A PowerShell command to execute after tests have been executed"
 					}
 				}
 			}

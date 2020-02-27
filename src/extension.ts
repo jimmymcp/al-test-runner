@@ -122,7 +122,7 @@ export function activate(context: vscode.ExtensionContext) {
 		setALTestRunnerConfig('securePassword', '');
 		terminal = getALTestRunnerTerminal(getTerminalName());
 		terminal.sendText(' ');
-		terminal.sendText('Get-ALTestRunnerCredential')
+		terminal.sendText('Get-ALTestRunnerCredential');
 	});
 
 	context.subscriptions.push(command);
@@ -132,7 +132,7 @@ export function activate(context: vscode.ExtensionContext) {
 		setALTestRunnerConfig('vmSecurePassword', '');
 		terminal = getALTestRunnerTerminal(getTerminalName());
 		terminal.sendText(' ');
-		terminal.sendText('Get-ALTestRunnerCredential -VM')
+		terminal.sendText('Get-ALTestRunnerCredential -VM');
 	});
 
 	context.subscriptions.push(command);
@@ -173,9 +173,21 @@ async function invokeTestRunner(command: string) {
 
 	terminal = getALTestRunnerTerminal(getTerminalName());
 	terminal.sendText(' ');
-	terminal.sendText('cd "' + getWorkspaceFolder() + '"');
-	terminal.sendText(command);
 	terminal.show(true);
+	terminal.sendText('cd "' + getWorkspaceFolder() + '"');
+	invokeCommand(config.preTestCommand);
+	terminal.sendText(command);
+	invokeCommand(config.postTestCommand);
+}
+
+function invokeCommand(command: string) {
+	if (command === undefined || command === null || command === '') {
+		return;
+	}
+
+	terminal.sendText(' ');
+	terminal.sendText('Invoke-Script {' + command + '}');
+	terminal.sendText(' ');
 }
 
 function updateDecorations() {

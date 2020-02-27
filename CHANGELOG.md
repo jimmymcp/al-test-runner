@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.2.5
+- Pre and Post Test Commands - enter a PowerShell command to be executed before or after the tests have run - [see here](https://jpearson.blog/al-test-runner-for-visual-studio-code/) for more information
+
 ## 0.2.4
 - Bug fix, do not error if a test codeunit cannot be found using the glob pattern in settings
 - Retry outputting test results if the promise is rejected e.g. because the result file cannot be read
