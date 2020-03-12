@@ -506,11 +506,9 @@ async function outputTestResults() {
 	const resultFileName = getALTestRunnerPath() + '\\last.xml';
 	if (existsSync(resultFileName)) {
 		outputChannel.clear();
-		outputChannel.show(true);
-
+		
 		const xmlParser = new xml2js.Parser();
 		const resultXml = readFileSync(resultFileName, { encoding: 'utf-8' });
-		unlinkSync(resultFileName);
 		
 		let noOfTests: number = 0;
 		let noOfFailures: number = 0;
@@ -542,13 +540,17 @@ async function outputTestResults() {
 				}
 			}
 		}
+		
+		unlinkSync(resultFileName);
 
 		if (noOfFailures === 0) {
-			outputChannel.appendLine('✅ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's');
+			outputChannel.appendLine('✅ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's at ' + assemblies[0].$!["run-time"]);
 		}
 		else {
-			outputChannel.appendLine('❌ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's - ' + noOfFailures + ' test(s) failed');
+			outputChannel.appendLine('❌ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's - ' + noOfFailures + ' test(s) failed at ' + assemblies[0].$!["run-time"]);
 		}
+
+		outputChannel.show(true);
 	}
 }
 

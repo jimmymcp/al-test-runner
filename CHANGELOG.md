@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.2.6
+- unlink result file after results have been output to help prevent error with locked resource
+- show test run time when outputting results
+
 ## 0.2.5
 - Pre and Post Test Commands - enter a PowerShell command to be executed before or after the tests have run - [see here](https://jpearson.blog/al-test-runner-for-visual-studio-code/) for more information
 
@@ -20,10 +24,10 @@
 ## 0.2.0
 - Support for executing tests on remote Docker host with PS Remoting - big thanks to MaxBelohoubek for submitting the initial changes and testing
 - New keys in config.json file to support remote host:
--- dockerHost: the name of the Docker host that a PSSession will be opened to (blank indicates that the local machine is the Docker host - no PowerShell session will be created)
--- newPSSessionOptions: optional switches that should be used with New-PSSession when creating the session to the Docker host
--- vmUserName, vmSecurePassword - credentials used to connect to Docker host
--- remoteContainerName - the name of the container to execute PowerShell against on the Docker host
+  - dockerHost: the name of the Docker host that a PSSession will be opened to (blank indicates that the local machine is the Docker host - no PowerShell session will be created)
+  - newPSSessionOptions: optional switches that should be used with New-PSSession when creating the session to the Docker host
+  - vmUserName, vmSecurePassword - credentials used to connect to Docker host
+  - remoteContainerName - the name of the container to execute PowerShell against on the Docker host
 - new VS Code commands to set credentials for Docker host and container
 
 ## 0.1.17
@@ -47,7 +51,7 @@
 
 ## 0.1.12
 - Support for multi-root workspaces
--- Run All Tests command will require an open editor to determine which folder (and extension) to run the tests in
+  - Run All Tests command will require an open editor to determine which folder (and extension) to run the tests in
 - Optional parameters included for commands to allow them to be called from other VS Code extensions
 - Round test execution times to 2 decimal places in output window
 
