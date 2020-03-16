@@ -5,6 +5,7 @@ import { isUndefined } from 'util';
 import { readFileSync, writeFileSync, mkdirSync, existsSync, watch, readdirSync, unlinkSync } from 'fs';
 import * as xml2js from 'xml2js';
 import * as types from './types';
+import {CodelensProvider} from './CodelensProvider';
 
 let terminal: vscode.Terminal;
 let activeEditor = vscode.window.activeTextEditor;
@@ -36,6 +37,9 @@ let isTestCodeunit: boolean;
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('jamespearson.al-test-runner extension is activated');
+
+	let codelensProvider = new CodelensProvider();
+	vscode.languages.registerCodeLensProvider("*", codelensProvider);
 
 	let command = vscode.commands.registerCommand('altestrunner.runAllTests', async (extensionId?: string, extensionName?: string) => {
 		await readyToRunTests().then(ready => {
