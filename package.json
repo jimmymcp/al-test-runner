@@ -220,7 +220,13 @@
 						"type": "string",
 						"scope": "resource",
 						"description": "A PowerShell command to execute after tests have been executed"
-					}
+					},
+					"al-test-runner.enableCodeLens": {
+						"type": "boolean",
+						"scope": "resource",
+						"description": "Enables CodeLens actions to run individual tests or all tests in a codeunit",
+						"default": true
+					}					
 				}
 			}
 		],

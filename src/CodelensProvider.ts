@@ -6,19 +6,28 @@ export class CodelensProvider implements vscode.CodeLensProvider {
 
     public provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): vscode.CodeLens[] | Thenable<vscode.CodeLens[]> {
         this.codeLenses = [];
-        const testMethodRanges = getTestMethodRangesFromDocument(document);
-        testMethodRanges.forEach(testMethodRange => {
-            this.codeLenses.push(new vscode.CodeLens(testMethodRange.range));
-        });
 
-        if (this.codeLenses.push.length > 0) {
-            this.codeLenses.push(new vscode.CodeLens(new vscode.Range(0,0,0,0)));
+        const config = vscode.workspace.getConfiguration('al-test-runner');
+        if (config.enableCodeLens) {
+            const testMethodRanges = getTestMethodRangesFromDocument(document);
+            testMethodRanges.forEach(testMethodRange => {
+                this.codeLenses.push(new vscode.CodeLens(testMethodRange.range));
+            });
+
+            if (this.codeLenses.push.length > 0) {
+                this.codeLenses.push(new vscode.CodeLens(new vscode.Range(0,0,0,0)));
+            }
         }
 
         return this.codeLenses;
     }
 
     public resolveCodeLens(codeLens: vscode.CodeLens, token: vscode.CancellationToken) {
+        const config = vscode.workspace.getConfiguration('al-test-runner');
+        if (!(config.enableCodeLens)) {
+            return codeLens;
+        }
+        
         const activeEditor = vscode.window.activeTextEditor;
         const filename = activeEditor!.document.fileName;
 
