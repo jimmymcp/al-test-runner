@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.2.7
+- Add CodeLens actions to run individual methods or all methods in a test codeunit
+
 ## 0.2.6
 - unlink result file after results have been output to help prevent error with locked resource
 - show test run time when outputting results
