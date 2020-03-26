@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.2.8
+- Showing the contents of the output window seems a little screwy attempt to make it more reliable
+
 ## 0.2.7
 - Add CodeLens actions to run individual methods or all methods in a test codeunit
 

@@ -2,6 +2,8 @@
 
 The AL Test Runner extension adds features to help run your Business Central tests and digest the results in VS Code. Run specified tests against your Business Central Docker container and save the results. Test methods are decorated according to the test results. Hover over the method name for more information.
 
+For more information about AL Test Runner and how to use it visit [https://jpearson.blog/al-test-runner-for-visual-studio-code/](https://jpearson.blog/al-test-runner-for-visual-studio-code/)
+
 ## Features
 
 ### Running Tests

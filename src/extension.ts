@@ -510,6 +510,7 @@ async function outputTestResults() {
 	const resultFileName = getALTestRunnerPath() + '\\last.xml';
 	if (existsSync(resultFileName)) {
 		outputChannel.clear();
+		outputChannel.show(true);
 		
 		const xmlParser = new xml2js.Parser();
 		const resultXml = readFileSync(resultFileName, { encoding: 'utf-8' });

@@ -16,7 +16,7 @@
 	"files": [
 		"PowerShell/"
 	],
-	"version": "0.2.7",
+	"version": "0.2.8",
 	"engines": {
 		"vscode": "^1.39.0"
 	},
@@ -226,7 +226,7 @@
 						"scope": "resource",
 						"description": "Enables CodeLens actions to run individual tests or all tests in a codeunit",
 						"default": true
-					}					
+					}
 				}
 			}
 		],
