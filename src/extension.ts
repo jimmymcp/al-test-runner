@@ -35,6 +35,10 @@ const outputChannel = vscode.window.createOutputChannel(getTerminalName());
 let timeout: NodeJS.Timer | undefined = undefined;
 let isTestCodeunit: boolean;
 
+const alTestRunnerAPI = new class {
+	getWorkspaceFolder: Function | undefined;
+};
+
 export function activate(context: vscode.ExtensionContext) {
 	console.log('jamespearson.al-test-runner extension is activated');
 
@@ -161,6 +165,8 @@ export function activate(context: vscode.ExtensionContext) {
 			triggerUpdateDecorations();
 		}
 	}, null, context.subscriptions);
+
+	return alTestRunnerAPI;
 }
 
 async function invokeTestRunner(command: string) {
@@ -601,6 +607,13 @@ function watchALTestRunnerPath(path: string) {
 }
 
 function getWorkspaceFolder() {
+	if (alTestRunnerAPI.getWorkspaceFolder) {
+		let override = alTestRunnerAPI.getWorkspaceFolder.call(null);
+		if (override && override.length > 0) {
+			return override;
+		}
+	}
+
 	const wsFolders = vscode.workspace.workspaceFolders!;
 	if (wsFolders !== undefined) {
 		if (wsFolders.length === 1) {
