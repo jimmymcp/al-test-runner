@@ -5,7 +5,7 @@ import { isUndefined } from 'util';
 import { readFileSync, writeFileSync, mkdirSync, existsSync, watch, readdirSync, unlinkSync } from 'fs';
 import * as xml2js from 'xml2js';
 import * as types from './types';
-import {CodelensProvider} from './CodelensProvider';
+import { CodelensProvider } from './CodelensProvider';
 
 let terminal: vscode.Terminal;
 let activeEditor = vscode.window.activeTextEditor;
@@ -37,6 +37,7 @@ let isTestCodeunit: boolean;
 
 const alTestRunnerAPI = new class {
 	getWorkspaceFolder: Function | undefined;
+	onOutputTestResults: Function | undefined;
 };
 
 export function activate(context: vscode.ExtensionContext) {
@@ -254,11 +255,11 @@ function updateDecorations() {
 					const hoverMessage: string = test.failure[0].message + "\n\n" + test.failure[0]["stack-trace"];
 					const decoration: vscode.DecorationOptions = { range: new vscode.Range(startPos, endPos), hoverMessage: hoverMessage };
 					failingTests.push(decoration);
-					
+
 					if (config.highlightFailingLine) {
 						const failingLineRange = getRangeOfFailingLineFromCallstack(test.failure[0]["stack-trace"][0], methodName, activeEditor!.document);
 						if (failingLineRange !== undefined) {
-							const decoration: vscode.DecorationOptions = {range: failingLineRange, hoverMessage: hoverMessage};
+							const decoration: vscode.DecorationOptions = { range: failingLineRange, hoverMessage: hoverMessage };
 							failingLines.push(decoration);
 						}
 					}
@@ -268,9 +269,9 @@ function updateDecorations() {
 
 		setDecorations(passingTests, failingTests, getUntestedTestDecorations(testMethodRanges), failingLines);
 	})
-	.catch(err => {
-		vscode.window.showErrorMessage(err);
-	});
+		.catch(err => {
+			vscode.window.showErrorMessage(err);
+		});
 }
 
 function setDecorations(passingTests: vscode.DecorationOptions[], failingTests: vscode.DecorationOptions[], untestedTests: vscode.DecorationOptions[], failingLines?: vscode.DecorationOptions[]) {
@@ -454,12 +455,12 @@ export function getDocumentIdAndName(document: vscode.TextDocument): string {
 	}
 }
 
-export function getRangeOfFailingLineFromCallstack(callstack: string, method: string, document: vscode.TextDocument): vscode.Range | void {	
+export function getRangeOfFailingLineFromCallstack(callstack: string, method: string, document: vscode.TextDocument): vscode.Range | void {
 	const methodStartLineForCallstack = getLineNumberOfMethodDeclaration(method, document);
 	if (methodStartLineForCallstack === -1) {
 		return;
 	}
-	
+
 	const matches = callstack.match(method + ' line (\\d+)');
 	if ((matches !== undefined) && (matches !== null)) {
 		const lineNo = parseInt(matches[1]);
@@ -488,7 +489,7 @@ export async function getFilePathByCodeunitId(codeunitId: number, method?: strin
 
 		const files = await vscode.workspace.findFiles(globPattern);
 		for (let file of files) {
-			const text = readFileSync(file.fsPath, {encoding: 'utf-8'});
+			const text = readFileSync(file.fsPath, { encoding: 'utf-8' });
 			if (text.startsWith('codeunit ' + codeunitId)) {
 				let filePath = file.fsPath;
 				if (method !== undefined) {
@@ -502,7 +503,7 @@ export async function getFilePathByCodeunitId(codeunitId: number, method?: strin
 				resolve(filePath);
 			}
 		}
-		
+
 		resolve('could not find codeunit ' + codeunitId + ' with pattern ' + globPattern);
 	});
 }
@@ -517,16 +518,16 @@ async function outputTestResults() {
 	if (existsSync(resultFileName)) {
 		outputChannel.clear();
 		outputChannel.show(true);
-		
+
 		const xmlParser = new xml2js.Parser();
 		const resultXml = readFileSync(resultFileName, { encoding: 'utf-8' });
-		
+
 		let noOfTests: number = 0;
 		let noOfFailures: number = 0;
 		let totalTime: number = 0;
 		const resultObj = await xmlParser.parseStringPromise(resultXml);
 		const assemblies: types.ALTestAssembly[] = resultObj.assemblies.assembly;
-		
+
 		for (let assembly of assemblies) {
 			noOfTests += parseInt(assembly.$.total);
 			const assemblyTime = parseFloat(assembly.$.time);
@@ -551,7 +552,7 @@ async function outputTestResults() {
 				}
 			}
 		}
-		
+
 		unlinkSync(resultFileName);
 
 		if (noOfFailures === 0) {
@@ -692,14 +693,29 @@ function createALTestRunnerDir() {
 }
 
 function onWatchEvent(event: string, filename: string): any {
+	let context = { event: event, filename: filename };
+	callOnOutputTestResults(context);
 	if ((filename === 'last.xml') && (event !== "change")) {
-		outputTestResults().catch(reason => {			
-			outputTestResults();
-		});
+		outputTestResults()
+			.then(() => {
+				callOnOutputTestResults(context);
+			})
+			.catch(reason => {
+				outputTestResults().then(() => {
+					callOnOutputTestResults(context);
+				})
+			});
+
 		triggerUpdateDecorations();
 	}
 	else {
 		triggerUpdateDecorations();
+	}
+}
+
+function callOnOutputTestResults(context: any) {
+	if (alTestRunnerAPI.onOutputTestResults) {
+		alTestRunnerAPI.onOutputTestResults.call(null, context);
 	}
 }
 
