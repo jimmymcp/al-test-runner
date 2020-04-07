@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.2.9
+- Handle skipped tests
+- Reworking watching for and outputting test results
+
 ## 0.2.8
 - Showing the contents of the output window seems a little screwy attempt to make it more reliable
 
