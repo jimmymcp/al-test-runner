@@ -188,6 +188,7 @@ async function invokeTestRunner(command: string) {
 	watch(getLastResultPath(), async (event, filename) => {
 		if (await outputTestResults()) {
 			outputChannel.show(true);
+			triggerUpdateDecorations();
 		}
 	});
 }
