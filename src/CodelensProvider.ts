@@ -7,6 +7,10 @@ export class CodelensProvider implements vscode.CodeLensProvider {
     public provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): vscode.CodeLens[] | Thenable<vscode.CodeLens[]> {
         this.codeLenses = [];
 
+        if (!(document.fileName.endsWith('.al'))) {
+            return this.codeLenses;
+        }
+
         const config = vscode.workspace.getConfiguration('al-test-runner');
         if (config.enableCodeLens) {
             const testMethodRanges = getTestMethodRangesFromDocument(document);

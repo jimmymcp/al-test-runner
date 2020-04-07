@@ -2,14 +2,13 @@
 // Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
 import { isUndefined } from 'util';
-import { readFileSync, writeFileSync, mkdirSync, existsSync, watch, readdirSync, unlinkSync } from 'fs';
+import { readFileSync, writeFileSync, mkdirSync, existsSync, watch, readdirSync, unlinkSync, unwatchFile } from 'fs';
 import * as xml2js from 'xml2js';
 import * as types from './types';
 import { CodelensProvider } from './CodelensProvider';
 
 let terminal: vscode.Terminal;
 let activeEditor = vscode.window.activeTextEditor;
-let watchedFolders: string[] = [];
 const config = vscode.workspace.getConfiguration('al-test-runner');
 const passingTestColor = 'rgba(' + config.passingTestsColor.red + ',' + config.passingTestsColor.green + ',' + config.passingTestsColor.blue + ',' + config.passingTestsColor.alpha + ')';
 const failingTestColor = 'rgba(' + config.failingTestsColor.red + ',' + config.failingTestsColor.green + ',' + config.failingTestsColor.blue + ',' + config.failingTestsColor.alpha + ')';
@@ -32,6 +31,7 @@ const failingLineDecorationType = vscode.window.createTextEditorDecorationType({
 });
 
 const outputChannel = vscode.window.createOutputChannel(getTerminalName());
+let testsOutput: boolean;
 let timeout: NodeJS.Timer | undefined = undefined;
 let isTestCodeunit: boolean;
 
@@ -189,6 +189,16 @@ async function invokeTestRunner(command: string) {
 	invokeCommand(config.preTestCommand);
 	terminal.sendText(command);
 	invokeCommand(config.postTestCommand);
+
+	writeFileSync(getLastResultPath(), '');
+	testsOutput = false;
+	watch(getLastResultPath(), async (event, filename) => {
+		if (await outputTestResults()) {
+			outputChannel.show(true);
+			let context = { event: event, filename: filename };
+			callOnOutputTestResults(context);
+		}
+	});
 }
 
 function invokeCommand(command: string) {
@@ -247,22 +257,28 @@ function updateDecorations() {
 					testMethodRanges.splice(arrayNo, 1);
 				}
 
-				if (test.$.result === 'Pass') {
-					const decoration: vscode.DecorationOptions = { range: new vscode.Range(startPos, endPos), hoverMessage: 'Test passing 👍' };
-					passingTests.push(decoration);
-				}
-				else {
-					const hoverMessage: string = test.failure[0].message + "\n\n" + test.failure[0]["stack-trace"];
-					const decoration: vscode.DecorationOptions = { range: new vscode.Range(startPos, endPos), hoverMessage: hoverMessage };
-					failingTests.push(decoration);
+				let decoration: vscode.DecorationOptions;
 
-					if (config.highlightFailingLine) {
-						const failingLineRange = getRangeOfFailingLineFromCallstack(test.failure[0]["stack-trace"][0], methodName, activeEditor!.document);
-						if (failingLineRange !== undefined) {
-							const decoration: vscode.DecorationOptions = { range: failingLineRange, hoverMessage: hoverMessage };
-							failingLines.push(decoration);
+				switch (test.$.result) {
+					case 'Pass':
+						decoration = { range: new vscode.Range(startPos, endPos), hoverMessage: 'Test passing 👍' };
+						passingTests.push(decoration);
+						break;
+					case 'Fail':
+						const hoverMessage: string = test.failure[0].message + "\n\n" + test.failure[0]["stack-trace"];
+						decoration = { range: new vscode.Range(startPos, endPos), hoverMessage: hoverMessage };
+						failingTests.push(decoration);
+
+						if (config.highlightFailingLine) {
+							const failingLineRange = getRangeOfFailingLineFromCallstack(test.failure[0]["stack-trace"][0], methodName, activeEditor!.document);
+							if (failingLineRange !== undefined) {
+								const decoration: vscode.DecorationOptions = { range: failingLineRange, hoverMessage: hoverMessage };
+								failingLines.push(decoration);
+							}
 						}
-					}
+						break;
+					default:
+						break;
 				}
 			}
 		});
@@ -316,7 +332,6 @@ if (activeEditor) {
 
 export function getTestMethodRangesFromDocument(document: vscode.TextDocument): types.ALTestMethodRange[] {
 	const documentText = document.getText();
-	//const regEx = /\[Test\].*\n(^.*\n){0,3} *procedure .*\(/gm;
 	const regEx = /\[Test\]/gi;
 	let testMethods: types.ALTestMethodRange[] = [];
 	let match;
@@ -513,57 +528,82 @@ export function getCodeunitIdFromAssemblyName(assemblyName: string): number {
 	return parseInt(matches!.shift()!);
 }
 
-async function outputTestResults() {
-	const resultFileName = getALTestRunnerPath() + '\\last.xml';
-	if (existsSync(resultFileName)) {
-		outputChannel.clear();
-		outputChannel.show(true);
-
-		const xmlParser = new xml2js.Parser();
-		const resultXml = readFileSync(resultFileName, { encoding: 'utf-8' });
-
-		let noOfTests: number = 0;
-		let noOfFailures: number = 0;
-		let totalTime: number = 0;
-		const resultObj = await xmlParser.parseStringPromise(resultXml);
-		const assemblies: types.ALTestAssembly[] = resultObj.assemblies.assembly;
-
-		for (let assembly of assemblies) {
-			noOfTests += parseInt(assembly.$.total);
-			const assemblyTime = parseFloat(assembly.$.time);
-			totalTime += assemblyTime;
-			const failed = parseInt(assembly.$.failed);
-			noOfFailures += failed;
-			if (failed > 0) {
-				outputChannel.appendLine('❌ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
+async function outputTestResults(): Promise<Boolean> {
+	return new Promise(async (resolve, reject) => {
+		if (testsOutput) {
+				resolve(false);
 			}
-			else {
-				outputChannel.appendLine('✅ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
-			}
-			for (let test of assembly.collection[0].test) {
-				const testTime = parseFloat(test.$.time);
-				if (test.$.result === 'Pass') {
-					outputChannel.appendLine('\t✅ ' + test.$.method + '\t' + testTime.toFixed(2) + 's');
+
+			if (existsSync(getLastResultPath())) {
+				unwatchFile(getLastResultPath());
+				const xmlParser = new xml2js.Parser();
+				const resultXml = readFileSync(getLastResultPath(), { encoding: 'utf-8' });
+
+				let noOfTests: number = 0;
+				let noOfFailures: number = 0;
+				let noOfSkips: number = 0;
+				let totalTime: number = 0;
+				const resultObj = await xmlParser.parseStringPromise(resultXml);
+				const assemblies: types.ALTestAssembly[] = resultObj.assemblies.assembly;
+
+				if (assemblies.length > 0) {
+					outputChannel.clear();
+					testsOutput = true;
+				}
+
+				for (let assembly of assemblies) {
+					noOfTests += parseInt(assembly.$.total);
+					const assemblyTime = parseFloat(assembly.$.time);
+					totalTime += assemblyTime;
+					const failed = parseInt(assembly.$.failed);
+					noOfFailures += failed;
+					const skipped = parseInt(assembly.$.skipped);
+					noOfSkips += skipped;
+
+					if (failed > 0) {
+						outputChannel.appendLine('❌ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
+					}
+					else {
+						outputChannel.appendLine('✅ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
+					}
+					for (let test of assembly.collection[0].test) {
+						const testTime = parseFloat(test.$.time);
+						let filePath = '';
+						switch (test.$.result) {
+							case 'Pass':
+								outputChannel.appendLine('\t✅ ' + test.$.method + '\t' + testTime.toFixed(2) + 's');
+								break;
+							case 'Skip':
+								filePath = await getFilePathByCodeunitId(getCodeunitIdFromAssemblyName(assembly.$.name), test.$.method);
+								outputChannel.appendLine('\t❓ ' + test.$.method + '\t' + testTime.toFixed(2) + 's ' + filePath);
+								break;
+							case 'Fail':
+								filePath = await getFilePathByCodeunitId(getCodeunitIdFromAssemblyName(assembly.$.name), test.$.method);
+								outputChannel.appendLine('\t❌ ' + test.$.method + '\t' + testTime.toFixed(2) + "s " + filePath);
+								outputChannel.appendLine('\t\t' + test.failure[0].message);
+								break;
+							default:
+								break;
+						}
+					}
+				}
+
+				if ((noOfFailures + noOfSkips) === 0) {
+					outputChannel.appendLine('✅ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's at ' + assemblies[0].$!["run-time"]);
 				}
 				else {
-					const filePath = await getFilePathByCodeunitId(getCodeunitIdFromAssemblyName(assembly.$.name), test.$.method);
-					outputChannel.appendLine('\t❌ ' + test.$.method + '\t' + testTime.toFixed(2) + "s " + filePath);
-					outputChannel.appendLine('\t\t' + test.failure[0].message);
+					outputChannel.appendLine('❌ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's - ' + (noOfFailures + noOfSkips) + ' test(s) failed/skipped at ' + assemblies[0].$!["run-time"]);
+				}
+
+				if (noOfTests > 0) {
+					resolve(true);
 				}
 			}
-		}
-
-		unlinkSync(resultFileName);
-
-		if (noOfFailures === 0) {
-			outputChannel.appendLine('✅ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's at ' + assemblies[0].$!["run-time"]);
-		}
-		else {
-			outputChannel.appendLine('❌ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's - ' + noOfFailures + ' test(s) failed at ' + assemblies[0].$!["run-time"]);
-		}
-
-		outputChannel.show(true);
-	}
+			else {
+				resolve(false);
+			}
+	});
+	
 }
 
 //@ts-ignore
@@ -588,23 +628,11 @@ function getAppJsonKey(keyName: string) {
 
 function getALTestRunnerPath(): string {
 	const alTestRunnerPath = getWorkspaceFolder() + '\\.altestrunner';
-	watchALTestRunnerPath(alTestRunnerPath);
 	return alTestRunnerPath;
 }
 
-function watchALTestRunnerPath(path: string) {
-	const filteredFolders = watchedFolders.filter(element => {
-		return element === path;
-	});
-
-	if (filteredFolders.length === 0) {
-		if (existsSync(path)) {
-			watch(path, (event, filename) => {
-				onWatchEvent(event, filename);
-			});
-			watchedFolders.push(path);
-		}
-	}
+function getLastResultPath(): string {
+	return getALTestRunnerPath() + '\\last.xml';
 }
 
 function getWorkspaceFolder() {
@@ -686,30 +714,6 @@ function createALTestRunnerDir() {
 
 	if (!(existsSync(getALTestRunnerPath()))) {
 		mkdirSync(getALTestRunnerPath());
-		watch(getALTestRunnerPath(), (event, filename) => {
-			onWatchEvent(event, filename);
-		});
-	}
-}
-
-function onWatchEvent(event: string, filename: string): any {
-	let context = { event: event, filename: filename };
-	callOnOutputTestResults(context);
-	if ((filename === 'last.xml') && (event !== "change")) {
-		outputTestResults()
-			.then(() => {
-				callOnOutputTestResults(context);
-			})
-			.catch(reason => {
-				outputTestResults().then(() => {
-					callOnOutputTestResults(context);
-				})
-			});
-
-		triggerUpdateDecorations();
-	}
-	else {
-		triggerUpdateDecorations();
 	}
 }
 
