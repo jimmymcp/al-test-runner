@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.2.10
+- Fix bug introduced in 0.2.9 🤦‍♂️
+
 ## 0.2.9
 - Handle skipped tests
 - Reworking watching for and outputting test results
