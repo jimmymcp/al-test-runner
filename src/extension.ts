@@ -240,22 +240,28 @@ function updateDecorations() {
 					testMethodRanges.splice(arrayNo, 1);
 				}
 
-				if (test.$.result === 'Pass') {
-					const decoration: vscode.DecorationOptions = { range: new vscode.Range(startPos, endPos), hoverMessage: 'Test passing 👍' };
-					passingTests.push(decoration);
-				}
-				else {
-					const hoverMessage: string = test.failure[0].message + "\n\n" + test.failure[0]["stack-trace"];
-					const decoration: vscode.DecorationOptions = { range: new vscode.Range(startPos, endPos), hoverMessage: hoverMessage };
-					failingTests.push(decoration);
-					
-					if (config.highlightFailingLine) {
-						const failingLineRange = getRangeOfFailingLineFromCallstack(test.failure[0]["stack-trace"][0], methodName, activeEditor!.document);
-						if (failingLineRange !== undefined) {
-							const decoration: vscode.DecorationOptions = {range: failingLineRange, hoverMessage: hoverMessage};
-							failingLines.push(decoration);
+				let decoration: vscode.DecorationOptions;
+
+				switch (test.$.result) {
+					case 'Pass':
+						decoration = { range: new vscode.Range(startPos, endPos), hoverMessage: 'Test passing 👍' };
+						passingTests.push(decoration);
+						break;
+					case 'Fail':
+						const hoverMessage: string = test.failure[0].message + "\n\n" + test.failure[0]["stack-trace"];
+						decoration = { range: new vscode.Range(startPos, endPos), hoverMessage: hoverMessage };
+						failingTests.push(decoration);
+
+						if (config.highlightFailingLine) {
+							const failingLineRange = getRangeOfFailingLineFromCallstack(test.failure[0]["stack-trace"][0], methodName, activeEditor!.document);
+							if (failingLineRange !== undefined) {
+								const decoration: vscode.DecorationOptions = { range: failingLineRange, hoverMessage: hoverMessage };
+								failingLines.push(decoration);
+							}
 						}
-					}
+						break;
+					default:
+						break;
 				}
 			}
 		});
@@ -535,25 +541,31 @@ async function outputTestResults() {
 			}
 			for (let test of assembly.collection[0].test) {
 				const testTime = parseFloat(test.$.time);
-				if (test.$.result === 'Pass') {
-					outputChannel.appendLine('\t✅ ' + test.$.method + '\t' + testTime.toFixed(2) + 's');
-				}
-				else {
-					const filePath = await getFilePathByCodeunitId(getCodeunitIdFromAssemblyName(assembly.$.name), test.$.method);
-					outputChannel.appendLine('\t❌ ' + test.$.method + '\t' + testTime.toFixed(2) + "s " + filePath);
-					outputChannel.appendLine('\t\t' + test.failure[0].message);
+						switch (test.$.result) {
+							case 'Pass':
+								outputChannel.appendLine('\t✅ ' + test.$.method + '\t' + testTime.toFixed(2) + 's');
+								break;
+							case 'Skip':
+								filePath = await getFilePathByCodeunitId(getCodeunitIdFromAssemblyName(assembly.$.name), test.$.method);
+								outputChannel.appendLine('\t❓ ' + test.$.method + '\t' + testTime.toFixed(2) + 's ' + filePath);
+								break;
+							case 'Fail':
+								filePath = await getFilePathByCodeunitId(getCodeunitIdFromAssemblyName(assembly.$.name), test.$.method);
+								outputChannel.appendLine('\t❌ ' + test.$.method + '\t' + testTime.toFixed(2) + "s " + filePath);
+								outputChannel.appendLine('\t\t' + test.failure[0].message);
+								break;
+							default:
+								break;
 				}
 			}
 		}
 		
-		unlinkSync(resultFileName);
-
-		if (noOfFailures === 0) {
-			outputChannel.appendLine('✅ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's at ' + assemblies[0].$!["run-time"]);
-		}
-		else {
-			outputChannel.appendLine('❌ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's - ' + noOfFailures + ' test(s) failed at ' + assemblies[0].$!["run-time"]);
-		}
+				if ((noOfFailures + noOfSkips) === 0) {
+					outputChannel.appendLine('✅ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's at ' + assemblies[0].$!["run-time"]);
+				}
+				else {
+					outputChannel.appendLine('❌ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's - ' + (noOfFailures + noOfSkips) + ' test(s) failed/skipped at ' + assemblies[0].$!["run-time"]);
+				}
 
 		outputChannel.show(true);
 	}
