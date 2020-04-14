@@ -1,7 +1,9 @@
 function Invoke-RunTests {
     Param(
         [Parameter(Mandatory=$true)]
-        $ContainerName,
+        $ContainerName,        
+        [Parameter(Mandatory=$false)]
+        $Tenant,
         [Parameter(Mandatory=$true)]
         $CompanyName,
         [Parameter(Mandatory=$false)]
@@ -38,6 +40,11 @@ function Invoke-RunTests {
         $Params.Add('credential', $Credential)
     }
     
+    if ($Tenant) {
+        $Params.Add('tenant', $Tenant)
+        $Message += ", tenant $Tenant"
+    }
+
     if ($TestCodeunit -ne '') {
         $Params.Add('testCodeunit', $TestCodeunit)
         $Message += ", codeunit $TestCodeunit"
