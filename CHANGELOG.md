@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.3.0
+- Merged pull requests 13 and 14 thanks Marton and Igor
+
 ## 0.2.10
 - Fix bug introduced in 0.2.9 🤦‍♂️
 
