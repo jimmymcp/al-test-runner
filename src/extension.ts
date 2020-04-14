@@ -35,6 +35,11 @@ let testsOutput: boolean;
 let timeout: NodeJS.Timer | undefined = undefined;
 let isTestCodeunit: boolean;
 
+const alTestRunnerAPI = new class {
+	getWorkspaceFolder: Function | undefined;
+	onOutputTestResults: Function | undefined;
+};
+
 export function activate(context: vscode.ExtensionContext) {
 	console.log('jamespearson.al-test-runner extension is activated');
 
@@ -161,6 +166,8 @@ export function activate(context: vscode.ExtensionContext) {
 			triggerUpdateDecorations();
 		}
 	}, null, context.subscriptions);
+
+	return alTestRunnerAPI;
 }
 
 async function invokeTestRunner(command: string) {
@@ -188,6 +195,8 @@ async function invokeTestRunner(command: string) {
 	watch(getLastResultPath(), async (event, filename) => {
 		if (await outputTestResults()) {
 			outputChannel.show(true);
+			let context = { event: event, filename: filename };
+			callOnOutputTestResults(context);
 			triggerUpdateDecorations();
 		}
 	});
@@ -629,6 +638,13 @@ function getLastResultPath(): string {
 }
 
 function getWorkspaceFolder() {
+	if (alTestRunnerAPI.getWorkspaceFolder) {
+		let override = alTestRunnerAPI.getWorkspaceFolder.call(null);
+		if (override && override.length > 0) {
+			return override;
+		}
+	}
+
 	const wsFolders = vscode.workspace.workspaceFolders!;
 	if (wsFolders !== undefined) {
 		if (wsFolders.length === 1) {
@@ -700,6 +716,12 @@ function createALTestRunnerDir() {
 
 	if (!(existsSync(getALTestRunnerPath()))) {
 		mkdirSync(getALTestRunnerPath());
+	}
+}
+
+function callOnOutputTestResults(context: any) {
+	if (alTestRunnerAPI.onOutputTestResults) {
+		alTestRunnerAPI.onOutputTestResults.call(null, context);
 	}
 }
 
