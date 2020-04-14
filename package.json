@@ -225,7 +225,7 @@
 						"type": "boolean",
 						"scope": "resource",
 						"description": "Enables CodeLens actions to run individual tests or all tests in a codeunit",
-						"default": false
+						"default": true
 					}
 				}
 			}
