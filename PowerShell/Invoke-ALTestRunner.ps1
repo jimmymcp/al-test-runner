@@ -49,7 +49,12 @@ function Invoke-ALTestRunner {
         TestSuiteName = $TestSuiteName
         ExtensionName = $ExtensionName
     }
-    
+
+    $Tenant = Get-TenantFromLaunchJson
+    if ($Tenant) {
+        $Params.Add('Tenant', $Tenant)
+    }
+
     if ($FileName -ne '') {
         if (Get-FileIsTestCodeunit -FileName $FileName) {
             $Params.Add('TestCodeunit', (Get-ObjectIdFromFile $FileName))
