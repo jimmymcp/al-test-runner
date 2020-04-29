@@ -510,7 +510,7 @@ export async function getFilePathByCodeunitId(codeunitId: number, method?: strin
 				let filePath = file.fsPath;
 				if (method !== undefined) {
 					const matches = text.match('procedure.*' + method + '\(\)');
-					if (matches !== undefined) {
+					if (matches !== null) {
 						const document = await vscode.workspace.openTextDocument(file.fsPath);
 						const lineNo = document.positionAt(matches!.index!).line + 1;
 						filePath += ':' + lineNo;
