@@ -74,6 +74,11 @@
 				"command": "altestrunner.openConfigFile",
 				"title": "Open Config File",
 				"category": "AL Test Runner"
+			},
+			{
+				"command": "altestrunner.outputTestResults",
+				"title": "Output Test Results",
+				"category": "AL Test Runner"
 			}
 		],
 		"keybindings": [

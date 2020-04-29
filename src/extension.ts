@@ -153,6 +153,14 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(command);
 
+	command = vscode.commands.registerCommand('altestrunner.outputTestResults', async () => {
+		testsOutput = false;
+		outputTestResults();
+		outputChannel.show();
+	});
+
+	context.subscriptions.push(command);
+
 	vscode.window.onDidChangeActiveTextEditor(editor => {
 		activeEditor = editor;
 		if (editor) {
