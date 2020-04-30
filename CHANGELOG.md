@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.3.2
+- Update minimum versions of packages in package-lock.json to respect security warnings
+
 ## 0.3.1
 - XUnit result files seem to sometimes be wrong. Test results reported as belonging to the wrong test codeunit. Result was an error when trying to find the line of that test method in that codeunit. Error handled.
 
