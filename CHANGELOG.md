@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.3.3
+- Get-FileIsTestCodeunit now searches case-insensitively for SubType = Test
+- Fix to Invoke-ALTestRunner test
+
 ## 0.3.2
 - Update minimum versions of packages in package-lock.json to respect security warnings
 
