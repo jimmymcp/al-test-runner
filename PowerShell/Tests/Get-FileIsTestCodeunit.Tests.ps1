@@ -4,7 +4,16 @@ Describe Get-FileIsTestCodeunit {
             $FileName = Join-Path $TestDrive ([Guid]::NewGuid().Guid + '.al')
             Set-Content -Path $FileName -Value 'codeunit 50100 "Test Codeunit"
                 {
-                    Subtype = Test;                
+                    Subtype = Test;
+                }'
+            Get-FileIsTestCodeunit $FileName | should be $true
+        }
+
+        It 'should return true for an .al test file with a SubType = Test line' {
+            $FileName = Join-Path $TestDrive ([Guid]::NewGuid().Guid + '.al')
+            Set-Content -Path $FileName -Value 'codeunit 50100 "Test Codeunit"
+                {
+                    SubType = Test;
                 }'
             Get-FileIsTestCodeunit $FileName | should be $true
         }
@@ -17,7 +26,7 @@ Describe Get-FileIsTestCodeunit {
                 {
                     procedure SomeTestMethod()
                     begin
-                    end;                                    
+                    end;
                 }'
             Get-FileIsTestCodeunit $FileName | should be $false
         }
@@ -28,7 +37,7 @@ Describe Get-FileIsTestCodeunit {
             $FileName = Join-Path $TestDrive ([Guid]::NewGuid().Guid + '.json')
             Set-Content -Path $FileName -Value '{
                     "key": "value",
-                    "anotehr key": "another value"            
+                    "anotehr key": "another value"
                 }'
             Get-FileIsTestCodeunit $FileName | should be $false
         }

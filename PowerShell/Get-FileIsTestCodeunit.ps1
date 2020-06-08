@@ -8,7 +8,7 @@ function Get-FileIsTestCodeunit {
     }
 
     $FileContent = Get-Content $FileName -Raw
-    $Matches = [regex]::Match($FileContent, 'Subtype = Test')
+    $Matches = [regex]::Match($FileContent, 'Subtype = Test', [System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
     return ($Matches.Captures.Count -gt 0)
 }
 
