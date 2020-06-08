@@ -1,4 +1,4 @@
-Describe Invoke-ALTestRunner {    
+Describe Invoke-ALTestRunner {
     InModuleScope ALTestRunner {
         Import-PowerShellModule 'navcontainerhelper'
         Mock Get-ServerFromLaunchJson {'bc'}
@@ -6,6 +6,7 @@ Describe Invoke-ALTestRunner {
         Mock Set-ALTestRunnerConfigValue {}
 
         Context 'No test suite selected, container is running pre-15 version' {
+            Mock Select-ALTestRunnerConfig {return 'bc'}
             Mock Get-ALTestRunnerConfigPath {return Join-Path $TestDrive 'config.json'}
             Mock Get-ValueFromLaunchJson {}
             Mock Select-BCTestSuite {'DEFAULT'}
@@ -16,7 +17,7 @@ Describe Invoke-ALTestRunner {
 
             It 'should prompt the user to enter the test suite' {
                 Invoke-ALTestRunner -Tests All -ExtensionId ([Guid]::NewGuid().Guid)
-                Assert-MockCalled Select-BCTestSuite                
+                Assert-MockCalled Select-BCTestSuite
             }
         }
     }    
