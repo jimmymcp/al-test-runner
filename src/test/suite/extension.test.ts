@@ -312,4 +312,24 @@ suite('Extension Test Suite', () => {
 	test('getCodeunitIdFromAssemblyName returns the numeric part of the assembly name', () => {
 		assert.strictEqual(50116, alTestRunner.getCodeunitIdFromAssemblyName('50116 Config Tests CACTMN'));
 	});
+
+	test('getTestMethodRangesFromDocument returns separate ranges for similar method names', async () => {
+		const text = `codeunit 51234 "Some Tests"
+		{
+			[Test]
+			procedure ThisIsATest()
+			begin
+			end;
+
+			[Test]
+			procedure ThisIsATestToo()
+			begin
+			end;
+		}`;
+
+		const doc = await createTextDocument('11.al', text);
+		const testMethodRanges = alTestRunner.getTestMethodRangesFromDocument(doc);
+
+		assert.strictEqual(testMethodRanges.length, 2);
+	});
 });

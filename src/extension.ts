@@ -253,18 +253,12 @@ function updateDecorations() {
 		const collection = resultObj.assembly.collection;
 		const tests = collection.shift()!.test as Array<types.ALTestResult>;
 
-		const documentText = activeEditor!.document.getText();
 		tests.forEach(test => {
-			const matches = documentText.match('(?<=procedure )' + test.$.method + '\(\)');
-			if ((matches !== undefined) && (matches !== null)) {
-				const startPos = activeEditor!.document.positionAt(matches!.index!);
-				const endPos = activeEditor!.document.positionAt(matches!.index! + matches![0].length);
-				let methodName = documentText.substr(matches!.index!, matches![0].length);
-
-				let arrayNo = testMethodRanges.findIndex(element => element.name === methodName);
-				if (arrayNo >= 0) {
-					testMethodRanges.splice(arrayNo, 1);
-				}
+			const testMethod = testMethodRanges.find(element => element.name === test.$.method);
+			if ((null !== testMethod) && (undefined !== testMethod)) {
+				const startPos = testMethod.range.start;
+				const endPos = testMethod.range.end;
+				testMethodRanges.splice(testMethodRanges.findIndex(element => element.name === test.$.method), 1);
 
 				let decoration: vscode.DecorationOptions;
 
@@ -279,7 +273,7 @@ function updateDecorations() {
 						failingTests.push(decoration);
 
 						if (config.highlightFailingLine) {
-							const failingLineRange = getRangeOfFailingLineFromCallstack(test.failure[0]["stack-trace"][0], methodName, activeEditor!.document);
+							const failingLineRange = getRangeOfFailingLineFromCallstack(test.failure[0]["stack-trace"][0], test.$.method, activeEditor!.document);
 							if (failingLineRange !== undefined) {
 								const decoration: vscode.DecorationOptions = { range: failingLineRange, hoverMessage: hoverMessage };
 								failingLines.push(decoration);
