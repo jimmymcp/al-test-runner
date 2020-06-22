@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.3.4
+- Fix issue 18: overlapping test decoration for test methods that begin with the name of another test
+
 ## 0.3.3
 - Get-FileIsTestCodeunit now searches case-insensitively for SubType = Test
 - Fix to Invoke-ALTestRunner test
