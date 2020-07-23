@@ -16,7 +16,7 @@ function Get-ALTestRunnerCredential {
             Set-ALTestRunnerCredential -Credential $Credential -VM
             return $Credential
         }
-        else {        
+        else {
             return [pscredential]::new($VMUserName, (ConvertTo-SecureString $VMSecurePassword))
         }
     } else {
@@ -31,7 +31,7 @@ function Get-ALTestRunnerCredential {
             Set-ALTestRunnerCredential -Credential $Credential
             return $Credential
         }
-        else {        
+        else {
             return [pscredential]::new($UserName, (ConvertTo-SecureString $SecurePwd))
         }
     }
