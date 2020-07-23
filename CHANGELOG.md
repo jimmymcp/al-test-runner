@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.3.5
+- Fix issue 21: handle line and block comments in launch.json file
+
 ## 0.3.4
 - Fix issue 18: overlapping test decoration for test methods that begin with the name of another test
 
