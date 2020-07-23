@@ -5,6 +5,7 @@ import {writeFileSync, readdirSync, existsSync, unlinkSync, mkdirSync} from 'fs'
 import * as os from 'os';
 import * as sinon from 'sinon';
 import { getLatestInsidersMetadata } from 'vscode-test/out/util';
+import { mock } from 'sinon';
 
 const tempDir: string = os.tmpdir() + '\\ALTR';
 if (existsSync(tempDir)) {
