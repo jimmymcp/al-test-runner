@@ -15,7 +15,8 @@ export class CodelensProvider implements vscode.CodeLensProvider {
         if (config.enableCodeLens) {
             const testMethodRanges = getTestMethodRangesFromDocument(document);
             testMethodRanges.forEach(testMethodRange => {
-                this.codeLenses.push(new vscode.CodeLens(testMethodRange.range));
+                this.codeLenses.push(new vscode.CodeLens(testMethodRange.range, {title: "Run Test", command: "altestrunner.runTest"}));
+                this.codeLenses.push(new vscode.CodeLens(testMethodRange.range, {title: "Debug Test", command: "altestrunner.debugTest"}));
             });
 
             if (this.codeLenses.push.length > 0) {
@@ -45,12 +46,22 @@ export class CodelensProvider implements vscode.CodeLensProvider {
         }
         else {
             const rangeStart = codeLens.range.start.line;
-            codeLens.command = {
-                title: "Run test",
-                command: "altestrunner.runTest",
-                arguments: [filename, rangeStart],
-                tooltip: "Run this test with AL Test Runner"
-            };
+            if (codeLens.command!.title === "Run Test") {
+                codeLens.command = {
+                    title: "Run test",
+                    command: "altestrunner.runTest",
+                    arguments: [filename, rangeStart],
+                    tooltip: "Run this test with AL Test Runner"
+                };
+            }
+            else {
+                codeLens.command = {
+                    title: "Debug test",
+                    command: "altestrunner.debugTest",
+                    arguments: [filename, rangeStart],
+                    tooltip: "Debug this test with AL Test Runner"
+                };
+            }
         }
 
         return codeLens;
