@@ -51,6 +51,11 @@
 				"category": "AL Test Runner"
 			},
 			{
+				"command": "altestrunner.debugTest",
+				"title": "Debug Current Test",
+				"category": "AL Test Runner"
+			},
+			{
 				"command": "altestrunner.clearTestResults",
 				"title": "Clear Test Results",
 				"category": "AL Test Runner"

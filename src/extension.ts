@@ -6,6 +6,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, watch, readdirSync,
 import * as xml2js from 'xml2js';
 import * as types from './types';
 import { CodelensProvider } from './CodelensProvider';
+import { callTestRunnerService } from './testRunnerService';
 
 let terminal: vscode.Terminal;
 let activeEditor = vscode.window.activeTextEditor;
@@ -103,6 +104,13 @@ export function activate(context: vscode.ExtensionContext) {
 				invokeTestRunner('Invoke-ALTestRunner -Tests Test -ExtensionId ' + extensionId + ' -ExtensionName "' + extensionName + '" -FileName "' + filename + '" -SelectionStart ' + selectionStart);
 			}
 		});
+	});
+
+	context.subscriptions.push(command);
+
+	command = vscode.commands.registerCommand('altestrunner.debugTest', async(filename: string, selectionStart: number) => {
+		await attachDebugger();
+		invokeDebugTest(filename, selectionStart);
 	});
 
 	context.subscriptions.push(command);
@@ -208,6 +216,24 @@ async function invokeTestRunner(command: string) {
 			triggerUpdateDecorations();
 		}
 	});
+}
+
+function invokeDebugTest(filename: string, selectionStart: number) {
+	terminal = getALTestRunnerTerminal(getTerminalName());
+	terminal.sendText(' ');
+	terminal.show(true);
+	terminal.sendText('cd "' + getWorkspaceFolder() + '"');
+	terminal.sendText('Invoke-TestRunnerService -FileName "' + filename + '" -SelectionStart ' + selectionStart);
+}
+
+async function attachDebugger() {
+	if (vscode.debug.activeDebugSession) {
+		return;
+	}
+
+	const attachConfigs = getDebugConfigurationsFromLaunchJson('attach');
+	const attachConfig = attachConfigs.shift() as vscode.DebugConfiguration;
+	await vscode.debug.startDebugging(vscode.workspace.workspaceFolders!.shift(), attachConfig);
 }
 
 function invokeCommand(command: string) {
@@ -423,13 +449,13 @@ export function launchConfigIsValid(alTestRunnerConfig?: types.ALTestRunnerConfi
 		return false;
 	}
 	else {
-		let debugConfigurations = getDebugConfigurationsFromLaunchJson();
+		let debugConfigurations = getDebugConfigurationsFromLaunchJson('launch');
 		return debugConfigurations.filter(element => element.name === alTestRunnerConfig!.launchConfigName).length === 1;
 	}
 }
 
 async function selectLaunchConfig() {
-	let debugConfigurations = getDebugConfigurationsFromLaunchJson();
+	let debugConfigurations = getDebugConfigurationsFromLaunchJson('launch');
 	let selectedConfig;
 
 	if (debugConfigurations.length === 1) {
@@ -606,11 +632,10 @@ async function outputTestResults(): Promise<Boolean> {
 	
 }
 
-//@ts-ignore
-export function getDebugConfigurationsFromLaunchJson() {
+export function getDebugConfigurationsFromLaunchJson(type: string) {
 	const configuration = vscode.workspace.getConfiguration('launch', vscode.Uri.file(getLaunchJsonPath()));
 	const debugConfigurations = configuration.configurations as Array<vscode.DebugConfiguration>;
-	return debugConfigurations.slice();
+	return debugConfigurations.filter(element => { return element.request === type;}).slice();
 }
 
 export function getLaunchJson() {
