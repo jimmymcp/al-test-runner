@@ -6,7 +6,6 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, watch, readdirSync,
 import * as xml2js from 'xml2js';
 import * as types from './types';
 import { CodelensProvider } from './CodelensProvider';
-import { callTestRunnerService } from './testRunnerService';
 
 let terminal: vscode.Terminal;
 let activeEditor = vscode.window.activeTextEditor;
