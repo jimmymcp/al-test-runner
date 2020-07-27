@@ -12,6 +12,7 @@ export type ALTestRunnerConfig = {
 	remoteContainerName: string;
 	dockerHost: string;
 	newPSSessionOptions: string;
+	testRunnerServiceUrl: string;
 };
 
 export type ALTestAssembly = {

@@ -704,7 +704,8 @@ function createALTestRunnerConfig() {
 		vmSecurePassword: "",
 		remoteContainerName: "",
 		dockerHost: "",
-		newPSSessionOptions: ""
+		newPSSessionOptions: "",
+		testRunnerServiceUrl: ""
 	};
 
 	createALTestRunnerDir();
