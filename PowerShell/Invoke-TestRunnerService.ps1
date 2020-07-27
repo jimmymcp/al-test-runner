@@ -9,8 +9,18 @@ function Invoke-TestRunnerService {
     $Credential = Get-ALTestRunnerCredential
     $CodeunitId = Get-ObjectIdFromFile $FileName
     $TestName = Get-TestNameFromSelectionStart -Path $FileName -SelectionStart $SelectionStart
-    $Proxy = New-WebServiceProxy -Uri (Get-ValueFromALTestRunnerConfig -KeyName 'testRunnerServiceUrl') -Credential $Credential
-    $Proxy.RunTest($CodeunitId, $TestName)
+    try {
+        Invoke-WebRequest (Get-ValueFromALTestRunnerConfig -KeyName 'testRunnerServiceUrl') `
+            -Credential $Credential `
+            -Method Post `
+            -Body "{`"codeunitId`": $CodeunitId, `"testName`": `"$TestName`"}" `
+            -ContentType application/json | Out-Null
+        Write-Host "Test $TestName passes" -ForegroundColor Green
+    }
+    catch {
+        $ErrorDetails = ConvertFrom-Json $_.ErrorDetails
+        Write-Host $ErrorDetails.error.message -ForegroundColor DarkRed
+    }
 }
 
 Export-ModuleMember -Function Invoke-TestRunnerService
