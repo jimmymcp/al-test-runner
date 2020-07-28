@@ -21,6 +21,7 @@ export class CodelensProvider implements vscode.CodeLensProvider {
 
             if (this.codeLenses.push.length > 0) {
                 this.codeLenses.push(new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), { title: "Run Tests", command: "altestrunner.runTestsCodeunit", arguments: [document.fileName], tooltip: "Run all tests in this codeunit with AL Test Runner" }));
+                this.codeLenses.push(new vscode.CodeLens(new vscode.Range(0, 0, 0, 0), { title: "Debug Tests", command: "altestrunner.debugTestsCodeunit", arguments: [document.fileName], tooltip: "Run all tests in this codeunit with AL Test Runner" }));
             }
         }
 

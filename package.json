@@ -56,6 +56,11 @@
 				"category": "AL Test Runner"
 			},
 			{
+				"command": "altestrunner.debugTestsCodeunit",
+				"title": "Debug Test in Current Codeunit",
+				"category": "AL Test Runner"
+			},
+			{
 				"command": "altestrunner.clearTestResults",
 				"title": "Clear Test Results",
 				"category": "AL Test Runner"

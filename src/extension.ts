@@ -114,6 +114,18 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(command);
 
+	command = vscode.commands.registerCommand('altestrunner.debugTestsCodeunit', async(filename: string) => {
+		if (filename === undefined) {
+			filename = vscode.window.activeTextEditor!.document.fileName;
+		}
+		
+		initDebugTest(filename);
+		await attachDebugger();
+		invokeDebugTest(filename, 0);
+	});
+
+	context.subscriptions.push(command);
+
 	command = vscode.commands.registerCommand('altestrunner.clearTestResults', async () => {
 		const resultsPath = getALTestRunnerPath() + '\\Results';
 		if (existsSync(resultsPath)) {
