@@ -245,6 +245,18 @@ async function invokeTestRunner(command: string) {
 	});
 }
 
+function initDebugTest(filename: string) {
+	terminal = getALTestRunnerTerminal(getTerminalName());
+	terminal.sendText(' ');
+	terminal.show(true);
+	terminal.sendText('cd "' + getWorkspaceFolder() + '"');
+	terminal.sendText('Invoke-TestRunnerService -FileName "' + filename + '" -Init');
+	
+	const sleep = require("system-sleep");
+	const config = vscode.workspace.getConfiguration('al-test-runner');
+	sleep(config.testRunnerInitialisationTime);
+}
+
 function invokeDebugTest(filename: string, selectionStart: number) {
 	terminal = getALTestRunnerTerminal(getTerminalName());
 	terminal.sendText(' ');
