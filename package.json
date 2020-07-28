@@ -84,6 +84,11 @@
 				"command": "altestrunner.outputTestResults",
 				"title": "Output Test Results",
 				"category": "AL Test Runner"
+			},
+			{
+				"command": "altestrunner.installTestRunnerService",
+				"title": "Install Test Runner Service",
+				"category": "AL Test Runner"
 			}
 		],
 		"keybindings": [

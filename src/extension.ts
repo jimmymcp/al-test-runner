@@ -168,6 +168,14 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(command);
 
+	command = vscode.commands.registerCommand('altestrunner.installTestRunnerService', async () => {
+		terminal = getALTestRunnerTerminal(getTerminalName());
+		terminal.show(true);
+		terminal.sendText('Install-TestRunnerService');
+	});
+
+	context.subscriptions.push(command);
+
 	vscode.window.onDidChangeActiveTextEditor(editor => {
 		activeEditor = editor;
 		if (editor) {
