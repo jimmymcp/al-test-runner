@@ -104,6 +104,10 @@
 			{
 				"command": "altestrunner.runAllTests",
 				"key": "Ctrl+Alt+Shift+T"
+			},
+			{
+				"command": "altestrunner.debugTest",
+				"key": "Ctrl+Alt+D"
 			}
 		],
 		"configuration": [

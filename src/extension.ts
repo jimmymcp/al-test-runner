@@ -108,6 +108,14 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(command);
 
 	command = vscode.commands.registerCommand('altestrunner.debugTest', async(filename: string, selectionStart: number) => {
+		if (filename === undefined) {
+			filename = vscode.window.activeTextEditor!.document.fileName;
+		}
+		if (selectionStart === undefined) {
+			selectionStart = vscode.window.activeTextEditor!.selection.start.line;
+		}
+		
+		initDebugTest(filename);
 		await attachDebugger();
 		invokeDebugTest(filename, selectionStart);
 	});
