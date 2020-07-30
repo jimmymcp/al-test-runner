@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.4.0
+- Support for debugging tests see [https://jpearson.blog/2020/07/03/debugging-business-central-tests-with-al-test-runner](https://jpearson.blog/2020/07/03/debugging-business-central-tests-with-al-test-runner) for more information
+
 ## 0.3.5
 - Fix issue 21: handle line and block comments in launch.json file
 
