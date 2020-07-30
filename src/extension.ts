@@ -271,6 +271,11 @@ async function attachDebugger() {
 	}
 
 	const attachConfigs = getDebugConfigurationsFromLaunchJson('attach');
+
+	if (attachConfigs.length === 0) {
+		throw new Error('Please define a debug configuration in launch.json before debugging tests.');
+	}
+
 	const attachConfig = attachConfigs.shift() as vscode.DebugConfiguration;
 	await vscode.debug.startDebugging(vscode.workspace.workspaceFolders!.shift(), attachConfig);
 }
