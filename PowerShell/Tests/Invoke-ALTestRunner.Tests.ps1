@@ -1,6 +1,6 @@
 Describe Invoke-ALTestRunner {
     InModuleScope ALTestRunner {
-        Import-PowerShellModule 'navcontainerhelper'
+        Import-ContainerHelper
         Mock Get-ServerFromLaunchJson {'bc'}
         Mock Get-ValueFromALTestRunnerConfig {'My Company'} {$KeyName -eq 'companyName'}
         Mock Set-ALTestRunnerConfigValue {}
@@ -20,5 +20,5 @@ Describe Invoke-ALTestRunner {
                 Assert-MockCalled Select-BCTestSuite
             }
         }
-    }    
+    }
 }
