@@ -1,7 +1,7 @@
 function Invoke-RunTests {
     Param(
         [Parameter(Mandatory=$true)]
-        $ContainerName,        
+        $ContainerName,
         [Parameter(Mandatory=$false)]
         $Tenant,
         [Parameter(Mandatory=$true)]
@@ -114,7 +114,7 @@ function Invoke-RunTests {
         }
         catch {
             $AttemptNo++
-            Write-Host "Error occurred, retrying..." -ForegroundColor Magenta
+            Write-Host "Error occurred ($_) - retrying..." -ForegroundColor Magenta
 
             if ($AttemptNo -ge 3) {
                 $BreakTestLoop = $true
