@@ -2,6 +2,7 @@
 
 ## 0.4.1
 - Support for bccontainerhelper module. AL Test Runner will now check for the availability of bccontainerhelper and import it if available. If not, it will attempt to import the navcontainerhelper module
+- Display error details when tests fail to run - should help diagnose the problem e.g. incorrect company name, invalid results file path
 
 ## 0.4.0
 - Support for debugging tests see [https://jpearson.blog/2020/07/03/debugging-business-central-tests-with-al-test-runner](https://jpearson.blog/2020/07/03/debugging-business-central-tests-with-al-test-runner) for more information
