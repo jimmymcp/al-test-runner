@@ -4,7 +4,7 @@ function Install-TestRunnerService {
             $ContainerName
         )
 
-        Import-PowerShellModule -Module 'navcontainerhelper'
+        Import-ContainerHelper
         $LocalPath = "$($Env:TEMP)\TestRunnerService.app"
         if (Test-Path $LocalPath) {
             Remove-Item $LocalPath

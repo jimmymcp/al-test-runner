@@ -11,9 +11,9 @@ function Invoke-ALTestRunner {
         [string]$ExtensionId,
         [Parameter(Mandatory=$false)]
         [string]$ExtensionName
-        )    
+        )
 
-    Import-PowerShellModule 'navcontainerhelper'
+    Import-ContainerHelper
 
     $ContainerName = Get-ContainerName
     if (!(Get-ContainerIsRunning $ContainerName)) {
