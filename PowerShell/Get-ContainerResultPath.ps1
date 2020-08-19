@@ -6,7 +6,10 @@ function Get-ContainerResultPath {
     $ResultPath = Get-ValueFromALTestRunnerConfig -ConfigPath $ALTestRunnerConfigPath -KeyName 'containerResultPath'
     if (($ResultPath -eq '') -or ($null -eq $ResultPath)) {
         $ContainerName = Get-ContainerNAme
-        $ResultPath = Invoke-CommandOnDockerHost {Param($ContainerName) (Get-BCContainerSharedFolders $ContainerName).Keys | Select-Object -First 1} -Parameters $ContainerName
+        $ResultPath = Invoke-CommandOnDockerHost {Param($ContainerName) (Get-BCContainerSharedFolders $ContainerName).Keys | Where-Object {$_.Contains('ProgramData')} | Select-Object -First 1} -Parameters $ContainerName
+        if ($null -eq $ResultPath) {
+            $ResultPath = Invoke-CommandOnDockerHost {Param($ContainerName) (Get-BCContainerSharedFolders $ContainerName).Keys | Select-Object -First 1} -Parameters $ContainerName
+        }
         Set-ALTestRunnerConfigValue -KeyName 'containerResultPath' -KeyValue $ResultPath
     }
 
