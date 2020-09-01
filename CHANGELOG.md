@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.4.2
+- Attempt to find a container result path in the ProgramData folder by default (there seems to be a problem using C:\\bcartifacts.cache)
+
 ## 0.4.1
 - Support for bccontainerhelper module. AL Test Runner will now check for the availability of bccontainerhelper and import it if available. If not, it will attempt to import the navcontainerhelper module
 - Display error details when tests fail to run - should help diagnose the problem e.g. incorrect company name, invalid results file path
