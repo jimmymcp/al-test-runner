@@ -1,0 +1,56 @@
+{
+    "$id": "AL Test Runner Config File",
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "description": "Schema for AL Test Runner config file",
+    "type": "object",
+    "properties": {
+        "containerResultPath": {
+            "type": "string",
+            "description": "The path to save test results files to - must be shared with the container"
+        },
+        "launchConfigName": {
+            "type": "string",
+            "description": "The name of the launch configuration to test against"
+        },
+        "securePassword": {
+            "type": "string",
+            "description": "The secure password used to connect to the container (for UserPassword authentication)"
+        },
+        "userName": {
+            "type": "string",
+            "description": "The user name used to connect to the container (for UserPassword authentication)"
+        },
+        "companyName": {
+            "type": "string",
+            "description": "The Business Central company to run the tests in"
+        },
+        "testSuiteName": {
+            "type": "string",
+            "description": "The name of test suite to execute tests in (only required in Business Central 14)"
+        },
+        "vmUserName": {
+            "type": "string",
+            "description": "The user name of the credentials used to connect to a remote Docker host"
+        },
+        "vmSecurePassword": {
+            "type": "string",
+            "description": "The secure password of the credentials used to connect to a remote Docker host"
+        },
+        "remoteContainerName": {
+            "type": "string",
+            "description": "The name of the Docker container to connect to when running in a remote Docker host"
+        },
+        "dockerHost": {
+            "type": "string",
+            "description": "The name of the Docker host (blank when running locally)"
+        },
+        "newPSSessionOptions": {
+            "type": "string",
+            "description": "Optional parameters to attach to the New-PSSession command when creating a session to the remote Docker host"
+        },
+        "testRunnerServiceUrl": {
+            "type": "string",
+            "description": "The OData endpoint to connect to the test runner service when debugging tests e.g. http://containername:7048/BC/ODataV4/TestRunner_RunTest?company=My%20Company&tenant=default"
+        }
+    }
+}

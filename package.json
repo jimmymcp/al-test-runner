@@ -265,6 +265,12 @@
 				"path": "snippets.json",
 				"language": "al"
 			}
+		],
+		"jsonValidation": [
+			{
+				"fileMatch": ".altestrunner/config.json",
+				"url": "./syntaxes/configSyntax.json"
+			}
 		]
 	},
 	"scripts": {
