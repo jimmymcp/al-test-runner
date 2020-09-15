@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.4.3
+- JSON validation for AL Test Runner config file
+
 ## 0.4.2
 - Attempt to find a container result path in the ProgramData folder by default (there seems to be a problem using C:\\bcartifacts.cache)
 
