@@ -484,7 +484,7 @@ function readyToRunTests(): Promise<boolean> {
 	});
 }
 
-export function launchConfigIsValid(alTestRunnerConfig?: types.ALTestRunnerConfig, launchJson?: object): boolean {
+export function launchConfigIsValid(alTestRunnerConfig?: types.ALTestRunnerConfig): boolean {
 	if (alTestRunnerConfig === undefined) {
 		alTestRunnerConfig = getALTestRunnerConfig();
 	}
