@@ -114,7 +114,14 @@ function Invoke-RunTests {
         }
         catch {
             $AttemptNo++
-            Write-Host "Error occurred ($_) - retrying..." -ForegroundColor Magenta
+            Write-Host "Error occurred ($_)" -ForegroundColor Magenta
+            Write-Host "Testing company set in config file exists in the container" -ForegroundColor Cyan
+            $NewCompanyName = Test-CompanyExists
+
+            if (![string]::IsNullOrEmpty($NewCompanyName)) {
+                $Params.Remove('companyName')
+                $Params.Add('companyName', $NewCompanyName)
+            }
 
             if ($AttemptNo -ge 3) {
                 $BreakTestLoop = $true
