@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.4.4
+- If tests fail to run then test whether the specified company exists in the container. If not then select a company which does exist.
+- Correct typo in debug tests in current codeunit command
+- Merged workspace configuration fixes PR (thanks Bjarki)
+
 ## 0.4.3
 - JSON validation for AL Test Runner config file
 
