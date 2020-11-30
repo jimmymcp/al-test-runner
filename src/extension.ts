@@ -107,14 +107,14 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(command);
 
-	command = vscode.commands.registerCommand('altestrunner.debugTest', async(filename: string, selectionStart: number) => {
+	command = vscode.commands.registerCommand('altestrunner.debugTest', async (filename: string, selectionStart: number) => {
 		if (filename === undefined) {
 			filename = vscode.window.activeTextEditor!.document.fileName;
 		}
 		if (selectionStart === undefined) {
 			selectionStart = vscode.window.activeTextEditor!.selection.start.line;
 		}
-		
+
 		initDebugTest(filename);
 		await attachDebugger();
 		invokeDebugTest(filename, selectionStart);
@@ -122,11 +122,11 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(command);
 
-	command = vscode.commands.registerCommand('altestrunner.debugTestsCodeunit', async(filename: string) => {
+	command = vscode.commands.registerCommand('altestrunner.debugTestsCodeunit', async (filename: string) => {
 		if (filename === undefined) {
 			filename = vscode.window.activeTextEditor!.document.fileName;
 		}
-		
+
 		initDebugTest(filename);
 		await attachDebugger();
 		invokeDebugTest(filename, 0);
@@ -251,7 +251,7 @@ function initDebugTest(filename: string) {
 	terminal.show(true);
 	terminal.sendText('cd "' + getWorkspaceFolder() + '"');
 	terminal.sendText('Invoke-TestRunnerService -FileName "' + filename + '" -Init');
-	
+
 	const sleep = require("system-sleep");
 	const config = getCurrentWorkspaceConfig();
 	sleep(config.testRunnerInitialisationTime);
@@ -673,13 +673,13 @@ async function outputTestResults(): Promise<Boolean> {
 			resolve(false);
 		}
 	});
-	
+
 }
 
 export function getDebugConfigurationsFromLaunchJson(type: string) {
 	const configuration = vscode.workspace.getConfiguration('launch', vscode.Uri.file(getLaunchJsonPath()));
 	const debugConfigurations = configuration.configurations as Array<vscode.DebugConfiguration>;
-	return debugConfigurations.filter(element => { return element.request === type;}).slice();
+	return debugConfigurations.filter(element => { return element.request === type; }).slice();
 }
 
 export function getLaunchJson() {
@@ -723,16 +723,21 @@ function getWorkspaceFolder() {
 		}
 	}
 
-	if (activeEditor === undefined || activeEditor === null) {
-		throw new Error('Please open a file in the project you want to run the tests for.');
-	}
-	else {
+	if (activeEditor) {
 		const workspace = vscode.workspace.getWorkspaceFolder(activeEditor!.document.uri);
-		if (workspace === undefined) {
-			throw new Error('Please open a file in the project you want to run the tests for.');
+		if (workspace) {
+			return workspace.uri.fsPath;
 		}
-		return workspace!.uri.fsPath;
 	}
+
+	if (vscode.window.visibleTextEditors.length > 0) {
+		const workspace = vscode.workspace.getWorkspaceFolder(vscode.window.visibleTextEditors[0].document.uri);
+		if (workspace) {
+			return workspace.uri.fsPath;
+		}
+	}
+
+	throw new Error('Please open a file in the project you want to run the tests for.');
 }
 
 function getCurrentWorkspaceConfig() {
