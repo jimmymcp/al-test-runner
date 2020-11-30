@@ -1,25 +1,25 @@
 function Invoke-RunTests {
     Param(
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         $ContainerName,
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         $Tenant,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         $CompanyName,
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [pscredential]$Credential,
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [Guid]$ExtensionId,
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [ValidateSet('All,Codeunit,Test')]
         [string]$Tests = 'All',
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [string]$TestCodeunit = '',
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [string]$TestFunction = '',
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [string]$TestSuiteName = '',
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [string]$ExtensionName
     )
 
@@ -31,8 +31,8 @@ function Invoke-RunTests {
     $Message = "Running tests on $ContainerName, company $CompanyName"
 
     $Params = @{
-        containerName = $ContainerName
-        companyName = $CompanyName 
+        containerName       = $ContainerName
+        companyName         = $CompanyName 
         XUnitResultFileName = $ContainerResultFile
     }
     
@@ -67,18 +67,18 @@ function Invoke-RunTests {
     [int]$AttemptNo = 1
     [bool]$BreakTestLoop = $false
     
-    while(!$BreakTestLoop) {
+    while (!$BreakTestLoop) {
         try {
             Write-Host $Message -ForegroundColor Green
 
-            Invoke-CommandOnDockerHost {Param($Params) Run-TestsInBCContainer @Params -detailed -Verbose} -Parameters $Params
+            Invoke-CommandOnDockerHost { Param($Params) Run-TestsInBCContainer @Params -detailed -Verbose } -Parameters $Params
             
             if (Get-DockerHostIsRemote) {
                 $Session = Get-DockerHostSession
                 Invoke-CommandOnDockerHost {
                     Param($ContainerResultFile, $ResultId)
                     if (Test-Path $ContainerResultFile) {
-                        if (-not (Test-Path 'C:\BCContainerTests\')){
+                        if (-not (Test-Path 'C:\BCContainerTests\')) {
                             New-Item -Path 'C:\' -Name BCContainerTests -ItemType Directory -Force | Out-Null
                         }
 
@@ -103,7 +103,7 @@ function Invoke-RunTests {
                     throw 'Tests have not been run'
                 }
             }
-                    
+
             Merge-ALTestRunnerTestResults -ResultsFile $ResultFile -ToPath (Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) 'Results')
             Remove-Item $ResultFile
 
