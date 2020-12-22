@@ -57,7 +57,7 @@
 			},
 			{
 				"command": "altestrunner.debugTestsCodeunit",
-				"title": "Debug Test in Current Codeunit",
+				"title": "Debug Tests in Current Codeunit",
 				"category": "AL Test Runner"
 			},
 			{
