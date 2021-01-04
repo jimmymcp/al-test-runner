@@ -214,7 +214,7 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 async function invokeTestRunner(command: string) {
-	const config = vscode.workspace.getConfiguration('al-test-runner');
+	const config = getCurrentWorkspaceConfig();
 
 	switch (config.publishBeforeTest) {
 		case 'Publish':
@@ -253,7 +253,7 @@ function initDebugTest(filename: string) {
 	terminal.sendText('Invoke-TestRunnerService -FileName "' + filename + '" -Init');
 	
 	const sleep = require("system-sleep");
-	const config = vscode.workspace.getConfiguration('al-test-runner');
+	const config = getCurrentWorkspaceConfig();
 	sleep(config.testRunnerInitialisationTime);
 }
 
@@ -291,7 +291,7 @@ function invokeCommand(command: string) {
 }
 
 function updateDecorations() {
-	const config = vscode.workspace.getConfiguration('al-test-runner');
+	const config = getCurrentWorkspaceConfig();
 
 	let passingTests: vscode.DecorationOptions[] = [];
 	let failingTests: vscode.DecorationOptions[] = [];
@@ -565,7 +565,7 @@ export function getLineNumberOfMethodDeclaration(method: string, document: vscod
 
 export async function getFilePathByCodeunitId(codeunitId: number, method?: string): Promise<string> {
 	return new Promise(async (resolve, reject) => {
-		const config = vscode.workspace.getConfiguration('al-test-runner');
+		const config = getCurrentWorkspaceConfig();
 		const globPattern = config.testCodeunitGlobPattern;
 		if ((globPattern === '') || (globPattern === undefined)) {
 			resolve('');
@@ -733,6 +733,10 @@ function getWorkspaceFolder() {
 		}
 		return workspace!.uri.fsPath;
 	}
+}
+
+function getCurrentWorkspaceConfig() {
+	return vscode.workspace.getConfiguration('al-test-runner', vscode.Uri.file(getWorkspaceFolder()));
 }
 
 function getALTestRunnerConfigPath(): string {
