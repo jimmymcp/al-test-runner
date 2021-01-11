@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.4.6
+- Include not implemented error in test snippet (to avoid incomplete tests passing by default)
+
 ## 0.4.5
 - Merged workspace configuration fixes PR (thanks Bjarki)
 
