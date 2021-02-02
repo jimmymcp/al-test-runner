@@ -59,3 +59,8 @@ export type ALTestMethodRange = {
 	name: string;
 	range: vscode.Range;
 };
+
+export type ALObject = {
+	type: string;
+	id: number;
+};
