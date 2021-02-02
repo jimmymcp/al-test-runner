@@ -3,9 +3,11 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, watch, readdirSync,
 import * as xml2js from 'xml2js';
 import * as types from './types';
 import { CodelensProvider } from './CodelensProvider';
+import { toggleCodeCoverage } from './CodeCoverage';
 
 let terminal: vscode.Terminal;
 let activeEditor = vscode.window.activeTextEditor;
+let showCodeCoverage: Boolean = false;
 const config = vscode.workspace.getConfiguration('al-test-runner');
 const passingTestColor = 'rgba(' + config.passingTestsColor.red + ',' + config.passingTestsColor.green + ',' + config.passingTestsColor.blue + ',' + config.passingTestsColor.alpha + ')';
 const failingTestColor = 'rgba(' + config.failingTestsColor.red + ',' + config.failingTestsColor.green + ',' + config.failingTestsColor.blue + ',' + config.failingTestsColor.alpha + ')';
@@ -190,6 +192,13 @@ export function activate(context: vscode.ExtensionContext) {
 		terminal.show(true);
 		terminal.sendText('Install-TestRunnerService');
 	});
+
+	context.subscriptions.push(command);
+
+	command = vscode.commands.registerCommand('altestrunner.toggleCodeCoverage', async () => {
+		showCodeCoverage = !showCodeCoverage;
+		toggleCodeCoverage(showCodeCoverage);
+	})
 
 	context.subscriptions.push(command);
 

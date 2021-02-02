@@ -94,6 +94,11 @@
 				"command": "altestrunner.installTestRunnerService",
 				"title": "Install Test Runner Service",
 				"category": "AL Test Runner"
+			},
+			{
+				"command": "altestrunner.toggleCodeCoverage",
+				"title": "Toggle Code Coverage",
+				"category": "AL Test Runner"
 			}
 		],
 		"keybindings": [
