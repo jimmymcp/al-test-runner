@@ -1,7 +1,4 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
 import * as vscode from 'vscode';
-import { isUndefined } from 'util';
 import { readFileSync, writeFileSync, mkdirSync, existsSync, watch, readdirSync, unlinkSync, unwatchFile } from 'fs';
 import * as xml2js from 'xml2js';
 import * as types from './types';
@@ -453,7 +450,7 @@ function getALTestRunnerTerminal(terminalName: string): vscode.Terminal {
 	let terminals = vscode.window.terminals.filter(element => element.name === terminalName);
 	let terminal = terminals.shift()!;
 
-	if (!(isUndefined(terminal))) {
+	if (terminal !== undefined) {
 		return terminal;
 	}
 	else {
@@ -508,7 +505,7 @@ async function selectLaunchConfig() {
 	else if (debugConfigurations.length > 1) {
 		let configNames: Array<string> = debugConfigurations.map(element => element.name);
 		selectedConfig = await vscode.window.showQuickPick(configNames, { canPickMany: false, placeHolder: 'Please select a configuration to run tests against' });
-		if (isUndefined(selectedConfig)) {
+		if (selectedConfig === undefined) {
 			vscode.window.showErrorMessage('Please select a configuration before running tests');
 		}
 		else {
@@ -531,7 +528,7 @@ export function documentIsTestCodeunit(document: vscode.TextDocument): boolean {
 export function getDocumentIdAndName(document: vscode.TextDocument): string {
 	let firstLine = document.getText(new vscode.Range(0, 0, 0, 250));
 	let matches = firstLine.match('\\d+ .*');
-	if (!(isUndefined(matches))) {
+	if (matches !== undefined) {
 		return matches!.shift()!.replace(/"/g, '');
 	}
 	else {
