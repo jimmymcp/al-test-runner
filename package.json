@@ -113,6 +113,10 @@
 			{
 				"command": "altestrunner.debugTest",
 				"key": "Ctrl+Alt+D"
+			},
+			{
+				"command": "altestrunner.toggleCodeCoverage",
+				"key": "Ctrl+Alt+C"
 			}
 		],
 		"configuration": [
