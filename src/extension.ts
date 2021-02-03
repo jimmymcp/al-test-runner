@@ -4,7 +4,7 @@ import * as xml2js from 'xml2js';
 import * as types from './types';
 import { CodelensProvider } from './CodelensProvider';
 import { updateCodeCoverageDecoration, outputCodeCoverage, getCodeCoveragePath } from './CodeCoverage';
-import { documentIsTestCodeunit, getDocumentIdAndName, getFilePathByCodeunitId} from './alFileHelper';
+import { documentIsTestCodeunit, getDocumentIdAndName, getFilePathByCodeunitId } from './alFileHelper';
 
 let terminal: vscode.Terminal;
 export let activeEditor = vscode.window.activeTextEditor;
@@ -243,7 +243,7 @@ async function invokeTestRunner(command: string) {
 
 	writeFileSync(getLastResultPath(), '');
 	testsOutput = false;
-	watch(getCodeCoveragePath(), async (event, filename) => {
+	watch(getLastResultPath(), async (event, filename) => {
 		if (await outputTestResults()) {
 			outputChannel.show(true);
 			let context = { event: event, filename: filename };
