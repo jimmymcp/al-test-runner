@@ -261,6 +261,12 @@
 						"scope": "resource",
 						"description": "The delay (in milliseconds) to allow the test runner to initialise before attaching the debugger",
 						"default": 3000
+					},
+					"al-test-runner.codeCoveragePath": {
+						"type": "string",
+						"scope": "resource",
+						"description": "The path to the JSON file which has details of the code coverage for this project",
+						"default": "../tests/.altestrunner/codecoverage.json"
 					}
 				}
 			}
