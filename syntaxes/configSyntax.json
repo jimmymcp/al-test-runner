@@ -51,6 +51,10 @@
         "testRunnerServiceUrl": {
             "type": "string",
             "description": "The OData endpoint to connect to the test runner service when debugging tests e.g. http://containername:7048/BC/ODataV4/TestRunner_RunTest?company=My%20Company&tenant=default"
+        },
+        "codeCoveragePath": {
+            "type": "string",
+            "description": "The path to save details of code coverage to e.g. .//.altestrunner//codecoverage.json"
         }
     }
 }

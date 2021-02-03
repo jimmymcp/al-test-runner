@@ -13,6 +13,7 @@ export type ALTestRunnerConfig = {
 	dockerHost: string;
 	newPSSessionOptions: string;
 	testRunnerServiceUrl: string;
+	codeCoveragePath: string;
 };
 
 export type ALTestAssembly = {

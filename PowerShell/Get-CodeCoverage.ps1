@@ -8,13 +8,15 @@ function Get-CodeCoverage {
         throw 'Please set the OData url to the test runner service (testRunnerServiceUrl key in AL Test Runner config).'
     }
 
+    $CodeCoverageFile = Get-ValueFromALTestRunnerConfig -KeyName 'codeCoveragePath'
+    Write-Host "Downloading code coverage to $CodeCoverageFile"
+
     try {
         $Result = (Invoke-WebRequest $ServiceUrl `
                 -Credential $Credential `
                 -Method Post `
                 -ContentType application/json).Content | ConvertFrom-Json
-        $CodeCoverage = ConvertFrom-Csv $Result.value -Header ('ObjectType', 'ObjectID', 'LineType', 'LineNo', 'NoOfHits') | Sort-Object ObjectType, ObjectID, LineNo
-        $CodeCoverageFile = Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) 'codecoverage.json'
+        $CodeCoverage = ConvertFrom-Csv $Result.value -Header ('ObjectType', 'ObjectID', 'LineType', 'LineNo', 'NoOfHits', 'Line') | Sort-Object ObjectType, ObjectID, LineNo
         Set-Content -Path $CodeCoverageFile -Value (ConvertTo-Json $CodeCoverage)
     }
     catch {

@@ -789,7 +789,8 @@ function createALTestRunnerConfig() {
 		remoteContainerName: "",
 		dockerHost: "",
 		newPSSessionOptions: "",
-		testRunnerServiceUrl: ""
+		testRunnerServiceUrl: "",
+		codeCoveragePath: ".//.altestrunner//codecoverage.json"
 	};
 
 	createALTestRunnerDir();
