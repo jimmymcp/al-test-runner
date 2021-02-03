@@ -3,11 +3,12 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, watch, readdirSync,
 import * as xml2js from 'xml2js';
 import * as types from './types';
 import { CodelensProvider } from './CodelensProvider';
-import { updateCodeCoverageDecoration, outputCodeCoverage, getCodeCoveragePath } from './CodeCoverage';
-import { documentIsTestCodeunit, getDocumentIdAndName, getFilePathByCodeunitId } from './alFileHelper';
+import { updateCodeCoverageDecoration, outputCodeCoverage } from './CodeCoverage';
+import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getFilePathByCodeunitId } from './alFileHelper';
 
 let terminal: vscode.Terminal;
 export let activeEditor = vscode.window.activeTextEditor;
+export let alFiles: types.ALFile[];
 let showCodeCoverage: Boolean = false;
 const config = vscode.workspace.getConfiguration('al-test-runner');
 const passingTestColor = 'rgba(' + config.passingTestsColor.red + ',' + config.passingTestsColor.green + ',' + config.passingTestsColor.blue + ',' + config.passingTestsColor.alpha + ')';
@@ -223,6 +224,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 async function invokeTestRunner(command: string) {
 	const config = getCurrentWorkspaceConfig();
+	getALFilesInWorkspace().then(files => { alFiles = files});
 
 	switch (config.publishBeforeTest) {
 		case 'Publish':
@@ -624,7 +626,7 @@ async function outputTestResults(): Promise<Boolean> {
 				outputChannel.appendLine('❌ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's - ' + (noOfFailures + noOfSkips) + ' test(s) failed/skipped at ' + assemblies[0].$!["run-time"]);
 			}
 
-			outputCodeCoverage();
+			await outputCodeCoverage();
 
 			if (noOfTests > 0) {
 				resolve(true);

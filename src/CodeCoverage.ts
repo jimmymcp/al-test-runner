@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getALObjectOfDocument } from './alFileHelper';
+import { getALObjectOfDocument, getALFileForALObject } from './alFileHelper';
 import { existsSync, readFileSync } from 'fs';
 import { ALObject, CodeCoverageLine } from './types';
 import { getWorkspaceFolder, activeEditor, passingTestDecorationType, outputChannel } from './extension';
@@ -55,16 +55,19 @@ function filterCodeCoverageByObject(codeCoverage: CodeCoverageLine[], alObject: 
     });
 }
 
-export function outputCodeCoverage() {
+export async function outputCodeCoverage() {
     outputChannel.appendLine(' ');
     outputChannel.appendLine('Code Coverage');
     outputChannel.appendLine('-------------');
 
     const codeCoverage: CodeCoverageLine[] = readCodeCoverage();
-    const alObjects: ALObject[] = getALObjectsFromCodeCoverage(codeCoverage);
-    alObjects.forEach(element => {
-        outputChannel.appendLine(getALObjectNameFromCodeCoverage(codeCoverage, element) + ' ' + getCodeCoveragePercentageForALObject(codeCoverage, element) + '%');
-    });
+    let alObjects: ALObject[] = getALObjectsFromCodeCoverage(codeCoverage);
+    for (let alObject of alObjects) {
+        const alFile = getALFileForALObject(alObject);
+        if (alFile) {
+            outputChannel.appendLine(`${getCodeCoveragePercentageForALObject(codeCoverage, alObject)}% ${getALObjectNameFromCodeCoverage(codeCoverage, alObject)} "${alFile.path}"`);
+        }
+    };
 }
 
 function getALObjectsFromCodeCoverage(codeCoverage: CodeCoverageLine[]): ALObject[] {

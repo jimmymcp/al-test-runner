@@ -74,3 +74,8 @@ export type CodeCoverageLine = {
 	"NoOfHits": string;
 	"Line": string;
 }
+
+export type ALFile = {
+	object: ALObject;
+	path: string;
+}
