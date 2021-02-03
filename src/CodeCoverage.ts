@@ -18,7 +18,6 @@ export function updateCodeCoverageDecoration(show: Boolean) {
     }
 
     let testedRanges: vscode.Range[] = [];
-    let config = vscode.workspace.getConfiguration('al-test-runner');
 
     if (show) {
         let codeCoverage: CodeCoverageLine[] = readCodeCoverage();
@@ -33,13 +32,17 @@ export function updateCodeCoverageDecoration(show: Boolean) {
 
 function readCodeCoverage(): CodeCoverageLine[] {
     let codeCoverage: CodeCoverageLine[] = [];
-    let config = vscode.workspace.getConfiguration('al-test-runner');
-    let codeCoveragePath = join(getWorkspaceFolder(), config.codeCoveragePath);
+    let codeCoveragePath = getCodeCoveragePath();
     if (existsSync(codeCoveragePath)) {
         codeCoverage = JSON.parse(readFileSync(codeCoveragePath, { encoding: 'utf-8' }));
     }
 
     return codeCoverage;
+}
+
+export function getCodeCoveragePath(): string {
+    let config = vscode.workspace.getConfiguration('al-test-runner');
+    return join(getWorkspaceFolder(), config.codeCoveragePath);
 }
 
 function filterCodeCoverageByObject(codeCoverage: CodeCoverageLine[], alObject: ALObject, includeZeroHits: Boolean = false): CodeCoverageLine[] {

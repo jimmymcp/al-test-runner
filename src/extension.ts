@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, watch, readdirSync,
 import * as xml2js from 'xml2js';
 import * as types from './types';
 import { CodelensProvider } from './CodelensProvider';
-import { updateCodeCoverageDecoration, outputCodeCoverage } from './CodeCoverage';
+import { updateCodeCoverageDecoration, outputCodeCoverage, getCodeCoveragePath } from './CodeCoverage';
 import { documentIsTestCodeunit, getDocumentIdAndName, getFilePathByCodeunitId} from './alFileHelper';
 
 let terminal: vscode.Terminal;
@@ -243,7 +243,7 @@ async function invokeTestRunner(command: string) {
 
 	writeFileSync(getLastResultPath(), '');
 	testsOutput = false;
-	watch(getLastResultPath(), async (event, filename) => {
+	watch(getCodeCoveragePath(), async (event, filename) => {
 		if (await outputTestResults()) {
 			outputChannel.show(true);
 			let context = { event: event, filename: filename };
