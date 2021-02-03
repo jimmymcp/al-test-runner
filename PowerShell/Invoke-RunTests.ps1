@@ -90,12 +90,16 @@ function Invoke-RunTests {
                     }
                 } -Parameters ($ContainerResultFile, $ResultId)
 
+                Get-CodeCoverage
+
                 Write-Host "Copy C:\BCContainerTests\$ResultId to $LastResultFile"
                 Copy-Item -FromSession $Session -Path "C:\BCContainerTests\$ResultId" -Destination $ResultFile
                 Copy-Item -Path $ResultFile -Destination $LastResultFile
             }
             else {
                 if (Test-Path $ContainerResultFile) {
+                    Get-CodeCoverage
+                    
                     Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath $ResultFile
                     Copy-Item -Path $ResultFile -Destination $LastResultFile
                 }

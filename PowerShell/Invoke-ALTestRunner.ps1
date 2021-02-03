@@ -80,7 +80,6 @@ function Invoke-ALTestRunner {
     }
     
     Invoke-RunTests @Params
-    Get-CodeCoverage
 }
 
 Export-ModuleMember -Function Invoke-ALTestRunner
