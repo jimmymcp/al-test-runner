@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, watch, readdirSync,
 import * as xml2js from 'xml2js';
 import * as types from './types';
 import { CodelensProvider } from './CodelensProvider';
-import { updateCodeCoverageDecoration } from './CodeCoverage';
+import { updateCodeCoverageDecoration, outputCodeCoverage } from './CodeCoverage';
 import { documentIsTestCodeunit, getDocumentIdAndName, getFilePathByCodeunitId} from './alFileHelper';
 
 let terminal: vscode.Terminal;
@@ -30,7 +30,7 @@ const failingLineDecorationType = vscode.window.createTextEditorDecorationType({
 	textDecoration: config.failingLineDecoration
 });
 
-const outputChannel = vscode.window.createOutputChannel(getTerminalName());
+export const outputChannel = vscode.window.createOutputChannel(getTerminalName());
 let testsOutput: boolean;
 let timeout: NodeJS.Timer | undefined = undefined;
 let isTestCodeunit: boolean;
@@ -623,6 +623,8 @@ async function outputTestResults(): Promise<Boolean> {
 			else {
 				outputChannel.appendLine('❌ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's - ' + (noOfFailures + noOfSkips) + ' test(s) failed/skipped at ' + assemblies[0].$!["run-time"]);
 			}
+
+			outputCodeCoverage();
 
 			if (noOfTests > 0) {
 				resolve(true);

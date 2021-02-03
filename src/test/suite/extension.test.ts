@@ -1,15 +1,16 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as alTestRunner from '../../extension';
-import {writeFileSync, readdirSync, existsSync, unlinkSync, mkdirSync} from 'fs';
+import { writeFileSync, readdirSync, existsSync, unlinkSync, mkdirSync } from 'fs';
 import * as os from 'os';
+import { documentIsTestCodeunit, getDocumentIdAndName } from '../../alFileHelper';
 import * as sinon from 'sinon';
 import { getLatestInsidersMetadata } from 'vscode-test/out/util';
 import { mock } from 'sinon';
 
 const tempDir: string = os.tmpdir() + '\\ALTR';
 if (existsSync(tempDir)) {
-	readdirSync(tempDir).forEach(e => {unlinkSync(tempDir + '\\' + e);});
+	readdirSync(tempDir).forEach(e => { unlinkSync(tempDir + '\\' + e); });
 }
 else {
 	mkdirSync(tempDir);
@@ -35,7 +36,7 @@ suite('Extension Test Suite', () => {
 			Subtype = Test;
 		}`;
 		const doc = await createTextDocument('01.al', text);
-		assert.strictEqual(alTestRunner.documentIsTestCodeunit(doc), true);
+		assert.strictEqual(documentIsTestCodeunit(doc), true);
 	});
 
 	test('textContainsTestCodeunit returns false for a non-test codeunit', async () => {
@@ -48,7 +49,7 @@ suite('Extension Test Suite', () => {
 		}`;
 
 		const doc = await createTextDocument('02.al', text);
-		assert.strictEqual(alTestRunner.documentIsTestCodeunit(doc), false);
+		assert.strictEqual(documentIsTestCodeunit(doc), false);
 	});
 
 	test('getTestMethodRanges returns procedures decorated with [Test]', async () => {
@@ -75,7 +76,7 @@ suite('Extension Test Suite', () => {
 		const testMethodRanges = alTestRunner.getTestMethodRangesFromDocument(doc);
 		assert.strictEqual(testMethodRanges.length, 2);
 	});
-	
+
 	test('getTestMethodRanges doesn\'t return [Test]s that have been commented out', async () => {
 		const text = `codeuint 50100 "Test Codeunit"
 		{
@@ -108,7 +109,7 @@ suite('Extension Test Suite', () => {
 			begin
 			end;
 		}`;
-	
+
 		const doc = await createTextDocument('04.al', text);
 		const testMethodRanges = alTestRunner.getTestMethodRangesFromDocument(doc);
 		assert.strictEqual(testMethodRanges.length, 2);
@@ -183,7 +184,7 @@ suite('Extension Test Suite', () => {
 		}`;
 
 		const doc = await createTextDocument('05.al', text);
-		const result = alTestRunner.documentIsTestCodeunit(doc);
+		const result = documentIsTestCodeunit(doc);
 		assert.strictEqual(result, true);
 	});
 
@@ -196,7 +197,7 @@ suite('Extension Test Suite', () => {
 		}`;
 
 		const doc = await createTextDocument('06.al', text);
-		const result = alTestRunner.documentIsTestCodeunit(doc);
+		const result = documentIsTestCodeunit(doc);
 		assert.strictEqual(result, false);
 	});
 
@@ -204,7 +205,7 @@ suite('Extension Test Suite', () => {
 		const text = `<root<node>Blah</node></root>`;
 
 		const doc = await createTextDocument('07.xml', text);
-		const result = alTestRunner.documentIsTestCodeunit(doc);
+		const result = documentIsTestCodeunit(doc);
 		assert.strictEqual(result, false);
 	});
 
@@ -214,7 +215,7 @@ suite('Extension Test Suite', () => {
 		}`;
 
 		const doc = await createTextDocument('08.al', text);
-		const result = alTestRunner.getDocumentIdAndName(doc);
+		const result = getDocumentIdAndName(doc);
 		assert.strictEqual(result, '51234 Some Amazing Tests');
 	});
 
