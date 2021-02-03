@@ -6,14 +6,14 @@ import { CodelensProvider } from './CodelensProvider';
 import { toggleCodeCoverage } from './CodeCoverage';
 
 let terminal: vscode.Terminal;
-let activeEditor = vscode.window.activeTextEditor;
+export let activeEditor = vscode.window.activeTextEditor;
 let showCodeCoverage: Boolean = false;
 const config = vscode.workspace.getConfiguration('al-test-runner');
 const passingTestColor = 'rgba(' + config.passingTestsColor.red + ',' + config.passingTestsColor.green + ',' + config.passingTestsColor.blue + ',' + config.passingTestsColor.alpha + ')';
 const failingTestColor = 'rgba(' + config.failingTestsColor.red + ',' + config.failingTestsColor.green + ',' + config.failingTestsColor.blue + ',' + config.failingTestsColor.alpha + ')';
 const untestedTestColor = 'rgba(' + config.untestedTestsColor.red + ',' + config.untestedTestsColor.green + ',' + config.untestedTestsColor.blue + ',' + config.untestedTestsColor.alpha + ')';
 
-const passingTestDecorationType = vscode.window.createTextEditorDecorationType({
+export const passingTestDecorationType = vscode.window.createTextEditorDecorationType({
 	backgroundColor: passingTestColor
 });
 
@@ -714,7 +714,7 @@ function getLastResultPath(): string {
 	return getALTestRunnerPath() + '\\last.xml';
 }
 
-function getWorkspaceFolder() {
+export function getWorkspaceFolder() {
 	if (alTestRunnerAPI.getWorkspaceFolder) {
 		let override = alTestRunnerAPI.getWorkspaceFolder.call(null);
 		if (override && override.length > 0) {
