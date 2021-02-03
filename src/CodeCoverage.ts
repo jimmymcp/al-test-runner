@@ -5,7 +5,7 @@ import { ALObject, CodeCoverageLine } from './types';
 import { getWorkspaceFolder, activeEditor, passingTestDecorationType } from './extension';
 import { join } from 'path';
 
-export function toggleCodeCoverage(toggle: Boolean) {
+export function updateCodeCoverageDecoration(show: Boolean) {
     if (!activeEditor) {
         return;
     }
@@ -20,7 +20,7 @@ export function toggleCodeCoverage(toggle: Boolean) {
     let testedRanges: vscode.Range[] = [];
     let config = vscode.workspace.getConfiguration('al-test-runner');
 
-    if (toggle) {
+    if (show) {
         let codeCoveragePath = join(getWorkspaceFolder(), config.codeCoveragePath);
         if (existsSync(codeCoveragePath)) {
             let codeCoverage: CodeCoverageLine[] = JSON.parse(readFileSync(codeCoveragePath, { encoding: 'utf-8' }));

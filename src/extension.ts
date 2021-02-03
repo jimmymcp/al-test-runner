@@ -3,7 +3,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, watch, readdirSync,
 import * as xml2js from 'xml2js';
 import * as types from './types';
 import { CodelensProvider } from './CodelensProvider';
-import { toggleCodeCoverage } from './CodeCoverage';
+import { updateCodeCoverageDecoration } from './CodeCoverage';
 
 let terminal: vscode.Terminal;
 export let activeEditor = vscode.window.activeTextEditor;
@@ -197,7 +197,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	command = vscode.commands.registerCommand('altestrunner.toggleCodeCoverage', async () => {
 		showCodeCoverage = !showCodeCoverage;
-		toggleCodeCoverage(showCodeCoverage);
+		updateCodeCoverageDecoration(showCodeCoverage);
 	})
 
 	context.subscriptions.push(command);
@@ -207,8 +207,7 @@ export function activate(context: vscode.ExtensionContext) {
 		if (editor) {
 			isTestCodeunit = documentIsTestCodeunit(activeEditor!.document);
 			triggerUpdateDecorations();
-			showCodeCoverage = false;
-			toggleCodeCoverage(showCodeCoverage);
+			updateCodeCoverageDecoration(showCodeCoverage);
 		}
 	}, null, context.subscriptions);
 
