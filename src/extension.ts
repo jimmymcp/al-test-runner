@@ -207,6 +207,8 @@ export function activate(context: vscode.ExtensionContext) {
 		if (editor) {
 			isTestCodeunit = documentIsTestCodeunit(activeEditor!.document);
 			triggerUpdateDecorations();
+			showCodeCoverage = false;
+			toggleCodeCoverage(showCodeCoverage);
 		}
 	}, null, context.subscriptions);
 
