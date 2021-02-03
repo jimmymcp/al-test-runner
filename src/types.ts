@@ -28,7 +28,7 @@ export type ALTestAssembly = {
 		'test-framework': string;
 		name: string;
 	};
-	collection: ALTestCollection[];	
+	collection: ALTestCollection[];
 };
 
 export type ALTestCollection = {
@@ -65,3 +65,12 @@ export type ALObject = {
 	type: string;
 	id: number;
 };
+
+export type CodeCoverageLine = {
+	"ObjectType": string;
+	"ObjectID": string;
+	"LineType": string;
+	"LineNo": string;
+	"NoOfHits": string;
+	"Line": string;
+}
