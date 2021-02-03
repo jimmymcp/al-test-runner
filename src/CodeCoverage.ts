@@ -38,7 +38,7 @@ function filterCodeCoverageByObject(codeCoverage: CodeCoverageLine[], alObject: 
     return codeCoverage.filter((element) => {
         return ((element.ObjectType.toLowerCase() === alObject.type.toLowerCase()) &&
             (element.ObjectID === alObject.id.toString()) &&
-            ((element.NoOfHits !== "0") || (element.LineType !== "Code")) &&
+            (element.NoOfHits !== "0") &&
             (element.LineNo !== "0"));
     });
 }
