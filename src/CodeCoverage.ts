@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { getALObjectOfDocument, getALFileForALObject } from './alFileHelper';
 import { existsSync, readFileSync } from 'fs';
-import { ALObject, CodeCoverageLine } from './types';
+import { ALObject, CodeCoverageLine, CodeCoverageObject } from './types';
 import { getWorkspaceFolder, activeEditor, passingTestDecorationType, outputChannel } from './extension';
 import { join } from 'path';
 
@@ -62,12 +62,28 @@ export async function outputCodeCoverage() {
 
     const codeCoverage: CodeCoverageLine[] = readCodeCoverage();
     let alObjects: ALObject[] = getALObjectsFromCodeCoverage(codeCoverage);
+    let coverageObjects: CodeCoverageObject[] = [];
     for (let alObject of alObjects) {
         const alFile = getALFileForALObject(alObject);
+        
         if (alFile) {
-            outputChannel.appendLine(`${getCodeCoveragePercentageForALObject(codeCoverage, alObject)}% ${alFile.object.type} ${alFile.object.id} ${alFile.object.name} "${alFile.path}"`);
+            coverageObjects.push({ file: alFile, coverage: getCodeCoveragePercentageForALObject(codeCoverage, alObject) });
         }
     };
+
+    if (coverageObjects) {
+        coverageObjects.forEach(element => {
+            outputChannel.appendLine(`${padString(element.coverage.toString() + '%', 4)} | ${padString(element.file.object.type, 15)} | ${padString(element.file.object.id.toString(), 10)} | ${element.file.path}`);
+        });
+    }
+}
+
+function padString(string: string, length: number): string {
+    let result = string;
+    for (let i = result.length; i < length; i++) {
+        result += ' ';
+    }
+    return result;
 }
 
 function getALObjectsFromCodeCoverage(codeCoverage: CodeCoverageLine[]): ALObject[] {
@@ -89,7 +105,7 @@ function getALObjectFromCodeCoverageLine(codeCoverageLine: CodeCoverageLine): AL
     return { id: parseInt(codeCoverageLine.ObjectID), type: codeCoverageLine.ObjectType };
 }
 
-function getCodeCoveragePercentageForALObject(codeCoverage: CodeCoverageLine[], alObject: ALObject, ): Number {
+function getCodeCoveragePercentageForALObject(codeCoverage: CodeCoverageLine[], alObject: ALObject, ): number {
     let objectCodeLines = filterCodeCoverageByObject(codeCoverage, alObject, true);
     let objectCoverage = filterCodeCoverageByObject(objectCodeLines, alObject);
     

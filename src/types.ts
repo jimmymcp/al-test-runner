@@ -79,3 +79,8 @@ export type ALFile = {
 	object: ALObject;
 	path: string;
 }
+
+export type CodeCoverageObject = {
+	file: ALFile;
+	coverage: number;
+}
