@@ -68,7 +68,11 @@ export async function getALFilesInWorkspace(): Promise<ALFile[]> {
 			if (objectName.includes('extends')) {
 				objectName = objectName.substr(0, objectName.indexOf('extends') - 1);
 			}
+			else if (objectName.includes('implements')) {
+				objectName = objectName.substr(0, objectName.indexOf('implements') - 1);
+			}
 			objectName = objectName.trim();
+			
 			const alObject: ALObject = { type: line.substr(0, positionOfSpace), id: parseInt(line.substring(positionOfSpace + 1, positionOfSecondSpace)), name: objectName };
 			alFiles.push({ object: alObject, path: file.fsPath });
 		};

@@ -63,17 +63,30 @@ export async function outputCodeCoverage() {
     const codeCoverage: CodeCoverageLine[] = readCodeCoverage();
     let alObjects: ALObject[] = getALObjectsFromCodeCoverage(codeCoverage);
     let coverageObjects: CodeCoverageObject[] = [];
+    let maxObjectNameLength: number = 0;
+    let maxObjectTypeLength: number = 0;
+    let maxObjectIDLength: number = 0;
     for (let alObject of alObjects) {
         const alFile = getALFileForALObject(alObject);
         
         if (alFile) {
             coverageObjects.push({ file: alFile, coverage: getCodeCoveragePercentageForALObject(codeCoverage, alObject) });
+            if (alFile.object.name!.length > maxObjectNameLength) {
+                maxObjectNameLength = alFile.object.name!.length;
+            }
+            if (alFile.object.type!.length > maxObjectTypeLength) {
+                maxObjectTypeLength = alFile.object.type!.length;
+            }
+            if (alFile.object.id.toString().length > maxObjectIDLength) {
+                maxObjectIDLength = alFile.object.id.toString().length;
+            }
         }
     };
 
+    
     if (coverageObjects) {
         coverageObjects.forEach(element => {
-            outputChannel.appendLine(`${padString(element.coverage.toString() + '%', 4)} | ${padString(element.file.object.type, 15)} | ${padString(element.file.object.id.toString(), 10)} | ${element.file.path}`);
+            outputChannel.appendLine(`${padString(element.coverage.toString() + '%', 4)} | ${padString(element.file.object.type, maxObjectTypeLength)} | ${padString(element.file.object.id.toString(), maxObjectIDLength)} | ${padString(element.file.object.name!, maxObjectNameLength)} | ${element.file.path}`);
         });
     }
 }
