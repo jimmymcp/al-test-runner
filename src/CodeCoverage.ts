@@ -65,7 +65,7 @@ export async function outputCodeCoverage() {
     for (let alObject of alObjects) {
         const alFile = getALFileForALObject(alObject);
         if (alFile) {
-            outputChannel.appendLine(`${getCodeCoveragePercentageForALObject(codeCoverage, alObject)}% ${getALObjectNameFromCodeCoverage(codeCoverage, alObject)} "${alFile.path}"`);
+            outputChannel.appendLine(`${getCodeCoveragePercentageForALObject(codeCoverage, alObject)}% ${alFile.object.type} ${alFile.object.id} ${alFile.object.name} "${alFile.path}"`);
         }
     };
 }
@@ -99,18 +99,4 @@ function getCodeCoveragePercentageForALObject(codeCoverage: CodeCoverageLine[], 
     else {
         return Math.round((objectCoverage.length / objectCodeLines.length) * 100);
     }
-}
-
-function getALObjectNameFromCodeCoverage(codeCoverage: CodeCoverageLine[], alObject: ALObject): string {
-    let lineZero = codeCoverage.filter(element => {
-        return ((element.ObjectType.toLowerCase() == alObject.type.toLowerCase()) &&
-            (element.ObjectID == alObject.id.toString() &&
-                (element.LineNo == "0")));
-    });
-
-    if (lineZero) {
-        return lineZero.shift()!.Line.trim();
-    }
-
-    return '';
 }

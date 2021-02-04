@@ -16,7 +16,7 @@ function Get-CodeCoverage {
                 -Credential $Credential `
                 -Method Post `
                 -ContentType application/json).Content | ConvertFrom-Json
-        $CodeCoverage = ConvertFrom-Csv $Result.value -Header ('ObjectType', 'ObjectID', 'LineType', 'LineNo', 'NoOfHits', 'Line') | Sort-Object ObjectType, ObjectID, LineNo
+        $CodeCoverage = ConvertFrom-Csv $Result.value -Header ('ObjectType', 'ObjectID', 'LineType', 'LineNo', 'NoOfHits') | Sort-Object ObjectType, ObjectID, LineNo
         Set-Content -Path $CodeCoverageFile -Value (ConvertTo-Json $CodeCoverage)
     }
     catch {

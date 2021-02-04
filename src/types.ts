@@ -64,6 +64,7 @@ export type ALTestMethodRange = {
 export type ALObject = {
 	type: string;
 	id: number;
+	name?: string;
 };
 
 export type CodeCoverageLine = {
@@ -72,7 +73,6 @@ export type CodeCoverageLine = {
 	"LineType": string;
 	"LineNo": string;
 	"NoOfHits": string;
-	"Line": string;
 }
 
 export type ALFile = {
