@@ -20,7 +20,9 @@ function Invoke-RunTests {
         [Parameter(Mandatory = $false)]
         [string]$TestSuiteName = '',
         [Parameter(Mandatory = $false)]
-        [string]$ExtensionName
+        [string]$ExtensionName,
+        [Parameter(Mandatory = $false)]
+        [switch]$GetCodeCoverage
     )
 
     $ResultId = [Guid]::NewGuid().Guid + ".xml"
@@ -90,7 +92,9 @@ function Invoke-RunTests {
                     }
                 } -Parameters ($ContainerResultFile, $ResultId)
 
-                Get-CodeCoverage
+                if ($GetCodeCoverage.IsPreset) {
+                    Get-CodeCoverage
+                }
 
                 Write-Host "Copy C:\BCContainerTests\$ResultId to $LastResultFile"
                 Copy-Item -FromSession $Session -Path "C:\BCContainerTests\$ResultId" -Destination $ResultFile
@@ -98,7 +102,9 @@ function Invoke-RunTests {
             }
             else {
                 if (Test-Path $ContainerResultFile) {
-                    Get-CodeCoverage
+                    if ($GetCodeCoverage.IsPresent) {
+                        Get-CodeCoverage
+                    }
                     
                     Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath $ResultFile
                     Copy-Item -Path $ResultFile -Destination $LastResultFile

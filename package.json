@@ -271,6 +271,12 @@
 						"scope": "resource",
 						"description": "The path to the JSON file which has details of the code coverage for this project",
 						"default": "../tests/.altestrunner/codecoverage.json"
+					},
+					"al-test-runner.enableCodeCoverage": {
+						"type": "boolean",
+						"scope": "resource",
+						"description": "Outputs code coverage statistics with test results and decorates covered lines with the Toggle Code Coverage command. See also the Code Coverage Path extension setting and key in the AL Test Runner config.json file.",
+						"default": false
 					}
 				}
 			}

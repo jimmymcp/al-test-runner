@@ -235,6 +235,10 @@ async function invokeTestRunner(command: string) {
 			break;
 	}
 
+	if (config.enableCodeCoverage) {
+		command += ' -GetCodeCoverage';
+	}
+
 	terminal = getALTestRunnerTerminal(getTerminalName());
 	terminal.sendText(' ');
 	terminal.show(true);
@@ -626,7 +630,9 @@ async function outputTestResults(): Promise<Boolean> {
 				outputChannel.appendLine('❌ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's - ' + (noOfFailures + noOfSkips) + ' test(s) failed/skipped at ' + assemblies[0].$!["run-time"]);
 			}
 
-			await outputCodeCoverage();
+			if (getCurrentWorkspaceConfig().enableCodeCoverage) {
+				await outputCodeCoverage();
+			}
 
 			if (noOfTests > 0) {
 				resolve(true);

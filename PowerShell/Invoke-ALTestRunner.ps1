@@ -10,7 +10,9 @@ function Invoke-ALTestRunner {
         [Parameter(Mandatory=$false)]
         [string]$ExtensionId,
         [Parameter(Mandatory=$false)]
-        [string]$ExtensionName
+        [string]$ExtensionName,
+        [Parameter(Mandatory = $false)]
+        [switch]$GetCodeCoverage
         )
 
     Import-ContainerHelper
@@ -48,6 +50,7 @@ function Invoke-ALTestRunner {
         ExtensionId = $ExtensionId
         TestSuiteName = $TestSuiteName
         ExtensionName = $ExtensionName
+        GetCodeCoverage = $GetCodeCoverage
     }
 
     $Tenant = Get-TenantFromLaunchJson
