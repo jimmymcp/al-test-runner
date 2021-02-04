@@ -1,12 +1,6 @@
 function Get-CodeCoverage {
-    $ServiceUrl = (Get-ValueFromALTestRunnerConfig -KeyName 'testRunnerServiceUrl')
-    #TODO get the correct URL for the method to get the code coverage
-    $ServiceUrl = "http://bc:7048/BC/ODataV4/TestRunner_GetCodeCoverage?company=My%20Company&tenant=default"
+    $ServiceUrl = Get-ServiceUrl -Method 'GetCodeCoverage'
     $Credential = Get-ALTestRunnerCredential
-
-    if (($null -eq $ServiceUrl) -or ('' -eq $ServiceUrl)) {
-        throw 'Please set the OData url to the test runner service (testRunnerServiceUrl key in AL Test Runner config).'
-    }
 
     $CodeCoverageFile = Get-ValueFromALTestRunnerConfig -KeyName 'codeCoveragePath'
     Write-Host "Downloading code coverage to $CodeCoverageFile"

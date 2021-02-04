@@ -8,7 +8,7 @@ function Invoke-TestRunnerService {
         [switch]$Init
     )
     
-    $ServiceUrl = (Get-ValueFromALTestRunnerConfig -KeyName 'testRunnerServiceUrl')
+    $ServiceUrl = Get-ServiceUrl -Method 'RunTest'
     $Credential = Get-ALTestRunnerCredential
     $CodeunitId = Get-ObjectIdFromFile $FileName
 
@@ -18,10 +18,6 @@ function Invoke-TestRunnerService {
     }
     else {
         $TestName = Get-TestNameFromSelectionStart -Path $FileName -SelectionStart $SelectionStart
-    }
-
-    if (($null -eq $ServiceUrl) -or ('' -eq $ServiceUrl)) {
-        throw 'Please set the OData url to the test runner service (testRunnerServiceUrl key in AL Test Runner config).'
     }
 
     try {
