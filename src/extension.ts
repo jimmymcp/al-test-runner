@@ -5,6 +5,7 @@ import * as types from './types';
 import { CodelensProvider } from './CodelensProvider';
 import { updateCodeCoverageDecoration, outputCodeCoverage } from './CodeCoverage';
 import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getFilePathByCodeunitId } from './alFileHelper';
+import { getTestWorkspaceFolder } from './config';
 
 let terminal: vscode.Terminal;
 export let activeEditor = vscode.window.activeTextEditor;
@@ -242,7 +243,7 @@ async function invokeTestRunner(command: string) {
 	terminal = getALTestRunnerTerminal(getTerminalName());
 	terminal.sendText(' ');
 	terminal.show(true);
-	terminal.sendText('cd "' + getWorkspaceFolder() + '"');
+	terminal.sendText('cd "' + getTestWorkspaceFolder() + '"');
 	invokeCommand(config.preTestCommand);
 	terminal.sendText(command);
 	invokeCommand(config.postTestCommand);
@@ -263,7 +264,7 @@ function initDebugTest(filename: string) {
 	terminal = getALTestRunnerTerminal(getTerminalName());
 	terminal.sendText(' ');
 	terminal.show(true);
-	terminal.sendText('cd "' + getWorkspaceFolder() + '"');
+	terminal.sendText('cd "' + getTestWorkspaceFolder() + '"');
 	terminal.sendText('Invoke-TestRunnerService -FileName "' + filename + '" -Init');
 
 	const sleep = require("system-sleep");
@@ -275,7 +276,7 @@ function invokeDebugTest(filename: string, selectionStart: number) {
 	terminal = getALTestRunnerTerminal(getTerminalName());
 	terminal.sendText(' ');
 	terminal.show(true);
-	terminal.sendText('cd "' + getWorkspaceFolder() + '"');
+	terminal.sendText('cd "' + getTestWorkspaceFolder() + '"');
 	terminal.sendText('Invoke-TestRunnerService -FileName "' + filename + '" -SelectionStart ' + selectionStart);
 }
 
@@ -658,18 +659,18 @@ export function getLaunchJson() {
 }
 
 function getLaunchJsonPath() {
-	return getWorkspaceFolder() + '\\.vscode\\launch.json';
+	return getTestWorkspaceFolder() + '\\.vscode\\launch.json';
 }
 
 function getAppJsonKey(keyName: string) {
-	const appJsonPath = getWorkspaceFolder() + '\\app.json';
+	const appJsonPath = getTestWorkspaceFolder() + '\\app.json';
 	const data = readFileSync(appJsonPath, { encoding: 'utf-8' });
 	const appJson = JSON.parse(data);
 	return appJson[keyName];
 }
 
 function getALTestRunnerPath(): string {
-	const alTestRunnerPath = getWorkspaceFolder() + '\\.altestrunner';
+	const alTestRunnerPath = getTestWorkspaceFolder() + '\\.altestrunner';
 	return alTestRunnerPath;
 }
 
@@ -710,7 +711,7 @@ export function getWorkspaceFolder() {
 }
 
 export function getCurrentWorkspaceConfig() {
-	return vscode.workspace.getConfiguration('al-test-runner', vscode.Uri.file(getWorkspaceFolder()));
+	return vscode.workspace.getConfiguration('al-test-runner', vscode.Uri.file(getTestWorkspaceFolder()));
 }
 
 function getALTestRunnerConfigPath(): string {

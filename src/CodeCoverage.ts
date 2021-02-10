@@ -2,8 +2,9 @@ import * as vscode from 'vscode';
 import { getALObjectOfDocument, getALFileForALObject } from './alFileHelper';
 import { existsSync, readFileSync } from 'fs';
 import { ALObject, CodeCoverageLine, CodeCoverageObject } from './types';
-import { getWorkspaceFolder, activeEditor, passingTestDecorationType, outputChannel } from './extension';
+import { activeEditor, passingTestDecorationType, outputChannel } from './extension';
 import { join } from 'path';
+import { getTestWorkspaceFolder } from './config';
 
 export function updateCodeCoverageDecoration(show: Boolean) {
     if (!activeEditor) {
@@ -42,7 +43,7 @@ function readCodeCoverage(): CodeCoverageLine[] {
 
 export function getCodeCoveragePath(): string {
     let config = vscode.workspace.getConfiguration('al-test-runner');
-    return join(getWorkspaceFolder(), config.codeCoveragePath);
+    return join(getTestWorkspaceFolder(), config.codeCoveragePath);
 }
 
 function filterCodeCoverageByObject(codeCoverage: CodeCoverageLine[], alObject: ALObject, includeZeroHits: Boolean = false): CodeCoverageLine[] {
