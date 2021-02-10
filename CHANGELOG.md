@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.5.1
+- Test Folder Name setting. Can be set to the name of the workspace folder that contains the test app. Useful for running all tests while the editor is open to the production app code in a multi-root workspace.
+
+## 0.5.0
+- Initial version of code coverage see [https://jpearson.blog/2021/02/07/measuring-code-coverage-in-business-central-with-al-test-runner/](https://jpearson.blog/2021/02/07/measuring-code-coverage-in-business-central-with-al-test-runner/) for more information
+
 ## 0.4.6
 - Include not implemented error in test snippet (to avoid incomplete tests passing by default)
 
