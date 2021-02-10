@@ -238,12 +238,6 @@
 						"description": "TextDecoration CSS to decorate failing lines with",
 						"default": "underline wavy red"
 					},
-					"al-test-runner.testCodeunitGlobPattern": {
-						"type": "string",
-						"scope": "resource",
-						"description": "The glob pattern that identifies test codeunit .al files in the workspace e.g. **/Tests/*.codeunit.al specifies file names that end in codeunit.al in a Tests folder",
-						"default": "**/*.al"
-					},
 					"al-test-runner.preTestCommand": {
 						"type": "string",
 						"scope": "resource",
@@ -271,6 +265,11 @@
 						"scope": "resource",
 						"description": "The path to the JSON file which has details of the code coverage for this project",
 						"default": "../tests/.altestrunner/codecoverage.json"
+					},
+					"al-test-runner.codeCoverageExcludeFiles": {
+						"type": "string",
+						"scope": "resource",
+						"description": "A regex pattern which defines file paths to exclude from the code coverage summary e.g. use it to exclude test objects"
 					},
 					"al-test-runner.enableCodeCoverage": {
 						"type": "boolean",

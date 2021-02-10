@@ -56,7 +56,7 @@ export async function getFilePathByCodeunitId(codeunitId: number, method?: strin
 	});
 }
 
-export async function getALFilesInWorkspace(): Promise<ALFile[]> {
+export async function getALFilesInWorkspace(excludePattern: string | undefined): Promise<ALFile[]> {
 	return new Promise(async (resolve) => {
 		let alFiles: ALFile[] = [];
 		const files = await vscode.workspace.findFiles('**/*.al');
@@ -73,12 +73,27 @@ export async function getALFilesInWorkspace(): Promise<ALFile[]> {
 			}
 			objectName = objectName.trim();
 			
-			const alObject: ALObject = { type: line.substr(0, positionOfSpace), id: parseInt(line.substring(positionOfSpace + 1, positionOfSecondSpace)), name: objectName };
-			alFiles.push({ object: alObject, path: file.fsPath });
+			const alObject: ALObject = {
+				type: line.substr(0, positionOfSpace),
+				id: parseInt(line.substring(positionOfSpace + 1, positionOfSecondSpace)),
+				name: objectName
+			};
+			alFiles.push({ object: alObject, path: file.fsPath, excludeFromCodeCoverage: excludePath(file.fsPath, excludePattern) });
 		};
 
 		resolve(alFiles);
 	});
+}
+
+function excludePath(path: string, excludePattern: string | undefined): boolean {
+	if (!excludePattern) {
+		return false;
+	}
+
+	if (path.match(excludePattern)) {
+		return true;
+	}
+	return false;
 }
 
 async function getFirstLine(pathToFile: string): Promise<string> {

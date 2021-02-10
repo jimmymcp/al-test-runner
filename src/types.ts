@@ -78,6 +78,7 @@ export type CodeCoverageLine = {
 export type ALFile = {
 	object: ALObject;
 	path: string;
+	excludeFromCodeCoverage: boolean;
 }
 
 export type CodeCoverageObject = {

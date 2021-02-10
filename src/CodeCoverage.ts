@@ -70,7 +70,7 @@ export async function outputCodeCoverage() {
     for (let alObject of alObjects) {
         const alFile = getALFileForALObject(alObject);
         
-        if (alFile) {
+        if (alFile && (!alFile.excludeFromCodeCoverage)) {
             coverageObjects.push({ file: alFile, coverage: getCodeCoveragePercentageForALObject(codeCoverage, alObject) });
             if (alFile.object.name!.length > maxObjectNameLength) {
                 maxObjectNameLength = alFile.object.name!.length;

@@ -225,7 +225,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 async function invokeTestRunner(command: string) {
 	const config = getCurrentWorkspaceConfig();
-	getALFilesInWorkspace().then(files => { alFiles = files});
+	getALFilesInWorkspace(config.codeCoverageExcludeFiles).then(files => { alFiles = files});
 
 	switch (config.publishBeforeTest) {
 		case 'Publish':
