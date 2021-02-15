@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.5.2
+- Output a warning when attempting to save code coverage but codeCoveragePath in config.json has not been set
+- Change code coverage output to include line stats (number of hit lines / number of lines) instead of the object ID
+
 ## 0.5.1
 - Test Folder Name setting. Can be set to the name of the workspace folder that contains the test app. Useful for running all tests while the editor is open to the production app code in a multi-root workspace.
 
