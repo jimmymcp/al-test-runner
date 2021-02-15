@@ -3,6 +3,12 @@ function Get-CodeCoverage {
     $Credential = Get-ALTestRunnerCredential
 
     $CodeCoverageFile = Get-ValueFromALTestRunnerConfig -KeyName 'codeCoveragePath'
+    if ([string]::IsNullOrEmpty($CodeCoverageFile)) {
+        Write-Host "Please set a value for codeCoveragePath in the AL Test Runner config.json file." -ForegroundColor DarkRed
+        Write-Host "See https://jpearson.blog/2021/02/07/measuring-code-coverage-in-business-central-with-al-test-runner/ for more information." -ForegroundColor DarkRed
+        return
+    }
+
     Write-Host "Downloading code coverage to $CodeCoverageFile"
 
     try {
