@@ -83,5 +83,7 @@ export type ALFile = {
 
 export type CodeCoverageObject = {
 	file: ALFile;
-	coverage: number;
+	coverage?: number;
+	noOfHitLines: number;
+	noOfLines: number;
 }

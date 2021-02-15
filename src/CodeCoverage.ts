@@ -66,20 +66,33 @@ export async function outputCodeCoverage() {
     let coverageObjects: CodeCoverageObject[] = [];
     let maxObjectNameLength: number = 0;
     let maxObjectTypeLength: number = 0;
-    let maxObjectIDLength: number = 0;
+    let maxNoOfHitLinesLength: number = 0;
+    let maxNoOfLinesLength: number = 0;
+
     for (let alObject of alObjects) {
         const alFile = getALFileForALObject(alObject);
         
         if (alFile && (!alFile.excludeFromCodeCoverage)) {
-            coverageObjects.push({ file: alFile, coverage: getCodeCoveragePercentageForALObject(codeCoverage, alObject) });
+            let objectCoverage: CodeCoverageLine[] = filterCodeCoverageByObject(codeCoverage, alFile.object, true);
+            let coverageObject: CodeCoverageObject = {
+                file: alFile,
+                noOfLines: objectCoverage.length,
+                noOfHitLines: filterCodeCoverageByObject(objectCoverage, alObject, false).length
+            };
+            coverageObject.coverage = getCodeCoveragePercentageForCoverageObject(coverageObject);
+
+            coverageObjects.push(coverageObject);
             if (alFile.object.name!.length > maxObjectNameLength) {
                 maxObjectNameLength = alFile.object.name!.length;
             }
             if (alFile.object.type!.length > maxObjectTypeLength) {
                 maxObjectTypeLength = alFile.object.type!.length;
             }
-            if (alFile.object.id.toString().length > maxObjectIDLength) {
-                maxObjectIDLength = alFile.object.id.toString().length;
+            if (coverageObject.noOfHitLines.toString().length > maxNoOfHitLinesLength) {
+                maxNoOfHitLinesLength = coverageObject.noOfHitLines.toString().length;
+            }
+            if (coverageObject.noOfLines.toString().length > maxNoOfLinesLength) {
+                maxNoOfLinesLength = coverageObject.noOfLines.toString().length;
             }
         }
     };
@@ -87,7 +100,7 @@ export async function outputCodeCoverage() {
     
     if (coverageObjects) {
         coverageObjects.forEach(element => {
-            outputChannel.appendLine(`${padString(element.coverage.toString() + '%', 4)} | ${padString(element.file.object.type, maxObjectTypeLength)} | ${padString(element.file.object.id.toString(), maxObjectIDLength)} | ${padString(element.file.object.name!, maxObjectNameLength)} | ${element.file.path}`);
+            outputChannel.appendLine(`${padString(element.coverage!.toString() + '%', 4)} | ${padString(element.noOfHitLines.toString(), maxNoOfHitLinesLength)} / ${padString(element.noOfLines.toString(), maxNoOfLinesLength)} | ${padString(element.file.object.type, maxObjectTypeLength)} | ${padString(element.file.object.name!, maxObjectNameLength)} | ${element.file.path}`);
         });
     }
 }
@@ -96,6 +109,14 @@ function padString(string: string, length: number): string {
     let result = string;
     for (let i = result.length; i < length; i++) {
         result += ' ';
+    }
+    return result;
+}
+
+function padLeft(string: string, length: number): string {
+    let result = string;
+    for (let i = result.length; i < length; i++) {
+        result = ' ' + result;
     }
     return result;
 }
@@ -119,14 +140,11 @@ function getALObjectFromCodeCoverageLine(codeCoverageLine: CodeCoverageLine): AL
     return { id: parseInt(codeCoverageLine.ObjectID), type: codeCoverageLine.ObjectType };
 }
 
-function getCodeCoveragePercentageForALObject(codeCoverage: CodeCoverageLine[], alObject: ALObject, ): number {
-    let objectCodeLines = filterCodeCoverageByObject(codeCoverage, alObject, true);
-    let objectCoverage = filterCodeCoverageByObject(objectCodeLines, alObject);
-    
-    if (objectCodeLines.length == 0) {
+function getCodeCoveragePercentageForCoverageObject(coverageObject: CodeCoverageObject): number {
+    if (coverageObject.noOfLines == 0) {
         return 0;
     }
     else {
-        return Math.round((objectCoverage.length / objectCodeLines.length) * 100);
+        return Math.round((coverageObject.noOfHitLines / coverageObject.noOfLines) * 100);
     }
 }
