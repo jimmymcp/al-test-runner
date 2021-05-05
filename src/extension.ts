@@ -733,7 +733,7 @@ export function getALTestRunnerConfig() {
 	return alTestRunnerConfig as types.ALTestRunnerConfig;
 }
 
-function setALTestRunnerConfig(keyName: string, keyValue: string | undefined) {
+export function setALTestRunnerConfig(keyName: string, keyValue: string | undefined) {
 	let config = getALTestRunnerConfig();
 	//@ts-ignore
 	config[keyName] = keyValue;
