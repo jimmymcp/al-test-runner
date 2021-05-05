@@ -1,13 +1,18 @@
 function Get-ServerFromLaunchJson {
     param (
         [Parameter(Mandatory=$false)]
-        $ConfigName = (Get-ValueFromALTestRunnerConfig -KeyName 'launchConfigName')
+        $ConfigName = (Get-ValueFromALTestRunnerConfig -KeyName 'launchConfigName'),
+        [Parameter(Mandatory=$false)]
+        [switch]$IncludeProtocol
     )
     
     $Server = Get-ValueFromLaunchJson -KeyName server -ConfigName $ConfigName
-    $Server = $Server.Substring($Server.IndexOf('://') + 3)
-    if ($Server.Substring($Server.length - 1) -eq '/') {
-        $Server = $Server.Substring(0,$Server.length - 1)
+
+    if (!$IncludeProtocol.IsPresent) {
+        $Server = $Server.Substring($Server.IndexOf('://') + 3)
+        if ($Server.Substring($Server.length - 1) -eq '/') {
+            $Server = $Server.Substring(0,$Server.length - 1)
+        }
     }
 
     return $Server
