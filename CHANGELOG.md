@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.5.3
+- Attempt to automatically find the code coverage file if the path is not specified in VS Code settings.
+
 ## 0.5.2
 - Output a warning when attempting to save code coverage but codeCoveragePath in config.json has not been set
 - Change code coverage output to include line stats (number of hit lines / number of lines) instead of the object ID
