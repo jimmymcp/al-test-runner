@@ -16,7 +16,7 @@
 	"files": [
 		"PowerShell/"
 	],
-	"version": "0.5.2",
+	"version": "0.5.4",
 	"engines": {
 		"vscode": "^1.39.0"
 	},
@@ -34,6 +34,15 @@
 	],
 	"main": "./out/extension.js",
 	"contributes": {
+		"menus": {
+			"editor/context": [
+				{
+					"when": "editorLangId == al",
+					"command": "altestrunner.showTableData",
+					"group": "AL Test Runner"
+				}
+			]
+		},
 		"commands": [
 			{
 				"command": "altestrunner.runAllTests",
@@ -98,6 +107,11 @@
 			{
 				"command": "altestrunner.toggleCodeCoverage",
 				"title": "Toggle Code Coverage",
+				"category": "AL Test Runner"
+			},
+			{
+				"command": "altestrunner.showTableData",
+				"title": "Show Table Data",
 				"category": "AL Test Runner"
 			}
 		],
@@ -309,13 +323,13 @@
 		"@types/glob": "^7.1.1",
 		"@types/mocha": "^5.2.6",
 		"@types/node": "^10.12.21",
-		"@types/vscode": "^1.39.0",
 		"@types/sinon": "^7.5.1",
+		"@types/vscode": "^1.39.0",
 		"glob": "^7.1.4",
 		"mocha": "^6.1.4",
 		"sinon": "^7.5.0",
-		"typescript": "^3.3.1",
 		"tslint": "^5.12.1",
+		"typescript": "^3.3.1",
 		"vscode-test": "^1.2.0"
 	},
 	"dependencies": {

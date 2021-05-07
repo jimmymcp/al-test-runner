@@ -2,8 +2,8 @@ import * as vscode from 'vscode';
 import { getALObjectOfDocument, getALFileForALObject } from './alFileHelper';
 import { existsSync, readFileSync } from 'fs';
 import { ALObject, CodeCoverageLine, CodeCoverageObject } from './types';
-import { activeEditor, passingTestDecorationType, outputChannel } from './extension';
-import { join } from 'path';
+import { activeEditor, passingTestDecorationType, outputChannel, getALTestRunnerConfig } from './extension';
+import { join, basename } from 'path';
 import { getTestWorkspaceFolder } from './config';
 
 export function updateCodeCoverageDecoration(show: Boolean) {

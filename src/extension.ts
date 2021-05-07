@@ -6,6 +6,7 @@ import { CodelensProvider } from './CodelensProvider';
 import { updateCodeCoverageDecoration, outputCodeCoverage } from './CodeCoverage';
 import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getFilePathByCodeunitId } from './alFileHelper';
 import { getTestWorkspaceFolder } from './config';
+import { showTableData } from './showTableData';
 
 let terminal: vscode.Terminal;
 export let activeEditor = vscode.window.activeTextEditor;
@@ -202,6 +203,12 @@ export function activate(context: vscode.ExtensionContext) {
 		showCodeCoverage = !showCodeCoverage;
 		updateCodeCoverageDecoration(showCodeCoverage);
 	})
+
+	context.subscriptions.push(command);
+
+	command = vscode.commands.registerCommand('altestrunner.showTableData', async () => {
+		showTableData();
+	});
 
 	context.subscriptions.push(command);
 
@@ -464,7 +471,7 @@ function getTerminalName() {
 	return 'al-test-runner';
 }
 
-function getALTestRunnerTerminal(terminalName: string): vscode.Terminal {
+export function getALTestRunnerTerminal(terminalName: string): vscode.Terminal {
 	let terminals = vscode.window.terminals.filter(element => element.name === terminalName);
 	let terminal = terminals.shift()!;
 
