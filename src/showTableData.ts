@@ -26,7 +26,7 @@ function getWordAtCursor(): string {
 
 function findRecordNameForVariable(variableName: string): string {
     let documentText = activeEditor!.document.getText();
-    let regex = `${variableName} *: *Record *"*(\\w| )*`;
+    let regex = String.raw`${variableName} *: *Record *"*[^;\)"]+`;
     let matches = documentText.match(regex);
     if (matches !== null) {
         let recordDefinition = matches!.shift()!;
