@@ -6,7 +6,7 @@ import { activeEditor, passingTestDecorationType, outputChannel, getALTestRunner
 import { join, basename } from 'path';
 import { getTestWorkspaceFolder } from './config';
 
-export function updateCodeCoverageDecoration(show: Boolean) {
+export async function updateCodeCoverageDecoration(show: Boolean) {
     if (!activeEditor) {
         return;
     }
@@ -21,7 +21,7 @@ export function updateCodeCoverageDecoration(show: Boolean) {
     let testedRanges: vscode.Range[] = [];
 
     if (show) {
-        let codeCoverage: CodeCoverageLine[] = readCodeCoverage();
+        let codeCoverage: CodeCoverageLine[] = await readCodeCoverage();
         codeCoverage = filterCodeCoverageByObject(codeCoverage, alObject!);
         codeCoverage.forEach(element => {
             testedRanges.push(document.lineAt(parseInt(element.LineNo) - 1).range);
@@ -31,19 +31,50 @@ export function updateCodeCoverageDecoration(show: Boolean) {
     activeEditor.setDecorations(passingTestDecorationType, testedRanges);
 }
 
-function readCodeCoverage(): CodeCoverageLine[] {
-    let codeCoverage: CodeCoverageLine[] = [];
-    let codeCoveragePath = getCodeCoveragePath();
-    if (existsSync(codeCoveragePath)) {
-        codeCoverage = JSON.parse(readFileSync(codeCoveragePath, { encoding: 'utf-8' }));
-    }
+function readCodeCoverage(): Promise<CodeCoverageLine[]> {
+    return new Promise(async (resolve, reject) => {
+        let codeCoverage: CodeCoverageLine[] = [];
+        let codeCoveragePath = await getCodeCoveragePath();
+        if (codeCoveragePath) {
+            if (existsSync(codeCoveragePath)) {
+                codeCoverage = JSON.parse(readFileSync(codeCoveragePath, { encoding: 'utf-8' }));
+            }
+        }
 
-    return codeCoverage;
+        resolve(codeCoverage);
+    })
+
 }
 
-export function getCodeCoveragePath(): string {
-    let config = vscode.workspace.getConfiguration('al-test-runner');
-    return join(getTestWorkspaceFolder(), config.codeCoveragePath);
+export async function getCodeCoveragePath(): Promise<string | null> {
+    return new Promise(async (resolve, reject) => {
+        let config = vscode.workspace.getConfiguration('al-test-runner');
+        if (config.codeCoveragePath) {
+            resolve(join(getTestWorkspaceFolder(), config.codeCoveragePath));
+        }
+        else {
+            let discoveredPath = await discoverCodeCoveragePath();
+            resolve(discoveredPath);
+        }
+    });
+}
+
+async function discoverCodeCoveragePath(): Promise<string | null> {
+    return new Promise(async (resolve, reject) => {
+        let codeCoverageFiles = await vscode.workspace.findFiles(`**/**${getCodeCoverageFileName()}`);
+        if (codeCoverageFiles.length > 0) {
+            let codeCoveragePath = codeCoverageFiles.shift()!.fsPath;
+            resolve(codeCoveragePath);
+        }
+        else {
+            resolve(null);
+        }
+    });
+}
+
+function getCodeCoverageFileName(): string {
+    let config = getALTestRunnerConfig();
+    return basename(config.codeCoveragePath);
 }
 
 function filterCodeCoverageByObject(codeCoverage: CodeCoverageLine[], alObject: ALObject, includeZeroHits: Boolean = false): CodeCoverageLine[] {
@@ -61,7 +92,7 @@ export async function outputCodeCoverage() {
     outputChannel.appendLine('Code Coverage');
     outputChannel.appendLine('-------------');
 
-    const codeCoverage: CodeCoverageLine[] = readCodeCoverage();
+    const codeCoverage: CodeCoverageLine[] = await readCodeCoverage();
     let alObjects: ALObject[] = getALObjectsFromCodeCoverage(codeCoverage);
     let coverageObjects: CodeCoverageObject[] = [];
     let maxObjectNameLength: number = 0;
@@ -71,7 +102,7 @@ export async function outputCodeCoverage() {
 
     for (let alObject of alObjects) {
         const alFile = getALFileForALObject(alObject);
-        
+
         if (alFile && (!alFile.excludeFromCodeCoverage)) {
             let objectCoverage: CodeCoverageLine[] = filterCodeCoverageByObject(codeCoverage, alFile.object, true);
             let coverageObject: CodeCoverageObject = {
@@ -97,7 +128,6 @@ export async function outputCodeCoverage() {
         }
     };
 
-    
     if (coverageObjects) {
         coverageObjects.forEach(element => {
             outputChannel.appendLine(`${padString(element.coverage!.toString() + '%', 4)} | ${padString(element.noOfHitLines.toString(), maxNoOfHitLinesLength)} / ${padString(element.noOfLines.toString(), maxNoOfLinesLength)} | ${padString(element.file.object.type, maxObjectTypeLength)} | ${padString(element.file.object.name!, maxObjectNameLength)} | ${element.file.path}`);
