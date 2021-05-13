@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.5.5
+- Look for AL Test Runner config in any of the subfolers of the current location's parent folder i.e. better support for multiroot workspace where test config is in a different folder to production code
+
+## 0.5.4
+- "Show Table Data" command and context menu. Gets the table id for the variable name that was selected and opens the browser to view the data in that browser
+
 ## 0.5.3
 - Attempt to automatically find the code coverage file if the path is not specified in VS Code settings.
 
