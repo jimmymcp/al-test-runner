@@ -1,11 +1,26 @@
 function Get-ALTestRunnerConfigPath {
-    Get-ChildItem (Join-Path (Get-Location) ..) -Recurse -Filter '.altestrunner' | ForEach-Object {
+    $ConfigPath = Find-ALTestRunnerConfigInFolder (Get-Location)
+    if ($null -eq $ConfigPath) {
+        $ConfigPath = Find-ALTestRunnerConfigInFolder (Split-Path (Get-Location) -Parent)
+    }
+
+    if ($null -eq $ConfigPath) {
+        $ConfigPath = Join-Path (Join-Path (Get-Location) '.altestrunner') '.config'
+    }
+
+    return $ConfigPath
+}
+
+function Find-ALTestRunnerConfigInFolder {
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Folder
+    )
+
+    Get-ChildItem $Folder -Recurse -Filter '.altestrunner' | ForEach-Object {
         $ConfigPath = (Join-Path $_.FullName 'config.json')
         if (Test-Path $ConfigPath) {
-            $JsonConfig = ConvertFrom-Json (Get-Content $ConfigPath -Raw)
-            if ($JsonConfig.launchConfigName.length -gt 0) {
-                return $ConfigPath
-            }
+            return $ConfigPath
         }
     }
 }

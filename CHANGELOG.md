@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.5.6
+- Fix issue finding config file in single-root workspaces introduced in previous version.
+
 ## 0.5.5
 - Look for AL Test Runner config in any of the subfolers of the current location's parent folder i.e. better support for multiroot workspace where test config is in a different folder to production code
 
