@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.5.7
+- Add total code lines, lines hit and percentage to code coverage summary.
+
 ## 0.5.6
 - Fix issue finding config file in single-root workspaces introduced in previous version.
 

@@ -88,10 +88,6 @@ function filterCodeCoverageByObject(codeCoverage: CodeCoverageLine[], alObject: 
 }
 
 export async function outputCodeCoverage() {
-    outputChannel.appendLine(' ');
-    outputChannel.appendLine('Code Coverage');
-    outputChannel.appendLine('-------------');
-
     const codeCoverage: CodeCoverageLine[] = await readCodeCoverage();
     let alObjects: ALObject[] = getALObjectsFromCodeCoverage(codeCoverage);
     let coverageObjects: CodeCoverageObject[] = [];
@@ -99,6 +95,9 @@ export async function outputCodeCoverage() {
     let maxObjectTypeLength: number = 0;
     let maxNoOfHitLinesLength: number = 0;
     let maxNoOfLinesLength: number = 0;
+    let totalLinesHit: number = 0;
+    let totalLines: number = 0;
+    let totalCodeCoverage: number = 0;
 
     for (let alObject of alObjects) {
         const alFile = getALFileForALObject(alObject);
@@ -111,6 +110,8 @@ export async function outputCodeCoverage() {
                 noOfHitLines: filterCodeCoverageByObject(objectCoverage, alObject, false).length
             };
             coverageObject.coverage = getCodeCoveragePercentageForCoverageObject(coverageObject);
+            totalLines += coverageObject.noOfLines;
+            totalLinesHit += coverageObject.noOfHitLines;
 
             coverageObjects.push(coverageObject);
             if (alFile.object.name!.length > maxObjectNameLength) {
@@ -128,6 +129,16 @@ export async function outputCodeCoverage() {
         }
     };
 
+    if (totalLines !== 0) {
+        totalCodeCoverage = Math.round((totalLinesHit / totalLines) * 100);
+    }
+
+    const codeCoverageSummary = `Code Coverage ${totalCodeCoverage}% (${totalLinesHit}/${totalLines})`;
+
+    outputChannel.appendLine(' ');
+    outputChannel.appendLine(codeCoverageSummary);
+    outputChannel.appendLine(padString('', codeCoverageSummary.length, '-'));
+
     if (coverageObjects) {
         coverageObjects.forEach(element => {
             outputChannel.appendLine(`${padString(element.coverage!.toString() + '%', 4)} | ${padString(element.noOfHitLines.toString(), maxNoOfHitLinesLength)} / ${padString(element.noOfLines.toString(), maxNoOfLinesLength)} | ${padString(element.file.object.type, maxObjectTypeLength)} | ${padString(element.file.object.name!, maxObjectNameLength)} | ${element.file.path}`);
@@ -135,18 +146,10 @@ export async function outputCodeCoverage() {
     }
 }
 
-function padString(string: string, length: number): string {
+function padString(string: string, length: number, padWith: string = ' '): string {
     let result = string;
     for (let i = result.length; i < length; i++) {
-        result += ' ';
-    }
-    return result;
-}
-
-function padLeft(string: string, length: number): string {
-    let result = string;
-    for (let i = result.length; i < length; i++) {
-        result = ' ' + result;
+        result += padWith;
     }
     return result;
 }
