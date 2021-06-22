@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import { exit } from 'process';
 import { activeEditor, getALTestRunnerTerminal } from './extension';
 
 export async function showTableData() {
