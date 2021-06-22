@@ -44,7 +44,7 @@ export async function getFilePathByCodeunitId(codeunitId: number, method?: strin
 		const alFile = getALFileForALObject({ type: 'codeunit', id: codeunitId });
 		if (alFile) {
 			const text = readFileSync(alFile.path, { encoding: 'utf-8' });
-			const matches = text.match('procedure.*' + method + '\(\)');
+			const matches = text.match('procedure.*' + method);
 			if (matches !== null) {
 				const document = await vscode.workspace.openTextDocument(alFile.path);
 				const lineNo = document.positionAt(matches!.index!).line + 1;

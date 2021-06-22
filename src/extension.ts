@@ -557,7 +557,7 @@ export function getRangeOfFailingLineFromCallstack(callstack: string, method: st
 
 export function getLineNumberOfMethodDeclaration(method: string, document: vscode.TextDocument): number {
 	const text = document.getText();
-	const match = text.match('procedure.+' + method + '\(.*\)');
+	const match = text.match('procedure.+' + method);
 	if ((match === undefined) || (match === null)) {
 		return -1;
 	}
