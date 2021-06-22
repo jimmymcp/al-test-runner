@@ -139,11 +139,9 @@ export async function outputCodeCoverage() {
     outputChannel.appendLine(codeCoverageSummary);
     outputChannel.appendLine(padString('', codeCoverageSummary.length, '-'));
 
-    if (coverageObjects) {
-        coverageObjects.forEach(element => {
-            outputChannel.appendLine(`${padString(element.coverage!.toString() + '%', 4)} | ${padString(element.noOfHitLines.toString(), maxNoOfHitLinesLength)} / ${padString(element.noOfLines.toString(), maxNoOfLinesLength)} | ${padString(element.file.object.type, maxObjectTypeLength)} | ${padString(element.file.object.name!, maxObjectNameLength)} | ${element.file.path}`);
-        });
-    }
+    coverageObjects.forEach(element => {
+        outputChannel.appendLine(`${padString(element.coverage!.toString() + '%', 4)} | ${padString(element.noOfHitLines.toString(), maxNoOfHitLinesLength)} / ${padString(element.noOfLines.toString(), maxNoOfLinesLength)} | ${padString(element.file.object.type, maxObjectTypeLength)} | ${padString(element.file.object.name!, maxObjectNameLength)} | ${element.file.path}`);
+    });
 }
 
 function padString(string: string, length: number, padWith: string = ' '): string {
