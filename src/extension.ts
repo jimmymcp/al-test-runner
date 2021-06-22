@@ -202,7 +202,7 @@ export function activate(context: vscode.ExtensionContext) {
 	command = vscode.commands.registerCommand('altestrunner.toggleCodeCoverage', async () => {
 		showCodeCoverage = !showCodeCoverage;
 		updateCodeCoverageDecoration(showCodeCoverage);
-	})
+	});
 
 	context.subscriptions.push(command);
 
