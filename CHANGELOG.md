@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.5.8
+- Respect code warnings
+
 ## 0.5.7
 - Add total code lines, lines hit and percentage to code coverage summary.
 
