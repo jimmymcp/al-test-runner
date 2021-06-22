@@ -3,10 +3,6 @@ import { exit } from 'process';
 import { activeEditor, getALTestRunnerTerminal } from './extension';
 
 export async function showTableData() {
-    if (!activeEditor) {
-        exit;
-    }
-
     let wordAtCursor = getWordAtCursor();
     let recordName = findRecordNameForVariable(wordAtCursor);
     if (recordName !== '') {
