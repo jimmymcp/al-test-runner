@@ -16,7 +16,7 @@
 	"files": [
 		"PowerShell/"
 	],
-	"version": "0.5.8",
+	"version": "0.5.9",
 	"engines": {
 		"vscode": "^1.39.0"
 	},
@@ -295,6 +295,15 @@
 						"type": "string",
 						"scope": "resource",
 						"description": "The name of the workspace folder that contains the test app"
+					},
+					"al-test-runner.testOutputLocation": {
+						"enum": [
+							"Output",
+							"Editor"
+						],
+						"scope": "resource",
+						"description": "Determines where test results will be displayed",
+						"default": "Output"
 					}
 				}
 			}

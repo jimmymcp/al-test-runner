@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.5.9
+- Optionally output test results to an editor instead of the output window.
+
 ## 0.5.8
 - Respect code warnings
 

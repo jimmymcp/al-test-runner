@@ -7,6 +7,7 @@ import { updateCodeCoverageDecoration, outputCodeCoverage } from './CodeCoverage
 import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getFilePathByCodeunitId } from './alFileHelper';
 import { getTestWorkspaceFolder } from './config';
 import { showTableData } from './showTableData';
+import { getOutputWriter, OutputWriter } from './output';
 
 let terminal: vscode.Terminal;
 export let activeEditor = vscode.window.activeTextEditor;
@@ -16,6 +17,7 @@ const config = vscode.workspace.getConfiguration('al-test-runner');
 const passingTestColor = 'rgba(' + config.passingTestsColor.red + ',' + config.passingTestsColor.green + ',' + config.passingTestsColor.blue + ',' + config.passingTestsColor.alpha + ')';
 const failingTestColor = 'rgba(' + config.failingTestsColor.red + ',' + config.failingTestsColor.green + ',' + config.failingTestsColor.blue + ',' + config.failingTestsColor.alpha + ')';
 const untestedTestColor = 'rgba(' + config.untestedTestsColor.red + ',' + config.untestedTestsColor.green + ',' + config.untestedTestsColor.blue + ',' + config.untestedTestsColor.alpha + ')';
+export const outputWriter: OutputWriter = getOutputWriter();
 
 export const passingTestDecorationType = vscode.window.createTextEditorDecorationType({
 	backgroundColor: passingTestColor
@@ -186,7 +188,7 @@ export function activate(context: vscode.ExtensionContext) {
 	command = vscode.commands.registerCommand('altestrunner.outputTestResults', async () => {
 		testsOutput = false;
 		outputTestResults();
-		outputChannel.show();
+		outputWriter.show();
 	});
 
 	context.subscriptions.push(command);
@@ -232,7 +234,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 async function invokeTestRunner(command: string) {
 	const config = getCurrentWorkspaceConfig();
-	getALFilesInWorkspace(config.codeCoverageExcludeFiles).then(files => { alFiles = files});
+	getALFilesInWorkspace(config.codeCoverageExcludeFiles).then(files => { alFiles = files });
 
 	switch (config.publishBeforeTest) {
 		case 'Publish':
@@ -259,7 +261,7 @@ async function invokeTestRunner(command: string) {
 	testsOutput = false;
 	watch(getLastResultPath(), async (event, filename) => {
 		if (await outputTestResults()) {
-			outputChannel.show(true);
+			outputWriter.show();
 			let context = { event: event, filename: filename };
 			callOnOutputTestResults(context);
 			triggerUpdateDecorations();
@@ -590,7 +592,7 @@ async function outputTestResults(): Promise<Boolean> {
 			const assemblies: types.ALTestAssembly[] = resultObj.assemblies.assembly;
 
 			if (assemblies.length > 0) {
-				outputChannel.clear();
+				outputWriter.clear();
 				testsOutput = true;
 			}
 
@@ -604,26 +606,26 @@ async function outputTestResults(): Promise<Boolean> {
 				noOfSkips += skipped;
 
 				if (failed > 0) {
-					outputChannel.appendLine('❌ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
+					outputWriter.write('❌ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
 				}
 				else {
-					outputChannel.appendLine('✅ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
+					outputWriter.write('✅ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
 				}
 				for (let test of assembly.collection[0].test) {
 					const testTime = parseFloat(test.$.time);
 					let filePath = '';
 					switch (test.$.result) {
 						case 'Pass':
-							outputChannel.appendLine('\t✅ ' + test.$.method + '\t' + testTime.toFixed(2) + 's');
+							outputWriter.write('\t✅ ' + test.$.method + '\t' + testTime.toFixed(2) + 's');
 							break;
 						case 'Skip':
 							filePath = await getFilePathByCodeunitId(getCodeunitIdFromAssemblyName(assembly.$.name), test.$.method);
-							outputChannel.appendLine('\t❓ ' + test.$.method + '\t' + testTime.toFixed(2) + 's ' + filePath);
+							outputWriter.write('\t❓ ' + test.$.method + '\t' + testTime.toFixed(2) + 's ' + filePath);
 							break;
 						case 'Fail':
 							filePath = await getFilePathByCodeunitId(getCodeunitIdFromAssemblyName(assembly.$.name), test.$.method);
-							outputChannel.appendLine('\t❌ ' + test.$.method + '\t' + testTime.toFixed(2) + "s " + filePath);
-							outputChannel.appendLine('\t\t' + test.failure[0].message);
+							outputWriter.write('\t❌ ' + test.$.method + '\t' + testTime.toFixed(2) + "s " + filePath);
+							outputWriter.write('\t\t' + test.failure[0].message);
 							break;
 						default:
 							break;
@@ -632,10 +634,10 @@ async function outputTestResults(): Promise<Boolean> {
 			}
 
 			if ((noOfFailures + noOfSkips) === 0) {
-				outputChannel.appendLine('✅ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's at ' + assemblies[0].$!["run-time"]);
+				outputWriter.write('✅ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's at ' + assemblies[0].$!["run-time"]);
 			}
 			else {
-				outputChannel.appendLine('❌ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's - ' + (noOfFailures + noOfSkips) + ' test(s) failed/skipped at ' + assemblies[0].$!["run-time"]);
+				outputWriter.write('❌ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's - ' + (noOfFailures + noOfSkips) + ' test(s) failed/skipped at ' + assemblies[0].$!["run-time"]);
 			}
 
 			if (getCurrentWorkspaceConfig().enableCodeCoverage) {
