@@ -1,5 +1,3 @@
-import { version } from "process";
-
 import * as vscode from 'vscode';
 import { getWorkspaceFolder } from "./extension";
 

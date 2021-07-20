@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { getALObjectOfDocument, getALFileForALObject } from './alFileHelper';
 import { existsSync, readFileSync } from 'fs';
 import { ALObject, CodeCoverageLine, CodeCoverageObject } from './types';
-import { activeEditor, passingTestDecorationType, outputChannel, getALTestRunnerConfig } from './extension';
+import { activeEditor, passingTestDecorationType, outputWriter, getALTestRunnerConfig } from './extension';
 import { join, basename } from 'path';
 import { getTestWorkspaceFolder } from './config';
 
@@ -135,15 +135,13 @@ export async function outputCodeCoverage() {
 
     const codeCoverageSummary = `Code Coverage ${totalCodeCoverage}% (${totalLinesHit}/${totalLines})`;
 
-    outputChannel.appendLine(' ');
-    outputChannel.appendLine(codeCoverageSummary);
-    outputChannel.appendLine(padString('', codeCoverageSummary.length, '-'));
+    outputWriter.write(' ');
+    outputWriter.write(codeCoverageSummary);
+    outputWriter.write(padString('', codeCoverageSummary.length, '-'));
 
-    if (coverageObjects) {
-        coverageObjects.forEach(element => {
-            outputChannel.appendLine(`${padString(element.coverage!.toString() + '%', 4)} | ${padString(element.noOfHitLines.toString(), maxNoOfHitLinesLength)} / ${padString(element.noOfLines.toString(), maxNoOfLinesLength)} | ${padString(element.file.object.type, maxObjectTypeLength)} | ${padString(element.file.object.name!, maxObjectNameLength)} | ${element.file.path}`);
-        });
-    }
+    coverageObjects.forEach(element => {
+        outputWriter.write(`${padString(element.coverage!.toString() + '%', 4)} | ${padString(element.noOfHitLines.toString(), maxNoOfHitLinesLength)} / ${padString(element.noOfLines.toString(), maxNoOfLinesLength)} | ${padString(element.file.object.type, maxObjectTypeLength)} | ${padString(element.file.object.name!, maxObjectNameLength)} | ${element.file.path}`);
+    });
 }
 
 function padString(string: string, length: number, padWith: string = ' '): string {
