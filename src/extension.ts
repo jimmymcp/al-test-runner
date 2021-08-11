@@ -655,12 +655,6 @@ async function outputTestResults(): Promise<Boolean> {
 
 }
 
-export function getDebugConfigurationsFromLaunchJson(type: string) {
-	const configuration = vscode.workspace.getConfiguration('launch', vscode.Uri.file(getLaunchJsonPath()));
-	const debugConfigurations = configuration.configurations as Array<vscode.DebugConfiguration>;
-	return debugConfigurations.filter(element => { return element.request === type; }).slice();
-}
-
 export function getLaunchJson() {
 	const launchPath = getLaunchJsonPath();
 	const data = readFileSync(launchPath, { encoding: 'utf-8' });
@@ -676,11 +670,6 @@ function getAppJsonKey(keyName: string) {
 	const data = readFileSync(appJsonPath, { encoding: 'utf-8' });
 	const appJson = JSON.parse(data);
 	return appJson[keyName];
-}
-
-function getALTestRunnerPath(): string {
-	const alTestRunnerPath = getTestWorkspaceFolder() + '\\.altestrunner';
-	return alTestRunnerPath;
 }
 
 function getLastResultPath(): string {
@@ -721,63 +710,6 @@ export function getWorkspaceFolder() {
 
 export function getCurrentWorkspaceConfig() {
 	return vscode.workspace.getConfiguration('al-test-runner', vscode.Uri.file(getTestWorkspaceFolder()));
-}
-
-function getALTestRunnerConfigPath(): string {
-	return getALTestRunnerPath() + '\\config.json';
-}
-
-export function getALTestRunnerConfig() {
-	let alTestRunnerConfigPath = getALTestRunnerConfigPath();
-	let data: string;
-
-	try {
-		data = readFileSync(alTestRunnerConfigPath, { encoding: 'utf-8' });
-	} catch (error) {
-		createALTestRunnerConfig();
-		data = readFileSync(alTestRunnerConfigPath, { encoding: 'utf-8' });
-	}
-
-	let alTestRunnerConfig = JSON.parse(data);
-	return alTestRunnerConfig as types.ALTestRunnerConfig;
-}
-
-export function setALTestRunnerConfig(keyName: string, keyValue: string | undefined) {
-	let config = getALTestRunnerConfig();
-	//@ts-ignore
-	config[keyName] = keyValue;
-	writeFileSync(getALTestRunnerConfigPath(), JSON.stringify(config), { encoding: 'utf-8' });
-}
-
-function createALTestRunnerConfig() {
-	let config: types.ALTestRunnerConfig = {
-		containerResultPath: "",
-		launchConfigName: "",
-		securePassword: "",
-		userName: "",
-		companyName: "",
-		testSuiteName: "",
-		vmUserName: "",
-		vmSecurePassword: "",
-		remoteContainerName: "",
-		dockerHost: "",
-		newPSSessionOptions: "",
-		testRunnerServiceUrl: "",
-		codeCoveragePath: ".//.altestrunner//codecoverage.json"
-	};
-
-	createALTestRunnerDir();
-	writeFileSync(getALTestRunnerConfigPath(), JSON.stringify(config, null, 2), { encoding: 'utf-8' });
-}
-
-function createALTestRunnerDir() {
-	if (getALTestRunnerPath() === '') {
-		return;
-	}
-
-	if (!(existsSync(getALTestRunnerPath()))) {
-		mkdirSync(getALTestRunnerPath());
-	}
 }
 
 function callOnOutputTestResults(context: any) {

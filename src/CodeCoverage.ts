@@ -2,9 +2,9 @@ import * as vscode from 'vscode';
 import { getALObjectOfDocument, getALFileForALObject } from './alFileHelper';
 import { existsSync, readFileSync } from 'fs';
 import { ALObject, CodeCoverageLine, CodeCoverageObject } from './types';
-import { activeEditor, passingTestDecorationType, outputWriter, getALTestRunnerConfig } from './extension';
+import { activeEditor, passingTestDecorationType, outputWriter } from './extension';
 import { join, basename } from 'path';
-import { getTestWorkspaceFolder } from './config';
+import { getALTestRunnerConfig, getTestWorkspaceFolder } from './config';
 
 export async function updateCodeCoverageDecoration(show: Boolean) {
     if (!activeEditor) {
