@@ -1,8 +1,7 @@
 import * as vscode from 'vscode';
 import { ALFile, ALObject } from './types';
 import { alFiles } from './extension';
-import { createReadStream, readFileSync } from 'fs';
-import { createInterface } from 'readline';
+import { readFileSync } from 'fs';
 
 export function getALObjectOfDocument(document: vscode.TextDocument): ALObject | undefined {
 	let documentText = document.getText(new vscode.Range(0, 0, 1, 0));
@@ -62,29 +61,20 @@ export async function getFilePathByCodeunitId(codeunitId: number, method?: strin
 	});
 }
 
-export async function getALFilesInWorkspace(excludePattern: string | undefined): Promise<ALFile[]> {
+export async function getALFilesInWorkspace(excludePattern?: string, glob?: string): Promise<ALFile[]> {
 	return new Promise(async (resolve) => {
 		let alFiles: ALFile[] = [];
-		const files = await vscode.workspace.findFiles('**/*.al');
+		let files;
+		if (glob) {
+			files = await vscode.workspace.findFiles(glob);
+		}
+		else {
+			files = await vscode.workspace.findFiles('**/*.al');
+		}
 		for (let file of files) {
-			const line = await getFirstLine(file.fsPath);
-			let positionOfSpace = line.indexOf(' ');
-			let positionOfSecondSpace = line.indexOf(' ', positionOfSpace + 1);
-			let objectName = line.substr(positionOfSecondSpace + 1);
-			if (objectName.includes('extends')) {
-				objectName = objectName.substr(0, objectName.indexOf('extends') - 1);
-			}
-			else if (objectName.includes('implements')) {
-				objectName = objectName.substr(0, objectName.indexOf('implements') - 1);
-			}
-			objectName = objectName.trim();
-			
-			const alObject: ALObject = {
-				type: line.substr(0, positionOfSpace),
-				id: parseInt(line.substring(positionOfSpace + 1, positionOfSecondSpace)),
-				name: objectName
-			};
-			alFiles.push({ object: alObject, path: file.fsPath, excludeFromCodeCoverage: excludePath(file.fsPath, excludePattern) });
+			const document = await vscode.workspace.openTextDocument(file);
+			const alObject = getALObjectOfDocument(document);
+			alFiles.push({ object: alObject!, path: file.fsPath, excludeFromCodeCoverage: excludePath(file.fsPath, excludePattern) });
 		};
 
 		resolve(alFiles);
@@ -102,23 +92,12 @@ function excludePath(path: string, excludePattern: string | undefined): boolean 
 	return false;
 }
 
-async function getFirstLine(pathToFile: string): Promise<string> {
-	const readable = createReadStream(pathToFile);
-	const reader = createInterface({ input: readable });
-	const line: string = await new Promise((resolve) => {
-		reader.on('line', (line) => {
-			reader.close();
-			resolve(line);
-		});
-	});
-	readable.close();
-	return line;
-}
-
 export function getALFileForALObject(alObject: ALObject): ALFile | undefined {
 	const filteredFiles = alFiles.filter(file => {
-		return ((file.object.type.toLowerCase() === alObject.type.toLowerCase()) &&
-			(file.object.id === alObject.id));
+		if (file.object) {
+			return ((file.object.type.toLowerCase() === alObject.type.toLowerCase()) &&
+				(file.object.id === alObject.id));
+		}
 	});
 
 	if (filteredFiles.length > 0) {
