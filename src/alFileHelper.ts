@@ -12,7 +12,8 @@ export function getALObjectOfDocument(document: vscode.TextDocument): ALObject |
 		let match = matches!.shift();
 		let ALObject: ALObject = {
 			type: match!.substr(0, match!.indexOf(' ')),
-			id: parseInt(match!.substring(match!.indexOf(' ') + 1, match!.length - 1))
+			id: parseInt(match!.substring(match!.indexOf(' ') + 1, match!.length - 1)),
+			name: getDocumentName(document)
 		};
 		return ALObject;
 	}
@@ -37,6 +38,11 @@ export function getDocumentIdAndName(document: vscode.TextDocument): string {
 	else {
 		return '';
 	}
+}
+
+function getDocumentName(document: vscode.TextDocument): string {
+	const idAndName = getDocumentIdAndName(document);
+	return idAndName.substr(idAndName.indexOf(' ') + 1);
 }
 
 export async function getFilePathByCodeunitId(codeunitId: number, method?: string): Promise<string> {
