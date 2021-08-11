@@ -1,13 +1,14 @@
 import * as vscode from 'vscode';
-import { readFileSync, writeFileSync, mkdirSync, existsSync, watch, readdirSync, unlinkSync, unwatchFile } from 'fs';
+import { readFileSync, existsSync, readdirSync, unlinkSync } from 'fs';
 import * as xml2js from 'xml2js';
 import * as types from './types';
 import { CodelensProvider } from './CodelensProvider';
 import { updateCodeCoverageDecoration, outputCodeCoverage } from './CodeCoverage';
 import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getFilePathByCodeunitId } from './alFileHelper';
-import { getTestWorkspaceFolder } from './config';
+import { getALTestRunnerConfig, getALTestRunnerConfigPath, getALTestRunnerPath, getDebugConfigurationsFromLaunchJson, getLaunchJsonPath, getTestWorkspaceFolder, setALTestRunnerConfig } from './config';
 import { showTableData } from './showTableData';
 import { getOutputWriter, OutputWriter } from './output';
+import { createTestController, debugTestHandler, deleteTestItemForFilename, discoverTests, discoverTestsInDocument, getTestItemFromFileNameAndSelection, runTestHandler } from './testController';
 
 let terminal: vscode.Terminal;
 export let activeEditor = vscode.window.activeTextEditor;
@@ -36,7 +37,6 @@ const failingLineDecorationType = vscode.window.createTextEditorDecorationType({
 });
 
 export const outputChannel = vscode.window.createOutputChannel(getTerminalName());
-let testsOutput: boolean;
 let timeout: NodeJS.Timer | undefined = undefined;
 let isTestCodeunit: boolean;
 
@@ -45,96 +45,58 @@ const alTestRunnerAPI = new class {
 	onOutputTestResults: Function | undefined;
 };
 
+export let alTestController: vscode.TestController;
+
 export function activate(context: vscode.ExtensionContext) {
 	console.log('jamespearson.al-test-runner extension is activated');
 
 	let codelensProvider = new CodelensProvider();
 	vscode.languages.registerCodeLensProvider("*", codelensProvider);
 
+	context.subscriptions.push(alTestController);
+
 	let command = vscode.commands.registerCommand('altestrunner.runAllTests', async (extensionId?: string, extensionName?: string) => {
-		await readyToRunTests().then(ready => {
-			if (ready) {
-				if (extensionId === undefined) {
-					extensionId = getAppJsonKey('id');
-				}
-
-				if (extensionName === undefined) {
-					extensionName = getAppJsonKey('name');
-				}
-
-				invokeTestRunner('Invoke-ALTestRunner -Tests All -ExtensionId ' + extensionId + ' -ExtensionName "' + extensionName + '"');
-			}
-		});
+		runTestHandler(new vscode.TestRunRequest());
 	});
 
 	context.subscriptions.push(command);
 
 	command = vscode.commands.registerCommand('altestrunner.runTestsCodeunit', async (filename?: string, extensionId?: string, extensionName?: string) => {
-		await readyToRunTests().then(ready => {
-			if (ready) {
-				if (filename === undefined) {
-					filename = vscode.window.activeTextEditor!.document.fileName;
-				}
-				if (extensionId === undefined) {
-					extensionId = getAppJsonKey('id');
-				}
-				if (extensionName === undefined) {
-					extensionName = getAppJsonKey('name');
-				}
-
-				invokeTestRunner('Invoke-ALTestRunner -Tests Codeunit -ExtensionId ' + extensionId + ' -ExtensionName "' + extensionName + '" -FileName "' + filename + '"');
-			}
-		});
+		const testItem = await getTestItemFromFileNameAndSelection(filename, 0);
+		if (testItem) {
+			const request = new vscode.TestRunRequest([testItem]);
+			runTestHandler(request);
+		}
 	});
 
 	context.subscriptions.push(command);
 
 	command = vscode.commands.registerCommand('altestrunner.runTest', async (filename?: string, selectionStart?: number, extensionId?: string, extensionName?: string) => {
-		await readyToRunTests().then(ready => {
-			if (ready) {
-				if (filename === undefined) {
-					filename = vscode.window.activeTextEditor!.document.fileName;
-				}
-				if (selectionStart === undefined) {
-					selectionStart = vscode.window.activeTextEditor!.selection.start.line;
-				}
-				if (extensionId === undefined) {
-					extensionId = getAppJsonKey('id');
-				}
-				if (extensionName === undefined) {
-					extensionName = getAppJsonKey('name');
-				}
-
-				invokeTestRunner('Invoke-ALTestRunner -Tests Test -ExtensionId ' + extensionId + ' -ExtensionName "' + extensionName + '" -FileName "' + filename + '" -SelectionStart ' + selectionStart);
-			}
-		});
+		const testItem = await getTestItemFromFileNameAndSelection(filename, selectionStart);
+		if (testItem) {
+			const request = new vscode.TestRunRequest([testItem]);
+			runTestHandler(request);
+		}
 	});
 
 	context.subscriptions.push(command);
 
 	command = vscode.commands.registerCommand('altestrunner.debugTest', async (filename: string, selectionStart: number) => {
-		if (filename === undefined) {
-			filename = vscode.window.activeTextEditor!.document.fileName;
+		const testItem = await getTestItemFromFileNameAndSelection(filename, selectionStart);
+		if (testItem) {
+			const request = new vscode.TestRunRequest([testItem]);
+			debugTestHandler(request);
 		}
-		if (selectionStart === undefined) {
-			selectionStart = vscode.window.activeTextEditor!.selection.start.line;
-		}
-
-		initDebugTest(filename);
-		await attachDebugger();
-		invokeDebugTest(filename, selectionStart);
 	});
 
 	context.subscriptions.push(command);
 
 	command = vscode.commands.registerCommand('altestrunner.debugTestsCodeunit', async (filename: string) => {
-		if (filename === undefined) {
-			filename = vscode.window.activeTextEditor!.document.fileName;
+		const testItem = await getTestItemFromFileNameAndSelection(filename, 0);
+		if (testItem) {
+			const request = new vscode.TestRunRequest([testItem]);
+			debugTestHandler(request);
 		}
-
-		initDebugTest(filename);
-		await attachDebugger();
-		invokeDebugTest(filename, 0);
 	});
 
 	context.subscriptions.push(command);
@@ -185,14 +147,6 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(command);
 
-	command = vscode.commands.registerCommand('altestrunner.outputTestResults', async () => {
-		testsOutput = false;
-		outputTestResults();
-		outputWriter.show();
-	});
-
-	context.subscriptions.push(command);
-
 	command = vscode.commands.registerCommand('altestrunner.installTestRunnerService', async () => {
 		terminal = getALTestRunnerTerminal(getTerminalName());
 		terminal.show(true);
@@ -226,50 +180,76 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.workspace.onDidChangeTextDocument(event => {
 		if (activeEditor && event.document === activeEditor.document) {
 			triggerUpdateDecorations();
+			discoverTestsInDocument(activeEditor.document);
 		}
 	}, null, context.subscriptions);
+
+	vscode.workspace.onDidRenameFiles(event => {
+		event.files.forEach(rename => {
+			deleteTestItemForFilename(rename.oldUri.fsPath);
+		});
+	});
+
+	vscode.workspace.onDidCreateFiles(event => {
+		event.files.forEach(file => {
+			deleteTestItemForFilename(file.fsPath);
+		});
+	});
+
+	alTestController = createTestController();
+	discoverTests();
 
 	return alTestRunnerAPI;
 }
 
-async function invokeTestRunner(command: string) {
-	const config = getCurrentWorkspaceConfig();
-	getALFilesInWorkspace(config.codeCoverageExcludeFiles).then(files => { alFiles = files });
+export async function invokeTestRunner(command: string): Promise<types.ALTestAssembly[]> {
+	return new Promise(async (resolve) => {
+		const config = getCurrentWorkspaceConfig();
+		getALFilesInWorkspace(config.codeCoverageExcludeFiles).then(files => { alFiles = files });
 
-	switch (config.publishBeforeTest) {
-		case 'Publish':
-			await vscode.commands.executeCommand('al.publishNoDebug');
-			break;
-		case 'Rapid application publish':
-			await vscode.commands.executeCommand('al.incrementalPublishNoDebug');
-			break;
-	}
-
-	if (config.enableCodeCoverage) {
-		command += ' -GetCodeCoverage';
-	}
-
-	terminal = getALTestRunnerTerminal(getTerminalName());
-	terminal.sendText(' ');
-	terminal.show(true);
-	terminal.sendText('cd "' + getTestWorkspaceFolder() + '"');
-	invokeCommand(config.preTestCommand);
-	terminal.sendText(command);
-	invokeCommand(config.postTestCommand);
-
-	writeFileSync(getLastResultPath(), '');
-	testsOutput = false;
-	watch(getLastResultPath(), async (event, filename) => {
-		if (await outputTestResults()) {
-			outputWriter.show();
-			let context = { event: event, filename: filename };
-			callOnOutputTestResults(context);
-			triggerUpdateDecorations();
+		switch (config.publishBeforeTest) {
+			case 'Publish':
+				await vscode.commands.executeCommand('al.publishNoDebug');
+				break;
+			case 'Rapid application publish':
+				await vscode.commands.executeCommand('al.incrementalPublishNoDebug');
+				break;
 		}
+
+		if (config.enableCodeCoverage) {
+			command += ' -GetCodeCoverage';
+		}
+
+		terminal = getALTestRunnerTerminal(getTerminalName());
+		terminal.sendText(' ');
+		terminal.show(true);
+		terminal.sendText('cd "' + getTestWorkspaceFolder() + '"');
+		invokeCommand(config.preTestCommand);
+		terminal.sendText(command);
+		invokeCommand(config.postTestCommand);
+
+		unlinkSync(getLastResultPath());
+		const watcher = vscode.workspace.createFileSystemWatcher(getLastResultPath(), false, true, true);
+		watcher.onDidCreate(async e => {
+			const results: types.ALTestAssembly[] = await readTestResults(e);
+			resolve(results);
+			watcher.dispose();
+		});
 	});
 }
 
-function initDebugTest(filename: string) {
+async function readTestResults(uri: vscode.Uri): Promise<types.ALTestAssembly[]> {
+	return new Promise(async resolve => {
+		const xmlParser = new xml2js.Parser();
+		const resultXml = readFileSync(uri.fsPath, { encoding: 'utf-8' });
+		const resultObj = await xmlParser.parseStringPromise(resultXml);
+		const assemblies: types.ALTestAssembly[] = resultObj.assemblies.assembly;
+
+		resolve(assemblies);
+	});
+}
+
+export function initDebugTest(filename: string) {
 	terminal = getALTestRunnerTerminal(getTerminalName());
 	terminal.sendText(' ');
 	terminal.show(true);
@@ -281,7 +261,7 @@ function initDebugTest(filename: string) {
 	sleep(config.testRunnerInitialisationTime);
 }
 
-function invokeDebugTest(filename: string, selectionStart: number) {
+export function invokeDebugTest(filename: string, selectionStart: number) {
 	terminal = getALTestRunnerTerminal(getTerminalName());
 	terminal.sendText(' ');
 	terminal.show(true);
@@ -289,7 +269,7 @@ function invokeDebugTest(filename: string, selectionStart: number) {
 	terminal.sendText('Invoke-TestRunnerService -FileName "' + filename + '" -SelectionStart ' + selectionStart);
 }
 
-async function attachDebugger() {
+export async function attachDebugger() {
 	if (vscode.debug.activeDebugSession) {
 		return;
 	}
@@ -301,7 +281,7 @@ async function attachDebugger() {
 	}
 
 	const attachConfig = attachConfigs.shift() as vscode.DebugConfiguration;
-	await vscode.debug.startDebugging(vscode.workspace.workspaceFolders!.shift(), attachConfig);
+	await vscode.debug.startDebugging(vscode.workspace.workspaceFolders![0], attachConfig);
 }
 
 function invokeCommand(command: string) {
@@ -489,60 +469,6 @@ export function getALTestRunnerTerminal(terminalName: string): vscode.Terminal {
 	}
 }
 
-function readyToRunTests(): Promise<boolean> {
-	return new Promise((resolve, reject) => {
-		if (!(launchConfigIsValid())) {
-			//clear the credentials and company name if the launch config is not valid
-			setALTestRunnerConfig('userName', '');
-			setALTestRunnerConfig('securePassword', '');
-			setALTestRunnerConfig('companyName', '');
-			selectLaunchConfig();
-		}
-
-		if (launchConfigIsValid()) {
-			resolve(true);
-		}
-		else {
-			reject();
-		}
-	});
-}
-
-export function launchConfigIsValid(alTestRunnerConfig?: types.ALTestRunnerConfig): boolean {
-	if (alTestRunnerConfig === undefined) {
-		alTestRunnerConfig = getALTestRunnerConfig();
-	}
-
-	if (alTestRunnerConfig.launchConfigName === '') {
-		return false;
-	}
-	else {
-		let debugConfigurations = getDebugConfigurationsFromLaunchJson('launch');
-		return debugConfigurations.filter(element => element.name === alTestRunnerConfig!.launchConfigName).length === 1;
-	}
-}
-
-async function selectLaunchConfig() {
-	let debugConfigurations = getDebugConfigurationsFromLaunchJson('launch');
-	let selectedConfig;
-
-	if (debugConfigurations.length === 1) {
-		selectedConfig = debugConfigurations.shift()!.name;
-	}
-	else if (debugConfigurations.length > 1) {
-		let configNames: Array<string> = debugConfigurations.map(element => element.name);
-		selectedConfig = await vscode.window.showQuickPick(configNames, { canPickMany: false, placeHolder: 'Please select a configuration to run tests against' });
-		if (selectedConfig === undefined) {
-			vscode.window.showErrorMessage('Please select a configuration before running tests');
-		}
-		else {
-			vscode.window.showInformationMessage('"' + selectedConfig + '" selected. Please run the command again to run the test(s).');
-		}
-	}
-
-	setALTestRunnerConfig('launchConfigName', selectedConfig);
-}
-
 export function getRangeOfFailingLineFromCallstack(callstack: string, method: string, document: vscode.TextDocument): vscode.Range | void {
 	const methodStartLineForCallstack = getLineNumberOfMethodDeclaration(method, document);
 	if (methodStartLineForCallstack === -1) {
@@ -572,85 +498,67 @@ export function getCodeunitIdFromAssemblyName(assemblyName: string): number {
 	return parseInt(matches!.shift()!);
 }
 
-async function outputTestResults(): Promise<Boolean> {
-	return new Promise(async (resolve, reject) => {
-		if (testsOutput) {
-			resolve(false);
-			return;
+export async function outputTestResults(assemblies: types.ALTestAssembly[]): Promise<Boolean> {
+	return new Promise(async (resolve) => {
+		let noOfTests: number = 0;
+		let noOfFailures: number = 0;
+		let noOfSkips: number = 0;
+		let totalTime: number = 0;
+
+		if (assemblies.length > 0) {
+			outputWriter.clear();
 		}
 
-		if (existsSync(getLastResultPath())) {
-			unwatchFile(getLastResultPath());
-			const xmlParser = new xml2js.Parser();
-			const resultXml = readFileSync(getLastResultPath(), { encoding: 'utf-8' });
+		for (let assembly of assemblies) {
+			noOfTests += parseInt(assembly.$.total);
+			const assemblyTime = parseFloat(assembly.$.time);
+			totalTime += assemblyTime;
+			const failed = parseInt(assembly.$.failed);
+			noOfFailures += failed;
+			const skipped = parseInt(assembly.$.skipped);
+			noOfSkips += skipped;
 
-			let noOfTests: number = 0;
-			let noOfFailures: number = 0;
-			let noOfSkips: number = 0;
-			let totalTime: number = 0;
-			const resultObj = await xmlParser.parseStringPromise(resultXml);
-			const assemblies: types.ALTestAssembly[] = resultObj.assemblies.assembly;
-
-			if (assemblies.length > 0) {
-				outputWriter.clear();
-				testsOutput = true;
-			}
-
-			for (let assembly of assemblies) {
-				noOfTests += parseInt(assembly.$.total);
-				const assemblyTime = parseFloat(assembly.$.time);
-				totalTime += assemblyTime;
-				const failed = parseInt(assembly.$.failed);
-				noOfFailures += failed;
-				const skipped = parseInt(assembly.$.skipped);
-				noOfSkips += skipped;
-
-				if (failed > 0) {
-					outputWriter.write('❌ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
-				}
-				else {
-					outputWriter.write('✅ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
-				}
-				for (let test of assembly.collection[0].test) {
-					const testTime = parseFloat(test.$.time);
-					let filePath = '';
-					switch (test.$.result) {
-						case 'Pass':
-							outputWriter.write('\t✅ ' + test.$.method + '\t' + testTime.toFixed(2) + 's');
-							break;
-						case 'Skip':
-							filePath = await getFilePathByCodeunitId(getCodeunitIdFromAssemblyName(assembly.$.name), test.$.method);
-							outputWriter.write('\t❓ ' + test.$.method + '\t' + testTime.toFixed(2) + 's ' + filePath);
-							break;
-						case 'Fail':
-							filePath = await getFilePathByCodeunitId(getCodeunitIdFromAssemblyName(assembly.$.name), test.$.method);
-							outputWriter.write('\t❌ ' + test.$.method + '\t' + testTime.toFixed(2) + "s " + filePath);
-							outputWriter.write('\t\t' + test.failure[0].message);
-							break;
-						default:
-							break;
-					}
-				}
-			}
-
-			if ((noOfFailures + noOfSkips) === 0) {
-				outputWriter.write('✅ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's at ' + assemblies[0].$!["run-time"]);
+			if (failed > 0) {
+				outputWriter.write('❌ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
 			}
 			else {
-				outputWriter.write('❌ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's - ' + (noOfFailures + noOfSkips) + ' test(s) failed/skipped at ' + assemblies[0].$!["run-time"]);
+				outputWriter.write('✅ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
 			}
+			for (let test of assembly.collection[0].test) {
+				const testTime = parseFloat(test.$.time);
+				let filePath = '';
+				switch (test.$.result) {
+					case 'Pass':
+						outputWriter.write('\t✅ ' + test.$.method + '\t' + testTime.toFixed(2) + 's');
+						break;
+					case 'Skip':
+						filePath = await getFilePathByCodeunitId(getCodeunitIdFromAssemblyName(assembly.$.name), test.$.method);
+						outputWriter.write('\t❓ ' + test.$.method + '\t' + testTime.toFixed(2) + 's ' + filePath);
+						break;
+					case 'Fail':
+						filePath = await getFilePathByCodeunitId(getCodeunitIdFromAssemblyName(assembly.$.name), test.$.method);
+						outputWriter.write('\t❌ ' + test.$.method + '\t' + testTime.toFixed(2) + "s " + filePath);
+						outputWriter.write('\t\t' + test.failure[0].message);
+						break;
+					default:
+						break;
+				}
+			}
+		}
 
-			if (getCurrentWorkspaceConfig().enableCodeCoverage) {
-				await outputCodeCoverage();
-			}
-
-			if (noOfTests > 0) {
-				resolve(true);
-			}
+		if ((noOfFailures + noOfSkips) === 0) {
+			outputWriter.write('✅ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's at ' + assemblies[0].$!["run-time"]);
 		}
 		else {
-			resolve(false);
+			outputWriter.write('❌ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's - ' + (noOfFailures + noOfSkips) + ' test(s) failed/skipped at ' + assemblies[0].$!["run-time"]);
 		}
+
+		if (getCurrentWorkspaceConfig().enableCodeCoverage) {
+			await outputCodeCoverage();
+		}
+
+		outputWriter.show();
+		resolve(true);
 	});
 
 }
@@ -661,11 +569,7 @@ export function getLaunchJson() {
 	return JSON.parse(data);
 }
 
-function getLaunchJsonPath() {
-	return getTestWorkspaceFolder() + '\\.vscode\\launch.json';
-}
-
-function getAppJsonKey(keyName: string) {
+export function getAppJsonKey(keyName: string) {
 	const appJsonPath = getTestWorkspaceFolder() + '\\app.json';
 	const data = readFileSync(appJsonPath, { encoding: 'utf-8' });
 	const appJson = JSON.parse(data);
@@ -687,7 +591,7 @@ export function getWorkspaceFolder() {
 	const wsFolders = vscode.workspace.workspaceFolders!;
 	if (wsFolders !== undefined) {
 		if (wsFolders.length === 1) {
-			return wsFolders.shift()!.uri.fsPath;
+			return wsFolders[0].uri.fsPath;
 		}
 	}
 
