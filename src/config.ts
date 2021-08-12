@@ -126,3 +126,7 @@ export async function selectLaunchConfig() {
 
 	setALTestRunnerConfig('launchConfigName', selectedConfig);
 }
+
+export function getCurrentWorkspaceConfig() {
+	return vscode.workspace.getConfiguration('al-test-runner', vscode.Uri.file(getTestWorkspaceFolder()));
+}

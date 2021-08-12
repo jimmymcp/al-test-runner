@@ -5,7 +5,7 @@ import * as types from './types';
 import { CodelensProvider } from './CodelensProvider';
 import { updateCodeCoverageDecoration, outputCodeCoverage } from './CodeCoverage';
 import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getFilePathByCodeunitId } from './alFileHelper';
-import { getALTestRunnerConfig, getALTestRunnerConfigPath, getALTestRunnerPath, getDebugConfigurationsFromLaunchJson, getLaunchJsonPath, getTestWorkspaceFolder, setALTestRunnerConfig } from './config';
+import { getALTestRunnerConfig, getALTestRunnerConfigPath, getALTestRunnerPath, getCurrentWorkspaceConfig, getDebugConfigurationsFromLaunchJson, getLaunchJsonPath, getTestWorkspaceFolder, setALTestRunnerConfig } from './config';
 import { showTableData } from './showTableData';
 import { getOutputWriter, OutputWriter } from './output';
 import { createTestController, debugTestHandler, deleteTestItemForFilename, discoverTests, discoverTestsInDocument, getTestItemFromFileNameAndSelection, runTestHandler } from './testController';
@@ -606,10 +606,6 @@ export function getWorkspaceFolder() {
 	}
 
 	throw new Error('Please open a file in the project you want to run the tests for.');
-}
-
-export function getCurrentWorkspaceConfig() {
-	return vscode.workspace.getConfiguration('al-test-runner', vscode.Uri.file(getTestWorkspaceFolder()));
 }
 
 function callOnOutputTestResults(context: any) {

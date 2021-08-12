@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { documentIsTestCodeunit, getALFilesInWorkspace, getALObjectOfDocument } from './alFileHelper';
-import { launchConfigIsValid, selectLaunchConfig, setALTestRunnerConfig } from './config';
+import { getCurrentWorkspaceConfig, launchConfigIsValid, selectLaunchConfig, setALTestRunnerConfig } from './config';
 import { alTestController, attachDebugger, getAppJsonKey, getTestMethodRangesFromDocument, initDebugTest, invokeDebugTest, invokeTestRunner, outputTestResults } from './extension';
 import { ALTestAssembly, ALTestResult } from './types';
 import * as path from 'path';
