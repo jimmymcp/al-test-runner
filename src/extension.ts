@@ -37,8 +37,8 @@ const failingLineDecorationType = vscode.window.createTextEditorDecorationType({
 });
 
 export const outputChannel = vscode.window.createOutputChannel(getTerminalName());
-let timeout: NodeJS.Timer | undefined = undefined;
-let isTestCodeunit: boolean;
+let updateDecorationsTimeout: NodeJS.Timer | undefined = undefined;
+let discoverTestsTimeout: NodeJS.Timer | undefined = undefined;
 
 const alTestRunnerAPI = new class {
 	getWorkspaceFolder: Function | undefined;
@@ -171,16 +171,17 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.window.onDidChangeActiveTextEditor(editor => {
 		activeEditor = editor;
 		if (editor) {
-			isTestCodeunit = documentIsTestCodeunit(activeEditor!.document);
-			triggerUpdateDecorations();
-			updateCodeCoverageDecoration(showCodeCoverage);
+			if (documentIsTestCodeunit(activeEditor!.document)) {
+				triggerUpdateDecorations();
+				updateCodeCoverageDecoration(showCodeCoverage);
+			}
 		}
 	}, null, context.subscriptions);
 
 	vscode.workspace.onDidChangeTextDocument(event => {
 		if (activeEditor && event.document === activeEditor.document) {
 			triggerUpdateDecorations();
-			discoverTestsInDocument(activeEditor.document);
+			triggerDiscoverTestsInDocument(activeEditor.document);
 		}
 	}, null, context.subscriptions);
 
@@ -234,6 +235,9 @@ export async function invokeTestRunner(command: string): Promise<types.ALTestAss
 			const results: types.ALTestAssembly[] = await readTestResults(e);
 			resolve(results);
 			watcher.dispose();
+
+			triggerUpdateDecorations();
+			callOnOutputTestResults({ event: 'create', filename: getLastResultPath() });
 		});
 	});
 }
@@ -386,21 +390,27 @@ function getUntestedTestDecorations(testMethodRanges: types.ALTestMethodRange[])
 }
 
 function triggerUpdateDecorations() {
-	if (!isTestCodeunit) {
-		return;
+	if (updateDecorationsTimeout) {
+		clearTimeout(updateDecorationsTimeout);
+		updateDecorationsTimeout = undefined;
 	}
 
-	if (timeout) {
-		clearTimeout(timeout);
-		timeout = undefined;
+	updateDecorationsTimeout = setTimeout(updateDecorations, 500);
+}
+
+function triggerDiscoverTestsInDocument(document: vscode.TextDocument) {
+	if (discoverTestsTimeout) {
+		clearTimeout(discoverTestsTimeout);
+		discoverTestsTimeout = undefined;
 	}
 
-	timeout = setTimeout(updateDecorations, 500);
+	discoverTestsTimeout = setTimeout(() => { discoverTestsInDocument(document) }, 500);
 }
 
 if (activeEditor) {
-	isTestCodeunit = documentIsTestCodeunit(activeEditor.document);
-	triggerUpdateDecorations();
+	if (documentIsTestCodeunit(activeEditor.document)) {
+		triggerUpdateDecorations();
+	}
 }
 
 export function getTestMethodRangesFromDocument(document: vscode.TextDocument): types.ALTestMethodRange[] {
