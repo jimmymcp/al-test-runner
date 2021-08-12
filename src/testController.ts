@@ -183,6 +183,10 @@ export async function debugTest(filename: string, selectionStart: number) {
     }
 
     initDebugTest(filename);
+
+    const config = getCurrentWorkspaceConfig();
+	await new Promise(r => setTimeout(r, config.testRunnerInitialisationTime));
+
     await attachDebugger();
     invokeDebugTest(filename, selectionStart);
 }

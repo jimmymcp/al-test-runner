@@ -255,10 +255,6 @@ export function initDebugTest(filename: string) {
 	terminal.show(true);
 	terminal.sendText('cd "' + getTestWorkspaceFolder() + '"');
 	terminal.sendText('Invoke-TestRunnerService -FileName "' + filename + '" -Init');
-
-	const sleep = require("system-sleep");
-	const config = getCurrentWorkspaceConfig();
-	sleep(config.testRunnerInitialisationTime);
 }
 
 export function invokeDebugTest(filename: string, selectionStart: number) {
