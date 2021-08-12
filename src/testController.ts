@@ -196,7 +196,7 @@ function setResultForTestItem(result: ALTestResult, testItem: vscode.TestItem, r
         run.passed(testItem);
     }
     else {
-        run.failed(testItem, new vscode.TestMessage(result.failure[0].message));
+        run.failed(testItem, new vscode.TestMessage(`${result.failure[0].message[0]}\n\n${result.failure[0]["stack-trace"][0]}`));
     }
 }
 
