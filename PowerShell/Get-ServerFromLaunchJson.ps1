@@ -8,6 +8,10 @@ function Get-ServerFromLaunchJson {
     
     $Server = Get-ValueFromLaunchJson -KeyName server -ConfigName $ConfigName
 
+    if ($Server.Substring($Server.IndexOf('://') + 1).Contains(':')) {
+        $Server = $Server.Substring(0, $Server.LastIndexOf(':'))
+    }
+
     if (!$IncludeProtocol.IsPresent) {
         $Server = $Server.Substring($Server.IndexOf('://') + 3)
         if ($Server.Substring($Server.length - 1) -eq '/') {
