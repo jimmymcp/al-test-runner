@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.6.1
+- Get-ServerFromLaunchJson: remove colon and port number from server name if present
+
+## 0.6.0
+- Support for VS Code Testing API
+
 ## 0.5.9
 - Optionally output test results to an editor instead of the output window.
 
