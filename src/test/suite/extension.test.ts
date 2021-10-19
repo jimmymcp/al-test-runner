@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import * as alTestRunner from '../../extension';
 import { writeFileSync, readdirSync, existsSync, unlinkSync, mkdirSync } from 'fs';
 import * as os from 'os';
-import { documentIsTestCodeunit, getDocumentIdAndName } from '../../alFileHelper';
+import { documentIsTestCodeunit, getALObjectOfDocument, getDocumentIdAndName } from '../../alFileHelper';
 import * as sinon from 'sinon';
 import { getLatestInsidersMetadata } from 'vscode-test/out/util';
 import { mock } from 'sinon';
@@ -315,5 +315,50 @@ suite('Extension Test Suite', () => {
 		const testMethodRanges = alTestRunner.getTestMethodRangesFromDocument(doc);
 
 		assert.strictEqual(testMethodRanges.length, 2);
+	});
+
+	test('getALObjectOfDocument returns alObject type for codeunit with object declaration on first line', async () => {
+		const text = `codeunit 51234 "Some Tests"
+		{
+			//some file content
+		}`
+
+		const doc = await createTextDocument('12.al', text);
+		const alObject = getALObjectOfDocument(doc);
+
+		assert.notStrictEqual(alObject, undefined, 'alObject should not be undefined');
+		assert.strictEqual(alObject!.id, 51234);
+		assert.strictEqual(alObject!.name!, 'Some Tests');
+	});
+
+	test('getALObjectOfDocument returns alObject type for codeunit with object declaration not on first line', async () => {
+		const text = `//some comments at the start of the file
+		//maybe some nonsense about copyright ©
+
+		codeunit 51234 "Some Tests"
+		{
+			//some file content
+		}`
+
+		const doc = await createTextDocument('13.al', text);
+		const alObject = getALObjectOfDocument(doc);
+
+		assert.notStrictEqual(alObject, undefined, 'alObject should not be undefined');
+		assert.strictEqual(alObject!.id, 51234);
+		assert.strictEqual(alObject!.name!, 'Some Tests');
+	});
+
+	test('getALObjectOfDocument returns alObject type for codeunit with strange casing of object declaration', async () => {
+		const text = `cOdeUnIt 51234 "Some Tests
+		{
+			//some file content
+		}`
+
+		const doc = await createTextDocument('14.al', text);
+		const alObject = getALObjectOfDocument(doc);
+
+		assert.notStrictEqual(alObject, undefined, 'alObject should not be undefined');
+		assert.strictEqual(alObject!.id, 51234);
+		assert.strictEqual(alObject!.name!, 'Some Tests');
 	});
 });

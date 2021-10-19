@@ -1,0 +1,1 @@
+export const objectDeclarationRegEx: string = '(codeunit|table|report|page|query)(extension){0,1} \\d+ .*';
