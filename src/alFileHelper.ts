@@ -4,16 +4,14 @@ import { activeEditor, alFiles } from './extension';
 import { readFileSync } from 'fs';
 import { getCurrentWorkspaceConfig } from './config';
 import { join } from 'path';
+import { objectDeclarationRegEx } from './constants';
 
 export function getALObjectOfDocument(document: vscode.TextDocument): ALObject | undefined {
-	let documentText = document.getText(new vscode.Range(0, 0, 1, 0));
-	const pattern = '\\D* \\d* ';
-	let matches = documentText.match(pattern);
-	if (matches !== null) {
-		let match = matches!.shift();
+	const objectDeclaration = getObjectDeclarationFromDocument(document);
+	if (objectDeclaration) {
 		let ALObject: ALObject = {
-			type: match!.substr(0, match!.indexOf(' ')),
-			id: parseInt(match!.substring(match!.indexOf(' ') + 1, match!.length - 1)),
+			type: objectDeclaration.substr(0, objectDeclaration.indexOf(' ')),
+			id: parseInt(objectDeclaration.substring(objectDeclaration.indexOf(' ') + 1)),
 			name: getDocumentName(document)
 		};
 		return ALObject;
@@ -31,13 +29,22 @@ export function documentIsTestCodeunit(document: vscode.TextDocument): boolean {
 }
 
 export function getDocumentIdAndName(document: vscode.TextDocument): string {
-	let firstLine = document.getText(new vscode.Range(0, 0, 0, 250));
-	let matches = firstLine.match('\\d+ .*');
-	if (matches !== undefined) {
-		return matches!.shift()!.replace(/"/g, '');
+	const objectDeclaration = getObjectDeclarationFromDocument(document);
+	if (objectDeclaration) {
+		let matches = objectDeclaration.match('\\d+ .*');
+		if (matches) {
+			return matches.shift()!.replace(/"/g, '');
+		}
 	}
-	else {
-		return '';
+
+	return '';
+}
+
+function getObjectDeclarationFromDocument(document: vscode.TextDocument): string | undefined {
+	const documentText = document.getText(new vscode.Range(0, 0, 10, 0));
+	let matches = documentText.match(new RegExp(objectDeclarationRegEx, 'i'));
+	if (matches) {
+		return matches!.shift()!;
 	}
 }
 

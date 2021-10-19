@@ -21,7 +21,7 @@
 		"vscode": "^1.59.0"
 	},
 	"categories": [
-		"Other"
+		"Testing"
 	],
 	"activationEvents": [
 		"onCommand:altestrunner.runAllTests",
