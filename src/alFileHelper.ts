@@ -1,7 +1,9 @@
 import * as vscode from 'vscode';
 import { ALFile, ALObject } from './types';
-import { alFiles } from './extension';
+import { activeEditor, alFiles } from './extension';
 import { readFileSync } from 'fs';
+import { getCurrentWorkspaceConfig } from './config';
+import { join } from 'path';
 import { objectDeclarationRegEx } from './constants';
 
 export function getALObjectOfDocument(document: vscode.TextDocument): ALObject | undefined {
@@ -113,4 +115,72 @@ export function getALFileForALObject(alObject: ALObject): ALFile | undefined {
 	else {
 		return undefined;
 	}
+}
+
+export async function openEditorToTestFileIfNotAlready(): Promise<Boolean> {
+	return new Promise(async resolve => {
+		if (!activeEditorOpenToTestFile()) {
+			await openTestAppJson();
+			resolve(true);
+		}
+		else {
+			resolve(false);
+		}
+	});
+}
+
+function activeEditorOpenToTestFile(): Boolean {
+	if (!activeEditor) {
+		return false;
+	}
+
+	const testFolderPath = getTestFolderPath();
+	if (testFolderPath) {
+		return activeEditor.document.uri.fsPath.includes(testFolderPath);
+	}
+	else {
+		return false;
+	}
+}
+
+async function openTestAppJson(): Promise<vscode.TextEditor> {
+	return new Promise(async resolve => {
+		vscode.commands.executeCommand('workbench.action.keepEditor');
+		resolve(await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(getPathOfTestAppJson()!)));
+	});
+}
+
+function getPathOfTestAppJson(): string | undefined {
+	const testFolderPath = getTestFolderPath();
+	if (testFolderPath) {
+		return join(testFolderPath, 'app.json');
+	}
+}
+
+function getTestFolderPath(): string | undefined {
+	const config = getCurrentWorkspaceConfig();
+	if (!config.testFolderName) {
+		return undefined;
+	}
+
+	let wsFolders = vscode.workspace.workspaceFolders;
+	if (!wsFolders) {
+		return undefined;
+	}
+
+	wsFolders = wsFolders.filter(element => {
+		return element.name === config.testFolderName;
+	})
+
+	if (wsFolders) {
+		return wsFolders[0].uri.fsPath;
+	}
+}
+
+export function activeEditorIsOpenToTestAppJson(): Boolean {
+	if (!activeEditor) {
+		return false;
+	}
+
+	return activeEditor.document.uri.fsPath === getPathOfTestAppJson();
 }

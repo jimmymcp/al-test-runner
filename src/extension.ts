@@ -4,7 +4,7 @@ import * as xml2js from 'xml2js';
 import * as types from './types';
 import { CodelensProvider } from './CodelensProvider';
 import { updateCodeCoverageDecoration, outputCodeCoverage } from './CodeCoverage';
-import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getFilePathByCodeunitId } from './alFileHelper';
+import { activeEditorIsOpenToTestAppJson, documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getFilePathByCodeunitId, openEditorToTestFileIfNotAlready } from './alFileHelper';
 import { getALTestRunnerConfig, getALTestRunnerConfigPath, getALTestRunnerPath, getCurrentWorkspaceConfig, getDebugConfigurationsFromLaunchJson, getLaunchJsonPath, getTestWorkspaceFolder, setALTestRunnerConfig } from './config';
 import { showTableData } from './showTableData';
 import { getOutputWriter, OutputWriter } from './output';
@@ -208,6 +208,11 @@ export async function invokeTestRunner(command: string): Promise<types.ALTestAss
 		const config = getCurrentWorkspaceConfig();
 		getALFilesInWorkspace(config.codeCoverageExcludeFiles).then(files => { alFiles = files });
 
+		let closeEditor: Boolean = false;
+		if (config.publishBeforeTest !== 'None') {
+			closeEditor = await openEditorToTestFileIfNotAlready();
+		}
+
 		switch (config.publishBeforeTest) {
 			case 'Publish':
 				await vscode.commands.executeCommand('al.publishNoDebug');
@@ -215,6 +220,12 @@ export async function invokeTestRunner(command: string): Promise<types.ALTestAss
 			case 'Rapid application publish':
 				await vscode.commands.executeCommand('al.incrementalPublishNoDebug');
 				break;
+		}
+
+		if (closeEditor) {
+			if (activeEditorIsOpenToTestAppJson()) {
+				await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+			}
 		}
 
 		if (config.enableCodeCoverage) {
