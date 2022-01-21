@@ -306,6 +306,10 @@ function invokeCommand(command: string) {
 }
 
 function updateDecorations() {
+	if (!activeEditor) {
+		return;
+	}
+
 	const config = getCurrentWorkspaceConfig();
 
 	let passingTests: vscode.DecorationOptions[] = [];
@@ -383,7 +387,7 @@ function setDecorations(passingTests: vscode.DecorationOptions[], failingTests: 
 	activeEditor!.setDecorations(failingTestDecorationType, failingTests);
 	activeEditor!.setDecorations(untestedTestDecorationType, untestedTests);
 
-	if (failingLines !== undefined) {
+	if (failingLines) {
 		activeEditor!.setDecorations(failingLineDecorationType, failingLines);
 	}
 }
@@ -472,9 +476,12 @@ function getTerminalName() {
 
 export function getALTestRunnerTerminal(terminalName: string): vscode.Terminal {
 	let terminals = vscode.window.terminals.filter(element => element.name === terminalName);
-	let terminal = terminals.shift()!;
+	let terminal;
+	if (terminals) {
+		terminal = terminals.shift()!;
+	}
 
-	if (terminal !== undefined) {
+	if (terminal) {
 		return terminal;
 	}
 	else {
@@ -512,7 +519,11 @@ export function getLineNumberOfMethodDeclaration(method: string, document: vscod
 
 export function getCodeunitIdFromAssemblyName(assemblyName: string): number {
 	const matches = assemblyName.match('\\d+');
-	return parseInt(matches!.shift()!);
+	if (matches) {
+		return parseInt(matches!.shift()!);
+	}
+
+	return (0);
 }
 
 export async function outputTestResults(assemblies: types.ALTestAssembly[]): Promise<Boolean> {

@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.6.3
+- Stability improvements
+
 ## 0.6.2
 - Open app.json of the test app before publishing on running tests. This is to ensure that the publish command provided by the AL extension publishes the correct app before running the tests.
 - Fix an assumption that the object declaration for a test codeunit must be on the first line of the file.

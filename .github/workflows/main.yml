@@ -8,7 +8,7 @@ on:
       - master
       - issue*
   pull_request:
-    branches: [ master ]    
+    branches: [ master ]
   workflow_dispatch:
 
 jobs:
@@ -35,3 +35,8 @@ jobs:
         with:
           name: AL Test Runner
           path: ./*.vsix
+
+      - name: Publish to marketplace
+        if: github.ref == 'refs/heads/master'
+        run: |
+          vsce publish -p ${{ secrets.VSCE_PAT }}
