@@ -23,7 +23,7 @@ function findRecordNameForVariable(variableName: string): string {
     let documentText = activeEditor!.document.getText();
     let regex = String.raw`${variableName} *: *Record *"*[^;\)"]+`;
     let matches = documentText.match(regex);
-    if (matches !== null) {
+    if (matches) {
         let recordDefinition = matches!.shift()!;
         if (recordDefinition.indexOf('"') > 0) {
             return recordDefinition.substring(recordDefinition.lastIndexOf('"') + 1);
