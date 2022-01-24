@@ -1,30 +1,40 @@
 function Invoke-TestRunnerService {
     param (
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [string]$FileName = '',
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [int]$SelectionStart = 0,
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [switch]$Init
     )
     
-    $ServiceUrl = Get-ServiceUrl -Method 'RunTest'
     $Credential = Get-ALTestRunnerCredential
-    $CodeunitId = Get-ObjectIdFromFile $FileName
 
     if ($Init.IsPresent) {
+        $ServiceUrl = Get-ServiceUrl -Method 'RunTestsFromFilter'
+        $CodeunitIDFilter = Get-FilterFromIDRanges
         $TestName = 'InitTestRunnerService'
+        $Body = "{`"codeunitIdFilter`": $CodeunitIDFilter, `"testName`": `"$TestName`"}"
         Write-Host "Initialising test runner"
     }
-    else {
+    elseif ($FileName -ne '') {
+        $ServiceUrl = Get-ServiceUrl -Method 'RunTest'
+        $CodeunitId = Get-ObjectIdFromFile $FileName
         $TestName = Get-TestNameFromSelectionStart -Path $FileName -SelectionStart $SelectionStart
+        $Body = "{`"codeunitId`": $CodeunitId, `"testName`": `"$TestName`"}"
+    }
+    else {
+        $ServiceUrl = Get-ServiceUrl -Method 'RunTestsFromFilter'
+        $CodeunitIDFilter = Get-FilterFromIDRanges
+        $TestName = ''
+        $Body = "{`"codeunitIdFilter`": `"$CodeunitIDFilter`", `"testName`": `"$TestName`"}"
     }
 
     try {
         Invoke-WebRequest $ServiceUrl `
             -Credential $Credential `
             -Method Post `
-            -Body "{`"codeunitId`": $CodeunitId, `"testName`": `"$TestName`"}" `
+            -Body $Body `
             -ContentType application/json | Out-Null
         if (!($Init.IsPresent)) {
             Write-Host "Test $TestName passes" -ForegroundColor Green
