@@ -5,7 +5,7 @@ Describe Get-FilterFromIDRanges {
             Set-Content -Path $AppJsonPath `
                 -Value '{"idRanges": [{"from": 50000, "to": 50100}]}'
 
-            Get-FilterFromIDRanges $AppJsonPath | should be "50000..50100"
+            Get-FilterFromIDRanges $AppJsonPath | should -be "50000..50100"
         }
     }
 
@@ -15,7 +15,7 @@ Describe Get-FilterFromIDRanges {
             Set-Content -Path $AppJsonPath `
                 -Value '{"idRanges": [{"from": 50000, "to": 50100}, {"from": 60000, "to": 60020}]}'
 
-            Get-FilterFromIDRanges $AppJsonPath | should be "50000..50100|60000..60020"
+            Get-FilterFromIDRanges $AppJsonPath | should -be "50000..50100|60000..60020"
         }
     }
 
@@ -25,7 +25,7 @@ Describe Get-FilterFromIDRanges {
             Set-Content -Path $AppJsonPath `
                 -Value '{"idRange": {"from": 70000, "to": 70050}}'
 
-            Get-FilterFromIDRanges $AppJsonPath | should be "70000..70050"
+            Get-FilterFromIDRanges $AppJsonPath | should -be "70000..70050"
         }
     }
 
@@ -35,7 +35,7 @@ Describe Get-FilterFromIDRanges {
             Set-Content -Path $AppJsonPath `
                 -Value '{}'
 
-            Get-FilterFromIDRanges $AppJsonPath | should be ""
+            Get-FilterFromIDRanges $AppJsonPath | should -be ""
         }
     }
 }

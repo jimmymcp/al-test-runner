@@ -17,19 +17,19 @@ Describe Get-TestNameFromSelectionStart {
 
     Context 'Cursor is below a [Test] attribute line' {
         It 'should return the name of the procedure' {
-            Get-TestNameFromSelectionStart -Path $Path -SelectionStart 4 | should be 'ThisIsATest'
+            Get-TestNameFromSelectionStart -Path $Path -SelectionStart 4 | should -be 'ThisIsATest'
         }
     }
 
     Context 'Cursor is above the first [Test] attribute line' {
         It 'should return blank' {
-            Get-TestNameFromSelectionStart -Path $Path -SelectionStart 2 | should be ''
+            Get-TestNameFromSelectionStart -Path $Path -SelectionStart 2 | should -be ''
         }
     }
 
     Context 'Cursor is below a [test] (lower case) attribute line' {
         It 'should return the name of the procedure' {
-            Get-TestNameFromSelectionStart -Path $Path -SelectionStart 11 | should be 'ThisIsAnotherTest'
+            Get-TestNameFromSelectionStart -Path $Path -SelectionStart 11 | should -be 'ThisIsAnotherTest'
         }
     }
 }

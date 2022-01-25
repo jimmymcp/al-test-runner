@@ -5,7 +5,7 @@ Describe Get-ContainerName {
             Mock Get-DockerHostIsRemote {$false}
             Mock Get-ServerFromLaunchJson {'launchJsonServer'}
             It 'should return the server name from launch.json' {
-                Get-ContainerName | should be 'launchJsonServer'
+                Get-ContainerName | should -be 'launchJsonServer'
             }
         }
 
@@ -34,7 +34,7 @@ Describe Get-ContainerName {
             Mock Get-ValueFromALTestRunnerConfig {'testContainer'} -ParameterFilter {$KeyName -eq 'remoteContainerName'}
             Mock Read-Host {'testContainer'}
             It 'should prompt for the name of the remoteContainerName' {
-                Get-ContainerName | should be 'testContainer'
+                Get-ContainerName | should -be 'testContainer'
             }
         }
     }

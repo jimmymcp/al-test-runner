@@ -20,7 +20,7 @@ Describe Merge-ALTestRunnerTestResults {
             $ResultsFile = Join-Path $TestDrive 'Results.xml'
             Set-Content -Path $ResultsFile -Value (Get-SingleAssemblyTestResults)
             Merge-ALTestRunnerTestResults -ResultsFile $ResultsFile -ToPath (Join-Path $TestDrive 'Results')
-            Test-Path (Join-Path (Join-Path $TestDrive 'Results') '9093548 Licensing Test CDLTMN.xml') | should be $true
+            Test-Path (Join-Path (Join-Path $TestDrive 'Results') '9093548 Licensing Test CDLTMN.xml') | should -be $true
         }        
     }
 
@@ -29,8 +29,8 @@ Describe Merge-ALTestRunnerTestResults {
             $ResultsFile = Join-Path $TestDrive 'Results.xml'
             Set-Content -Path $ResultsFile -Value (Get-MultipleAssemblyTestResults)
             Merge-ALTestRunnerTestResults -ResultsFile $ResultsFile -ToPath (Join-Path $TestDrive 'Results')
-            Test-Path (Join-Path (Join-Path $TestDrive 'Results') '9030216 Global Obfuscate Tests GBSTMN.xml') | should be $true
-            Test-Path (Join-Path (Join-Path $TestDrive 'Results') '9030215 Global Search Tests GBSTMN.xml') | should be $true
+            Test-Path (Join-Path (Join-Path $TestDrive 'Results') '9030216 Global Obfuscate Tests GBSTMN.xml') | should -be $true
+            Test-Path (Join-Path (Join-Path $TestDrive 'Results') '9030215 Global Search Tests GBSTMN.xml') | should -be $true
         }
     }
 
@@ -45,10 +45,10 @@ Describe Merge-ALTestRunnerTestResults {
             Merge-ALTestRunnerTestResults -ResultsFile $ResultsFile -ToPath (Join-Path $TestDrive 'Results')
             [xml]$TestResults = Get-Content -Path (Join-Path (Join-Path $TestDrive 'Results') '9093548 Licensing Test CDLTMN.xml')
             $Nodes = $TestResults.SelectNodes('/assembly/collection/test[@method="ExpiredLicenseErrorsOnUpload"]')
-            $Nodes.Count | should be 1
+            $Nodes.Count | should -be 1
             $Node = $Nodes.Item(0)
-            $Node.result | should be 'Fail'
-            $Node.failure.message | should be 'There was an error'
+            $Node.result | should -be 'Fail'
+            $Node.failure.message | should -be 'There was an error'
         }
     }
 
@@ -57,7 +57,7 @@ Describe Merge-ALTestRunnerTestResults {
             $ResultsFile = Join-Path $TestDrive 'Results.xml'
             Set-Content -Path $ResultsFile -Value (Get-TestResultWithIllegalFilenameCharacters)
             Merge-ALTestRunnerTestResults -ResultsFile $ResultsFile -ToPath (Join-Path $TestDrive 'Results')
-            Test-Path (Join-Path (Join-Path $TestDrive 'Results') '9093548 ABCDEF Test.xml') | should be $true
+            Test-Path (Join-Path (Join-Path $TestDrive 'Results') '9093548 ABCDEF Test.xml') | should -be $true
         }
     }
 }

@@ -15,21 +15,21 @@ Describe Get-DockerHostIsRemote {
             It 'returns false' {
                 New-ConfigFile -Path (Join-Path $TestDrive 'config.json') -Value '{}'
                 Mock -CommandName Get-ALTestRunnerConfigPath {return Join-Path $TestDrive 'config.json'}
-                Get-DockerHostIsRemote | should be $false
+                Get-DockerHostIsRemote | should -be $false
             }
         }
         Context 'dockerHost is blank in config file' {
             It 'returns false' {
                 New-ConfigFile -Path (Join-Path $TestDrive 'config.json') -Value '{"dockerHost": ""}'
                 Mock -CommandName Get-ALTestRunnerConfigPath {return Join-Path $TestDrive 'config.json'}
-                Get-DockerHostIsRemote | should be $false
+                Get-DockerHostIsRemote | should -be $false
             }
         }
         Context 'dockerHost is not blank in config file' {
             It 'returns true' {
                 New-ConfigFile -Path (Join-Path $TestDrive 'config.json') -Value '{"dockerHost": "my great server"}'
                 Mock -CommandName Get-ALTestRunnerConfigPath {return Join-Path $TestDrive 'config.json'}
-                Get-DockerHostIsRemote | should be $true
+                Get-DockerHostIsRemote | should -be $true
             }
         }
     }
