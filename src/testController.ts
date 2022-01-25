@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { documentIsTestCodeunit, getALFilesInWorkspace, getALObjectOfDocument } from './alFileHelper';
 import { getCurrentWorkspaceConfig, launchConfigIsValid, selectLaunchConfig, setALTestRunnerConfig } from './config';
-import { alTestController, attachDebugger, getAppJsonKey, getTestMethodRangesFromDocument, initDebugTest, invokeDebugTest, invokeTestRunner, outputTestResults } from './extension';
+import { alTestController, attachDebugger, getAppJsonKey, getTestMethodRangesFromDocument, invokeDebugTest, invokeTestRunner, outputTestResults } from './extension';
 import { ALTestAssembly, ALTestResult } from './types';
 import * as path from 'path';
 
@@ -182,8 +182,6 @@ export async function debugTest(filename: string, selectionStart: number) {
     if (selectionStart === undefined) {
         selectionStart = vscode.window.activeTextEditor!.selection.start.line;
     }
-
-    initDebugTest(filename);
 
     const config = getCurrentWorkspaceConfig();
     await new Promise(r => setTimeout(r, config.testRunnerInitialisationTime));
