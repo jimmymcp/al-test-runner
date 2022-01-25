@@ -32,6 +32,7 @@ jobs:
         run: |
           Set-PSRepository psgallery -InstallationPolicy Trusted
           Install-Module Pester
+          Install-Module bccontainerhelper
           gci *ALTestRunner.psm1 -Recurse | % {$_.FullName; Import-Module $_.FullName}
           Invoke-Pester
 
