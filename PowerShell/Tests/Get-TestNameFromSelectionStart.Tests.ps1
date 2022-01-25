@@ -1,19 +1,22 @@
 Describe Get-TestNameFromSelectionStart {
-    $Path = Join-Path $TestDrive ([Guid]::NewGuid().Guid + '.al')
-    Set-Content -Path $Path -Value 'codeunit 50100 "Test Codeunit"
-    {
-        Subtype = Test;
-        [Test]
-        [HandlerFunctions(''MessageHandler'')]
-        procedure ThisIsATest()
-        begin
-        end;
-        [test]
-        [HandlerFunctions(''MessageHandler'')]
-        procedure ThisIsAnotherTest()
-        begin
-        end;
-    }'
+    BeforeAll {
+
+        $Path = Join-Path $TestDrive ([Guid]::NewGuid().Guid + '.al')
+        Set-Content -Path $Path -Value 'codeunit 50100 "Test Codeunit"
+        {
+            Subtype = Test;
+            [Test]
+            [HandlerFunctions(''MessageHandler'')]
+            procedure ThisIsATest()
+            begin
+            end;
+            [test]
+            [HandlerFunctions(''MessageHandler'')]
+            procedure ThisIsAnotherTest()
+            begin
+            end;
+        }'
+    }
 
     Context 'Cursor is below a [Test] attribute line' {
         It 'should return the name of the procedure' {
