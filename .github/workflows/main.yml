@@ -30,6 +30,13 @@ jobs:
           npm install -g vsce
           vsce package
 
+      - name: run pester tests
+        shell: pwsh
+        run: |
+          Set-PSRepository psgallery -InstallationPolicy Trusted
+          Install-Module Pester
+          Invoke-Pester
+
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v2.1.4
         with:
