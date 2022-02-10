@@ -88,7 +88,9 @@ export async function runTestHandler(request: vscode.TestRunRequest) {
     }
 
     run.end();
-    outputTestResults(results);
+    if (results.length > 0) {
+        outputTestResults(results);
+    }
 }
 
 export function readyToRunTests(): Promise<Boolean> {

@@ -4,11 +4,12 @@ import * as xml2js from 'xml2js';
 import * as types from './types';
 import { CodelensProvider } from './CodelensProvider';
 import { updateCodeCoverageDecoration, outputCodeCoverage } from './CodeCoverage';
-import { activeEditorIsOpenToTestAppJson, documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getFilePathByCodeunitId, openEditorToTestFileIfNotAlready } from './alFileHelper';
+import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getFilePathByCodeunitId } from './alFileHelper';
 import { getALTestRunnerConfig, getALTestRunnerConfigPath, getALTestRunnerPath, getCurrentWorkspaceConfig, getDebugConfigurationsFromLaunchJson, getLaunchJsonPath, getTestWorkspaceFolder, setALTestRunnerConfig } from './config';
 import { showTableData } from './showTableData';
 import { getOutputWriter, OutputWriter } from './output';
 import { createTestController, debugTestHandler, deleteTestItemForFilename, discoverTests, discoverTestsInDocument, getTestItemFromFileNameAndSelection, runTestHandler } from './testController';
+import { displayPublishTerminal, onChangeAppFile, publishApp } from './publish';
 
 let terminal: vscode.Terminal;
 export let activeEditor = vscode.window.activeTextEditor;
@@ -19,6 +20,11 @@ const passingTestColor = 'rgba(' + config.passingTestsColor.red + ',' + config.p
 const failingTestColor = 'rgba(' + config.failingTestsColor.red + ',' + config.failingTestsColor.green + ',' + config.failingTestsColor.blue + ',' + config.failingTestsColor.alpha + ')';
 const untestedTestColor = 'rgba(' + config.untestedTestsColor.red + ',' + config.untestedTestsColor.green + ',' + config.untestedTestsColor.blue + ',' + config.untestedTestsColor.alpha + ')';
 export const outputWriter: OutputWriter = getOutputWriter();
+
+const appFileWatcher = vscode.workspace.createFileSystemWatcher('**/*.app', false, false, true);
+appFileWatcher.onDidChange(e => {
+	onChangeAppFile(e);
+});
 
 export const passingTestDecorationType = vscode.window.createTextEditorDecorationType({
 	backgroundColor: passingTestColor
@@ -207,25 +213,27 @@ export async function invokeTestRunner(command: string): Promise<types.ALTestAss
 	return new Promise(async (resolve) => {
 		const config = getCurrentWorkspaceConfig();
 		getALFilesInWorkspace(config.codeCoverageExcludeFiles).then(files => { alFiles = files });
-
-		let closeEditor: Boolean = false;
-		if (config.publishBeforeTest !== 'None') {
-			closeEditor = await openEditorToTestFileIfNotAlready();
-		}
+		let publishType: types.PublishType = types.PublishType.None;
 
 		switch (config.publishBeforeTest) {
 			case 'Publish':
-				await vscode.commands.executeCommand('al.publishNoDebug');
+				publishType = types.PublishType.Publish;
 				break;
 			case 'Rapid application publish':
-				await vscode.commands.executeCommand('al.incrementalPublishNoDebug');
+				publishType = types.PublishType.Rapid;
 				break;
 		}
 
-		if (closeEditor) {
-			if (activeEditorIsOpenToTestAppJson()) {
-				await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
-			}
+		const publishSuccessful = await publishApp(publishType);
+		if (!publishSuccessful) {
+			const results: types.ALTestAssembly[] = [];
+			vscode.window.showWarningMessage('The app failed to compile or publish into the container.', "Show Terminal").then(value => {
+				if (value === "Show Terminal") {
+					displayPublishTerminal();
+				}
+			});
+			resolve(results);
+			return;
 		}
 
 		if (config.enableCodeCoverage) {
