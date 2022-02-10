@@ -3,12 +3,21 @@ function Invoke-TestRunnerService {
         [Parameter(Mandatory = $false)]
         [string]$FileName = '',
         [Parameter(Mandatory = $false)]
-        [int]$SelectionStart = 0
+        [int]$SelectionStart = 0,
+        [Parameter(Mandatory = $false)]
+        [switch]$Init
     )
     
     $Credential = Get-ALTestRunnerCredential
 
-    if ($FileName -ne '') {
+    if ($Init.IsPresent) {
+        $ServiceUrl = Get-ServiceUrl -Method 'RunTestsFromFilter'
+        $CodeunitIDFilter = Get-FilterFromIDRanges
+        $TestName = 'InitTestRunnerService'
+        $Body = "{`"codeunitIdFilter`": $CodeunitIDFilter, `"testName`": `"$TestName`"}"
+        Write-Host "Initialising test runner"
+    }
+    elseif ($FileName -ne '') {
         $ServiceUrl = Get-ServiceUrl -Method 'RunTest'
         $CodeunitId = Get-ObjectIdFromFile $FileName
         $TestName = Get-TestNameFromSelectionStart -Path $FileName -SelectionStart $SelectionStart

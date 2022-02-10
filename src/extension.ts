@@ -272,6 +272,14 @@ async function readTestResults(uri: vscode.Uri): Promise<types.ALTestAssembly[]>
 	});
 }
 
+export function initDebugTest(filename: string) {
+	terminal = getALTestRunnerTerminal(getTerminalName());
+	terminal.sendText(' ');
+	terminal.show(true);
+	terminal.sendText('cd "' + getTestWorkspaceFolder() + '"');
+	terminal.sendText('Invoke-TestRunnerService -FileName "' + filename + '" -Init');
+}
+
 export function invokeDebugTest(filename: string, selectionStart: number) {
 	terminal = getALTestRunnerTerminal(getTerminalName());
 	terminal.sendText(' ');
