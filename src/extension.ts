@@ -9,7 +9,9 @@ import { getALTestRunnerConfig, getALTestRunnerConfigPath, getALTestRunnerPath, 
 import { showTableData } from './showTableData';
 import { getOutputWriter, OutputWriter } from './output';
 import { createTestController, debugTestHandler, deleteTestItemForFilename, discoverTests, discoverTestsInDocument, getTestItemFromFileNameAndSelection, runTestHandler } from './testController';
-import { displayPublishTerminal, onChangeAppFile, publishApp } from './publish';
+import { displayPublishTerminal as displayTerminal, onChangeAppFile, publishApp } from './publish';
+import { awaitFileExistence } from './file';
+import { join } from 'path';
 
 let terminal: vscode.Terminal;
 export let activeEditor = vscode.window.activeTextEditor;
@@ -21,7 +23,8 @@ const failingTestColor = 'rgba(' + config.failingTestsColor.red + ',' + config.f
 const untestedTestColor = 'rgba(' + config.untestedTestsColor.red + ',' + config.untestedTestsColor.green + ',' + config.untestedTestsColor.blue + ',' + config.untestedTestsColor.alpha + ')';
 export const outputWriter: OutputWriter = getOutputWriter();
 
-const appFileWatcher = vscode.workspace.createFileSystemWatcher('**/*.app', false, false, true);
+const testAppsPath = join(getTestWorkspaceFolder(), '*.app');
+const appFileWatcher = vscode.workspace.createFileSystemWatcher(testAppsPath, false, false, true);
 appFileWatcher.onDidChange(e => {
 	onChangeAppFile(e);
 });
@@ -215,21 +218,23 @@ export async function invokeTestRunner(command: string): Promise<types.ALTestAss
 		getALFilesInWorkspace(config.codeCoverageExcludeFiles).then(files => { alFiles = files });
 		let publishType: types.PublishType = types.PublishType.None;
 
-		switch (config.publishBeforeTest) {
-			case 'Publish':
-				publishType = types.PublishType.Publish;
-				break;
-			case 'Rapid application publish':
-				publishType = types.PublishType.Rapid;
-				break;
+		if (!config.automaticPublishing) {
+			switch (config.publishBeforeTest) {
+				case 'Publish':
+					publishType = types.PublishType.Publish;
+					break;
+				case 'Rapid application publish':
+					publishType = types.PublishType.Rapid;
+					break;
+			}
 		}
 
 		const publishSuccessful = await publishApp(publishType);
 		if (!publishSuccessful) {
 			const results: types.ALTestAssembly[] = [];
-			vscode.window.showWarningMessage('The app failed to compile or publish into the container.', "Show Terminal").then(value => {
+			vscode.window.showWarningMessage('The app failed to compile or failed to publish into the container.', "Show Terminal").then(value => {
 				if (value === "Show Terminal") {
-					displayPublishTerminal();
+					displayTerminal();
 				}
 			});
 			resolve(results);
@@ -240,6 +245,10 @@ export async function invokeTestRunner(command: string): Promise<types.ALTestAss
 			command += ' -GetCodeCoverage';
 		}
 
+		if (existsSync(getLastResultPath())) {
+			unlinkSync(getLastResultPath());
+		}
+
 		terminal = getALTestRunnerTerminal(getTerminalName());
 		terminal.sendText(' ');
 		terminal.show(true);
@@ -248,15 +257,14 @@ export async function invokeTestRunner(command: string): Promise<types.ALTestAss
 		terminal.sendText(command);
 		invokeCommand(config.postTestCommand);
 
-		unlinkSync(getLastResultPath());
-		const watcher = vscode.workspace.createFileSystemWatcher(getLastResultPath(), false, true, true);
-		watcher.onDidCreate(async e => {
-			const results: types.ALTestAssembly[] = await readTestResults(e);
-			resolve(results);
-			watcher.dispose();
+		awaitFileExistence(getLastResultPath(), 0).then(async resultsAvailable => {
+			if (resultsAvailable) {
+				const results: types.ALTestAssembly[] = await readTestResults(vscode.Uri.file(getLastResultPath()));
+				resolve(results);
 
-			triggerUpdateDecorations();
-			callOnOutputTestResults({ event: 'create', filename: getLastResultPath() });
+				triggerUpdateDecorations();
+				callOnOutputTestResults({ event: 'create', filename: getLastResultPath() });
+			}
 		});
 	});
 }

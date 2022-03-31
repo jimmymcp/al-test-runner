@@ -54,12 +54,14 @@ export async function runTestHandler(request: vscode.TestRunRequest) {
     let results: ALTestAssembly[];
     if (request.include === undefined) {
         results = await runAllTests();
-        alTestController.items.forEach(codeunit => {
-            codeunit.children.forEach(test => {
-                const result = getResultForTestItem(results, test, codeunit);
-                setResultForTestItem(result, test, run);
+        if (results.length > 0) {
+            alTestController.items.forEach(codeunit => {
+                codeunit.children.forEach(test => {
+                    const result = getResultForTestItem(results, test, codeunit);
+                    setResultForTestItem(result, test, run);
+                });
             });
-        });
+        }
     }
     else {
         const testItem = request.include![0];
