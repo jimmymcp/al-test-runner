@@ -55,6 +55,10 @@
         "codeCoveragePath": {
             "type": "string",
             "description": "The path to save details of code coverage to e.g. .//.altestrunner//codecoverage.json"
+        },
+        "testRunnerCodeunitId": {
+            "type": "number",
+            "description": "The id of the test runner codeunit to use when running tests (130450 = codeunit isolation, 130451 = isolation disabled)"
         }
     }
 }

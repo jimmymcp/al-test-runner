@@ -22,7 +22,9 @@ function Invoke-RunTests {
         [Parameter(Mandatory = $false)]
         [string]$ExtensionName,
         [Parameter(Mandatory = $false)]
-        [switch]$GetCodeCoverage
+        [switch]$GetCodeCoverage,
+        [Parameter(Mandatory=$false)]
+        [int]$TestRunnerCodeunitId = 130450
     )
 
     $ResultId = [Guid]::NewGuid().Guid + ".xml"
@@ -64,6 +66,11 @@ function Invoke-RunTests {
     else {
         $Params.Add('extensionId', $ExtensionId)
         $Message += ", extension {0}" -f $ExtensionName
+    }
+
+    if ($TestRunnerCodeunitId -ne 0) {
+        $Params.Add('testRunnerCodeunitId', $TestRunnerCodeunitId)
+        $Message += ", test runner $TestRunnerCodeunitId"
     }
 
     [int]$AttemptNo = 1

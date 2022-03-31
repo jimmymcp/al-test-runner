@@ -81,6 +81,10 @@ function Invoke-ALTestRunner {
         $Credential = Get-ALTestRunnerCredential
         $Params.Add('Credential', $Credential)
     }
+
+    if ((Get-ValueFromALTestRunnerConfig -KeyName 'testRunnerCodeunitId') -gt 0) {
+        $Params.Add('TestRunnerCodeunitId', (Get-ValueFromALTestRunnerConfig -KeyName 'testRunnerCodeunitId'))
+    }
     
     Invoke-RunTests @Params
 }
