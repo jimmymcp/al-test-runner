@@ -23,11 +23,13 @@ const failingTestColor = 'rgba(' + config.failingTestsColor.red + ',' + config.f
 const untestedTestColor = 'rgba(' + config.untestedTestsColor.red + ',' + config.untestedTestsColor.green + ',' + config.untestedTestsColor.blue + ',' + config.untestedTestsColor.alpha + ')';
 export const outputWriter: OutputWriter = getOutputWriter();
 
-const testAppsPath = join(getTestWorkspaceFolder(), '*.app');
-const appFileWatcher = vscode.workspace.createFileSystemWatcher(testAppsPath, false, false, true);
-appFileWatcher.onDidChange(e => {
-	onChangeAppFile(e);
-});
+if (getTestWorkspaceFolder(true) != '') {
+	const testAppsPath = join(getTestWorkspaceFolder(true), '*.app');
+	const appFileWatcher = vscode.workspace.createFileSystemWatcher(testAppsPath, false, false, true);
+	appFileWatcher.onDidChange(e => {
+		onChangeAppFile(e);
+	});
+}
 
 export const passingTestDecorationType = vscode.window.createTextEditorDecorationType({
 	backgroundColor: passingTestColor
