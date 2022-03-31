@@ -28,7 +28,7 @@ Describe Get-LaunchJson {
                     ]
                 }'
             
-            (Get-LaunchJson -Path $LaunchPath).configurations.Length | should be 1
+            (Get-LaunchJson -Path $LaunchPath).configurations.Length | should -be 1
         }
     }
 
@@ -51,7 +51,7 @@ Describe Get-LaunchJson {
                     ]
                 }'
             
-            (Get-LaunchJson -Path $LaunchPath).configurations.Length | should be 1
+            (Get-LaunchJson -Path $LaunchPath).configurations.Length | should -be 1
         }
     }
 }

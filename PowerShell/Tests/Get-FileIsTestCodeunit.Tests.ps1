@@ -6,7 +6,7 @@ Describe Get-FileIsTestCodeunit {
                 {
                     Subtype = Test;
                 }'
-            Get-FileIsTestCodeunit $FileName | should be $true
+            Get-FileIsTestCodeunit $FileName | should -be $true
         }
 
         It 'should return true for an .al test file with a SubType = Test line' {
@@ -15,7 +15,7 @@ Describe Get-FileIsTestCodeunit {
                 {
                     SubType = Test;
                 }'
-            Get-FileIsTestCodeunit $FileName | should be $true
+            Get-FileIsTestCodeunit $FileName | should -be $true
         }
     }
 
@@ -28,7 +28,7 @@ Describe Get-FileIsTestCodeunit {
                     begin
                     end;
                 }'
-            Get-FileIsTestCodeunit $FileName | should be $false
+            Get-FileIsTestCodeunit $FileName | should -be $false
         }
     }
 
@@ -39,7 +39,7 @@ Describe Get-FileIsTestCodeunit {
                     "key": "value",
                     "anotehr key": "another value"
                 }'
-            Get-FileIsTestCodeunit $FileName | should be $false
+            Get-FileIsTestCodeunit $FileName | should -be $false
         }
     }
 }

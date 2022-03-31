@@ -54,12 +54,14 @@ export async function runTestHandler(request: vscode.TestRunRequest) {
     let results: ALTestAssembly[];
     if (request.include === undefined) {
         results = await runAllTests();
-        alTestController.items.forEach(codeunit => {
-            codeunit.children.forEach(test => {
-                const result = getResultForTestItem(results, test, codeunit);
-                setResultForTestItem(result, test, run);
+        if (results.length > 0) {
+            alTestController.items.forEach(codeunit => {
+                codeunit.children.forEach(test => {
+                    const result = getResultForTestItem(results, test, codeunit);
+                    setResultForTestItem(result, test, run);
+                });
             });
-        });
+        }
     }
     else {
         const testItem = request.include![0];
@@ -88,7 +90,9 @@ export async function runTestHandler(request: vscode.TestRunRequest) {
     }
 
     run.end();
-    outputTestResults(results);
+    if (results.length > 0) {
+        outputTestResults(results);
+    }
 }
 
 export function readyToRunTests(): Promise<Boolean> {
@@ -154,24 +158,25 @@ export async function runAllTests(extensionId?: string, extensionName?: string):
 }
 
 export async function debugTestHandler(request: vscode.TestRunRequest) {
-    if (!request.include) {
-        return;
-    }
+    if (request.include) {
+        const testItem = request.include[0];
+        let filename: string;
+        let lineNumber: number;
 
-    const testItem = request.include[0];
-    let filename: string;
-    let lineNumber: number;
+        if (testItem.parent) {
+            filename = testItem.parent.uri!.fsPath;
+            lineNumber = testItem.range!.start.line;
+        }
+        else {
+            filename = testItem.uri!.fsPath;
+            lineNumber = 0;
+        }
 
-    if (testItem.parent) {
-        filename = testItem.parent.uri!.fsPath;
-        lineNumber = testItem.range!.start.line;
+        debugTest(filename, lineNumber);
     }
     else {
-        filename = testItem.uri!.fsPath;
-        lineNumber = 0;
+        debugTest('', 0);
     }
-
-    debugTest(filename, lineNumber);
 }
 
 export async function debugTest(filename: string, selectionStart: number) {
@@ -185,7 +190,7 @@ export async function debugTest(filename: string, selectionStart: number) {
     initDebugTest(filename);
 
     const config = getCurrentWorkspaceConfig();
-	await new Promise(r => setTimeout(r, config.testRunnerInitialisationTime));
+    await new Promise(r => setTimeout(r, config.testRunnerInitialisationTime));
 
     await attachDebugger();
     invokeDebugTest(filename, selectionStart);
@@ -227,7 +232,7 @@ export async function getTestItemFromFileNameAndSelection(filename?: string, sel
         if (selectionStart === undefined) {
             selectionStart = vscode.window.activeTextEditor!.selection.start.line;
         }
-    
+
         const document = await vscode.workspace.openTextDocument(filename);
         const object = getALObjectOfDocument(document);
 
