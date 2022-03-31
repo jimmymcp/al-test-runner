@@ -39,4 +39,4 @@ jobs:
       - name: Publish to marketplace
         if: github.ref == 'refs/heads/master'
         run: |
-          vsce publish -p ${{ secrets.VSCE_PAT }}
+          vsce publish -p ${{ secrets.VSCE_PAT }} --pre-release
