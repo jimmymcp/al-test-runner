@@ -43,6 +43,6 @@ jobs:
           path: ./*.vsix
 
       - name: Publish to marketplace
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/pre-release'
         run: |
           vsce publish -p ${{ secrets.VSCE_PAT }} --pre-release
