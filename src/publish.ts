@@ -68,16 +68,16 @@ export async function publishAppFile(uri: vscode.Uri): Promise<Boolean> {
         terminal.show(true);
         terminal.sendText(' ');
         terminal.sendText(`Publish-App -AppFile "${uri.fsPath}" -CompletionPath "${getPublishCompletionPath()}"`);
-        
+
         const resultExists = await awaitFileExistence(getPublishCompletionPath(), getCurrentWorkspaceConfig().publishTimeout);
-            if (resultExists) {
-                const content = readFileSync(getPublishCompletionPath(), { encoding: 'utf-8' })
-                const result = content.trim() === '1';
-                resolve(result);
-            }
-            else {
-                resolve(false);
-            }
+        if (resultExists) {
+            const content = readFileSync(getPublishCompletionPath(), { encoding: 'utf-8' })
+            const result = content.trim() === '1';
+            resolve(result);
+        }
+        else {
+            resolve(false);
+        }
     });
 }
 
@@ -90,9 +90,7 @@ export async function onChangeAppFile(uri: vscode.Uri) {
         return;
     }
 
-    if (await publishAppFile(uri)) {
-        runTestHandler(new vscode.TestRunRequest());
-    }
+    await publishAppFile(uri);
 }
 
 function getTerminalName(): string {
