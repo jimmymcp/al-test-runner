@@ -3,7 +3,7 @@ import { existsSync } from "fs";
 
 export function awaitFileExistence(path: string, timeout: number): Promise<Boolean> {
     return new Promise(resolve => {
-        const timer = setTimeout(() => {
+        let timer = setTimeout(() => {
             if (timeout > 0) {
                 watcher.dispose();
                 resolve(false);
