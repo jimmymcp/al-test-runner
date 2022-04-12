@@ -499,16 +499,14 @@ export function getALTestRunnerTerminal(terminalName: string): vscode.Terminal {
 		terminal = terminals.shift()!;
 	}
 
-	if (terminal) {
-		return terminal;
-	}
-	else {
+	if (!terminal) {
 		terminal = vscode.window.createTerminal(terminalName);
-		let extension = vscode.extensions.getExtension('jamespearson.al-test-runner');
-		let PSPath = extension!.extensionPath + '\\PowerShell\\ALTestRunner.psm1';
-		terminal.sendText('Import-Module "' + PSPath + '" -DisableNameChecking');
-		return terminal;
 	}
+	
+	let extension = vscode.extensions.getExtension('jamespearson.al-test-runner');
+	let PSPath = extension!.extensionPath + '\\PowerShell\\ALTestRunner.psm1';
+	terminal.sendText('if ($null -eq (Get-Module ALTestRunner)) {Import-Module "' + PSPath + '" -DisableNameChecking}');
+	return terminal;
 }
 
 export function getRangeOfFailingLineFromCallstack(callstack: string, method: string, document: vscode.TextDocument): vscode.Range | void {
