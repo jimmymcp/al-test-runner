@@ -9,6 +9,8 @@ import { getALTestRunnerConfig, getALTestRunnerConfigPath, getALTestRunnerPath, 
 import { showTableData } from './showTableData';
 import { getOutputWriter, OutputWriter } from './output';
 import { createTestController, debugTestHandler, deleteTestItemForFilename, discoverTests, discoverTestsInDocument, getTestItemFromFileNameAndSelection, runTestHandler } from './testController';
+import TelemetryReporter from '@vscode/extension-telemetry';
+import { createTelemetryReporter } from './telemetry';
 
 let terminal: vscode.Terminal;
 export let activeEditor = vscode.window.activeTextEditor;
@@ -46,6 +48,7 @@ const alTestRunnerAPI = new class {
 };
 
 export let alTestController: vscode.TestController;
+export let telemetryReporter: TelemetryReporter;
 
 export function activate(context: vscode.ExtensionContext) {
 	console.log('jamespearson.al-test-runner extension is activated');
@@ -197,7 +200,11 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	});
 
+	telemetryReporter = createTelemetryReporter();
+	context.subscriptions.push(telemetryReporter);
+
 	alTestController = createTestController();
+	context.subscriptions.push(alTestController);
 	discoverTests();
 
 	return alTestRunnerAPI;
@@ -484,11 +491,14 @@ export function getALTestRunnerTerminal(terminalName: string): vscode.Terminal {
 	if (!terminal) {
 		terminal = vscode.window.createTerminal(terminalName);
 	}
-	
-	let extension = vscode.extensions.getExtension('jamespearson.al-test-runner');
-	let PSPath = extension!.extensionPath + '\\PowerShell\\ALTestRunner.psm1';
+
+	let PSPath = getExtension()!.extensionPath + '\\PowerShell\\ALTestRunner.psm1';
 	terminal.sendText('if ($null -eq (Get-Module ALTestRunner)) {Import-Module "' + PSPath + '" -DisableNameChecking}');
 	return terminal;
+}
+
+export function getExtension() {
+	return vscode.extensions.getExtension('jamespearson.al-test-runner');
 }
 
 export function getRangeOfFailingLineFromCallstack(callstack: string, method: string, document: vscode.TextDocument): vscode.Range | void {

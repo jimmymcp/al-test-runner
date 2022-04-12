@@ -4,6 +4,9 @@ import { getCurrentWorkspaceConfig, launchConfigIsValid, selectLaunchConfig, set
 import { alTestController, attachDebugger, getAppJsonKey, getTestMethodRangesFromDocument, initDebugTest, invokeDebugTest, invokeTestRunner, outputTestResults } from './extension';
 import { ALTestAssembly, ALTestResult } from './types';
 import * as path from 'path';
+import { sendTestRunFinishedEvent, sendTestRunStartEvent } from './telemetry';
+
+export let numberOfTests: number;
 
 export function createTestController(): vscode.TestController {
     const alTestController = vscode.tests.createTestController('alTestController', 'AL Tests');
@@ -17,6 +20,7 @@ export function createTestController(): vscode.TestController {
 }
 
 export async function discoverTests() {
+    numberOfTests = 0;
     const alFiles = await getALFilesInWorkspace();
     alFiles.forEach(async alFile => {
         const document = await vscode.workspace.openTextDocument(alFile.path);
@@ -43,6 +47,7 @@ export async function discoverTestsInDocument(document: vscode.TextDocument) {
                 const testItem = alTestController.createTestItem(testRange.name, testRange.name, document.uri);
                 testItem.range = testRange.range;
                 codeunitItem!.children.add(testItem);
+                numberOfTests += 1;
             });
             alTestController.items.add(codeunitItem);
         }
@@ -51,6 +56,8 @@ export async function discoverTestsInDocument(document: vscode.TextDocument) {
 
 export async function runTestHandler(request: vscode.TestRunRequest) {
     const run = alTestController.createTestRun(request);
+    sendTestRunStartEvent(request);
+
     let results: ALTestAssembly[];
     if (request.include === undefined) {
         results = await runAllTests();
@@ -88,6 +95,7 @@ export async function runTestHandler(request: vscode.TestRunRequest) {
     }
 
     run.end();
+    sendTestRunFinishedEvent(request);
     outputTestResults(results);
 }
 
