@@ -1,7 +1,10 @@
 # Change Log
 
+## 0.6.5
+- Test if PowerShell module is imported when fetching al-test-runner terminal
+
 ## 0.6.4
-- 
+- Bump dependency version of ansi-regex
 
 ## 0.6.3
 - Stability improvements
