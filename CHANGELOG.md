@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.6.6
+- Initial version of telemetry. See [https://jpearson.blog/al-test-runner-for-visual-studio-code#telemetry](https://jpearson.blog/al-test-runner-for-visual-studio-code#telemetry) for more information
+
 ## 0.6.5
 - Test if PowerShell module is imported when fetching al-test-runner terminal
 
