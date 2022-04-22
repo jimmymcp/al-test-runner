@@ -4,7 +4,7 @@ import { getCurrentWorkspaceConfig, launchConfigIsValid, selectLaunchConfig, set
 import { alTestController, attachDebugger, getAppJsonKey, getTestMethodRangesFromDocument, initDebugTest, invokeDebugTest, invokeTestRunner, outputTestResults } from './extension';
 import { ALTestAssembly, ALTestResult } from './types';
 import * as path from 'path';
-import { sendTestRunFinishedEvent, sendTestRunStartEvent } from './telemetry';
+import { sendTestDebugStartEvent, sendTestRunFinishedEvent, sendTestRunStartEvent } from './telemetry';
 
 export let numberOfTests: number;
 
@@ -41,6 +41,7 @@ export async function discoverTestsInDocument(document: vscode.TextDocument) {
 
             codeunitItem.children.forEach(test => {
                 codeunitItem!.children.delete(test.id);
+                numberOfTests -= 1;
             });
 
             getTestMethodRangesFromDocument(document).forEach(testRange => {
@@ -179,7 +180,7 @@ export async function debugTestHandler(request: vscode.TestRunRequest) {
             filename = testItem.uri!.fsPath;
             lineNumber = 0;
         }
-
+        sendTestDebugStartEvent(request);
         debugTest(filename, lineNumber);
     }
     else {
