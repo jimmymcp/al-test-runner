@@ -4,7 +4,7 @@ import { getCurrentWorkspaceConfig, launchConfigIsValid, selectLaunchConfig, set
 import { alTestController, attachDebugger, getAppJsonKey, getTestMethodRangesFromDocument, initDebugTest, invokeDebugTest, invokeTestRunner, outputTestResults } from './extension';
 import { ALTestAssembly, ALTestResult } from './types';
 import * as path from 'path';
-import { sendTestRunFinishedEvent, sendTestRunStartEvent } from './telemetry';
+import { sendTestDebugStartEvent, sendTestRunFinishedEvent, sendTestRunStartEvent } from './telemetry';
 
 export let numberOfTests: number;
 
@@ -167,6 +167,7 @@ export async function debugTestHandler(request: vscode.TestRunRequest) {
         return;
     }
 
+    sendTestDebugStartEvent(request);
     const testItem = request.include[0];
     let filename: string;
     let lineNumber: number;
