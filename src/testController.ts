@@ -41,6 +41,7 @@ export async function discoverTestsInDocument(document: vscode.TextDocument) {
 
             codeunitItem.children.forEach(test => {
                 codeunitItem!.children.delete(test.id);
+                numberOfTests -= 1;
             });
 
             getTestMethodRangesFromDocument(document).forEach(testRange => {
