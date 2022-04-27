@@ -1,13 +1,11 @@
 import { existsSync, readFileSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import * as vscode from 'vscode';
-import { MessageChannel } from 'worker_threads';
 import { activeEditorIsOpenToTestAppJson, openEditorToTestFileIfNotAlready } from './alFileHelper';
 import { getALTestRunnerPath, getCurrentWorkspaceConfig } from './config';
 import { failedToPublishMessage } from './constants';
 import { getALTestRunnerTerminal } from './extension';
 import { awaitFileExistence } from './file';
-import { runTestHandler } from './testController';
 import { PublishResult, PublishType } from "./types";
 
 let shouldPublishApp: Boolean = false;
