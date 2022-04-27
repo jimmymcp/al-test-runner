@@ -4,6 +4,7 @@ import * as vscode from 'vscode';
 import { MessageChannel } from 'worker_threads';
 import { activeEditorIsOpenToTestAppJson, openEditorToTestFileIfNotAlready } from './alFileHelper';
 import { getALTestRunnerPath, getCurrentWorkspaceConfig } from './config';
+import { failedToPublishMessage } from './constants';
 import { getALTestRunnerTerminal } from './extension';
 import { awaitFileExistence } from './file';
 import { runTestHandler } from './testController';
@@ -40,7 +41,7 @@ export function publishApp(publishType: PublishType): Promise<PublishResult> {
             }
             else {
                 success = false;
-                message = "The app failed to compile or failed to publish into the container.";
+                message = failedToPublishMessage;
             }
         }
         else {
@@ -86,7 +87,7 @@ export async function publishAppFile(uri: vscode.Uri): Promise<PublishResult> {
             resolve({ success: success, message: message });
         }
         else {
-            resolve({ success: false, message: "The app failed to compile or failed to publish into the container." });
+            resolve({ success: false, message: failedToPublishMessage });
         }
     });
 }
