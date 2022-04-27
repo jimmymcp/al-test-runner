@@ -1,20 +1,22 @@
 import { existsSync, readFileSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import * as vscode from 'vscode';
+import { MessageChannel } from 'worker_threads';
 import { activeEditorIsOpenToTestAppJson, openEditorToTestFileIfNotAlready } from './alFileHelper';
 import { getALTestRunnerPath, getCurrentWorkspaceConfig } from './config';
 import { getALTestRunnerTerminal } from './extension';
 import { awaitFileExistence } from './file';
 import { runTestHandler } from './testController';
-import { PublishType } from "./types";
+import { PublishResult, PublishType } from "./types";
 
 let shouldPublishApp: Boolean = false;
 
-export function publishApp(publishType: PublishType): Promise<Boolean> {
+export function publishApp(publishType: PublishType): Promise<PublishResult> {
     return new Promise(async resolve => {
-        let result: Boolean = false;
+        let success: boolean = false;
+        let message: string = '';
         if (publishType === PublishType.None) {
-            resolve(true);
+            resolve({ success: true, message: '' });
             return;
         }
 
@@ -31,10 +33,14 @@ export function publishApp(publishType: PublishType): Promise<Boolean> {
             const resultExists = await awaitFileExistence(getPublishCompletionPath(), getCurrentWorkspaceConfig().publishTimeout);
             if (resultExists) {
                 const content = readFileSync(getPublishCompletionPath(), { encoding: 'utf-8' })
-                result = content.trim() === '1';
+                success = content.trim() === '1';
+                if (!success) {
+                    message = content;
+                }
             }
             else {
-                result = false;
+                success = false;
+                message = "The app failed to compile or failed to publish into the container.";
             }
         }
         else {
@@ -48,7 +54,7 @@ export function publishApp(publishType: PublishType): Promise<Boolean> {
             }
 
             await vscode.commands.executeCommand(command);
-            result = true;
+            success = true;
         }
 
         if (closeEditor) {
@@ -57,11 +63,11 @@ export function publishApp(publishType: PublishType): Promise<Boolean> {
             }
         }
 
-        resolve(result);
+        resolve({ success: success, message: message });
     });
 }
 
-export async function publishAppFile(uri: vscode.Uri): Promise<Boolean> {
+export async function publishAppFile(uri: vscode.Uri): Promise<PublishResult> {
     return new Promise(async resolve => {
         shouldPublishApp = false;
         const terminal = getALTestRunnerTerminal(getTerminalName());
@@ -72,11 +78,15 @@ export async function publishAppFile(uri: vscode.Uri): Promise<Boolean> {
         const resultExists = await awaitFileExistence(getPublishCompletionPath(), getCurrentWorkspaceConfig().publishTimeout);
         if (resultExists) {
             const content = readFileSync(getPublishCompletionPath(), { encoding: 'utf-8' })
-            const result = content.trim() === '1';
-            resolve(result);
+            const success = content.trim() === '1';
+            let message = '';
+            if (!success) {
+                message = content.trim();
+            }
+            resolve({ success: success, message: message });
         }
         else {
-            resolve(false);
+            resolve({ success: false, message: "The app failed to compile or failed to publish into the container." });
         }
     });
 }

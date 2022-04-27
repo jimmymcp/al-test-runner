@@ -93,3 +93,8 @@ export enum PublishType {
 	Publish,
 	Rapid
 }
+
+export type PublishResult = {
+	success: boolean;
+	message: string;
+}

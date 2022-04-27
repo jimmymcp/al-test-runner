@@ -238,10 +238,10 @@ export async function invokeTestRunner(command: string): Promise<types.ALTestAss
 			}
 		}
 
-		const publishSuccessful = await publishApp(publishType);
-		if (!publishSuccessful) {
+		const result = await publishApp(publishType);
+		if (!result.success) {
 			const results: types.ALTestAssembly[] = [];
-			vscode.window.showWarningMessage('The app failed to compile or failed to publish into the container.', "Show Terminal").then(value => {
+			vscode.window.showWarningMessage(result.message, "Show Terminal").then(value => {
 				if (value === "Show Terminal") {
 					displayTerminal();
 				}
