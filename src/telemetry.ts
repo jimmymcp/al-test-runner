@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
 import TelemetryReporter, { TelemetryEventMeasurements, TelemetryEventProperties } from "@vscode/extension-telemetry";
-import { appInsightsKey, RunType } from "./constants";
+import { appInsightsKey } from "./constants";
 import { getExtension, telemetryReporter } from "./extension";
 import { numberOfTests } from './testController';
 import { getCurrentWorkspaceConfig } from './config';
+import { RunType } from './types'
 
 export function createTelemetryReporter(): TelemetryReporter {
     const extensionId = getExtension()!.id;
