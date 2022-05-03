@@ -3,7 +3,7 @@ import * as vscode from 'vscode';
 import { getWorkspaceFolder } from "./extension";
 import * as types from './types';
 
-export function getTestWorkspaceFolder(): string {
+export function getTestWorkspaceFolder(onlyTest: boolean = false): string {
     let config = vscode.workspace.getConfiguration('al-test-runner');
     if (config.testFolderName) {
         const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -15,9 +15,12 @@ export function getTestWorkspaceFolder(): string {
                 return testFolder.shift()!.uri.fsPath;
             }
         }
-    }
-
-    return getWorkspaceFolder();
+	}
+	
+	if (!onlyTest) {
+		return getWorkspaceFolder();
+	}
+	return '';
 }
 
 export function getALTestRunnerPath(): string {

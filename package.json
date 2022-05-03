@@ -18,7 +18,7 @@
 	],
 	"version": "0.6.7",
 	"engines": {
-		"vscode": "^1.59.0"
+		"vscode": ">=1.63.0"
 	},
 	"categories": [
 		"Testing"
@@ -304,6 +304,23 @@
 						"scope": "resource",
 						"description": "Determines where test results will be displayed",
 						"default": "Output"
+					},
+					"al-test-runner.enablePublishingFromPowerShell": {
+						"type": "boolean",
+						"scope": "resource",
+						"description": "Enable (experimental) publishing apps from PowerShell"
+					},
+					"al-test-runner.publishTimeout": {
+						"type": "number",
+						"scope": "resource",
+						"description": "Timeout (milliseconds) for publishing apps from PowerShell",
+						"default": 20000
+					},
+					"al-test-runner.automaticPublishing": {
+						"type": "boolean",
+						"scope": "resource",
+						"description": "Automatically publish apps to the container when compiling",
+						"default": false
 					}
 				}
 			}

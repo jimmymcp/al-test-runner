@@ -87,3 +87,20 @@ export type CodeCoverageObject = {
 	noOfHitLines: number;
 	noOfLines: number;
 }
+
+export enum PublishType {
+	None,
+	Publish,
+	Rapid
+}
+
+export type PublishResult = {
+	success: boolean;
+	message: string;
+}
+
+export enum RunType {
+	All,
+	Codeunit,
+	Test
+}
