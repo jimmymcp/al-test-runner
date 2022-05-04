@@ -24,6 +24,10 @@ export function sendTestDebugStartEvent(request: vscode.TestRunRequest) {
     sendTestRunEvent('003-DebugStarted', request);
 }
 
+export function sendShowTableDataEvent() {
+    sendEvent('004-ShowTableData');
+}
+
 function sendTestRunEvent(eventName: string, request: vscode.TestRunRequest) {
     let runType: RunType;
     let testCount: number;
