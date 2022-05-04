@@ -1,7 +1,9 @@
 import * as vscode from 'vscode';
 import { activeEditor, getALTestRunnerTerminal } from './extension';
+import { sendShowTableDataEvent } from './telemetry';
 
 export async function showTableData() {
+    sendShowTableDataEvent();
     let wordAtCursor = getWordAtCursor();
     let recordName = findRecordNameForVariable(wordAtCursor);
     if (recordName !== '') {

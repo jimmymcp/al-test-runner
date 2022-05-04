@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.7.7
+- Optionally publish apps using PowerShell rather than running AL extension commands. Allows for better control of when to stop a test run if publishing the app has failed for any reason
+
+## 0.6.7
+- Updates to telemetry
+
 ## 0.6.6
 - Initial version of telemetry. See [https://jpearson.blog/al-test-runner-for-visual-studio-code#telemetry](https://jpearson.blog/al-test-runner-for-visual-studio-code#telemetry) for more information
 
