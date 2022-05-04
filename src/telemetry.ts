@@ -27,13 +27,23 @@ export function sendTestDebugStartEvent(request: vscode.TestRunRequest) {
 function sendTestRunEvent(eventName: string, request: vscode.TestRunRequest) {
     let runType: RunType;
     let testCount: number;
-    let codeCoverageEnabled: string;
+    let codeCoverageEnabled, publishBeforeTest, enablePublishingFromPowerShell: string;
+    const config = getCurrentWorkspaceConfig();
 
-    if (getCurrentWorkspaceConfig().enableCodeCoverage) {
+    if (config.enableCodeCoverage) {
         codeCoverageEnabled = 'true';
     }
     else {
         codeCoverageEnabled = 'false';
+    }
+
+    publishBeforeTest = config.publishBeforeTest;
+    
+    if (config.enablePublishingFromPowerShell) {
+        enablePublishingFromPowerShell = 'true';
+    }
+    else {
+        enablePublishingFromPowerShell = 'false';
     }
 
     if (request.include === undefined) {
@@ -52,7 +62,7 @@ function sendTestRunEvent(eventName: string, request: vscode.TestRunRequest) {
         }
     }
 
-    sendEvent(eventName, { 'codeCoverageEnabled': codeCoverageEnabled }, { 'runType': runType, 'testCount': testCount });
+    sendEvent(eventName, { 'codeCoverageEnabled': codeCoverageEnabled, 'publishBeforeTest': publishBeforeTest, 'enablePublishingFromPowerShell': enablePublishingFromPowerShell }, { 'runType': runType, 'testCount': testCount });
 }
 
 export function sendEvent(eventName: string, properties?: TelemetryEventProperties, measurements?: TelemetryEventMeasurements) {
