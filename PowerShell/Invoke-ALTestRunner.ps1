@@ -24,7 +24,7 @@ function Invoke-ALTestRunner {
 
     $CompanyName = Get-ValueFromALTestRunnerConfig -KeyName 'companyName'
     if ($CompanyName -eq '') {
-        $CompanyName = Select-BCCompany $ContainerName    
+        $CompanyName = Select-BCCompany $ContainerName
     }
     
     $TestSuiteName = (Get-ValueFromALTestRunnerConfig -KeyName 'testSuiteName')
@@ -81,8 +81,11 @@ function Invoke-ALTestRunner {
         $Credential = Get-ALTestRunnerCredential
         $Params.Add('Credential', $Credential)
     }
-
-    if ((Get-ValueFromALTestRunnerConfig -KeyName 'testRunnerCodeunitId') -gt 0) {
+    
+    if ($NavVersion -lt [version]::new('15.0.0.0')) {
+        $Params.Add('TestRunnerCodeunitId', 0)
+    }
+    elseif ((Get-ValueFromALTestRunnerConfig -KeyName 'testRunnerCodeunitId') -gt 0) {
         $Params.Add('TestRunnerCodeunitId', (Get-ValueFromALTestRunnerConfig -KeyName 'testRunnerCodeunitId'))
     }
     
