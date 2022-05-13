@@ -1,7 +1,7 @@
 function Get-DockerHostIsRemote {
     $dockerHost = Get-ValueFromALTestRunnerConfig -KeyName 'dockerHost'
     if (($null -ne $dockerHost) -and ($dockerHost -ne '')) {
-        return $true        
+        return $true
     }
     else {
         return $false
