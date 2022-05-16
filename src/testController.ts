@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { documentIsTestCodeunit, getALFilesInWorkspace, getALObjectOfDocument } from './alFileHelper';
 import { getCurrentWorkspaceConfig, launchConfigIsValid, selectLaunchConfig, setALTestRunnerConfig } from './config';
 import { alTestController, attachDebugger, getAppJsonKey, getTestMethodRangesFromDocument, initDebugTest, invokeDebugTest, invokeTestRunner, outputTestResults } from './extension';
-import { ALTestAssembly, ALTestResult } from './types';
+import { ALTestAssembly, ALTestResult, TestName } from './types';
 import * as path from 'path';
 import { sendTestDebugStartEvent, sendTestRunFinishedEvent, sendTestRunStartEvent } from './telemetry';
 
@@ -62,14 +62,9 @@ export async function runTestHandler(request: vscode.TestRunRequest) {
     let results: ALTestAssembly[];
     if (request.include === undefined) {
         results = await runAllTests();
-        if (results.length > 0) {
-            alTestController.items.forEach(codeunit => {
-                codeunit.children.forEach(test => {
-                    const result = getResultForTestItem(results, test, codeunit);
-                    setResultForTestItem(result, test, run);
-                });
-            });
-        }
+    }
+    else if (request.include.length > 1) {
+        results = await runSelectedTests(request);
     }
     else {
         const testItem = request.include![0];
@@ -84,7 +79,33 @@ export async function runTestHandler(request: vscode.TestRunRequest) {
         }
 
         results = await runTest(filename, lineNumber);
+    }
 
+    setResultsForTestItems(results, request, run);
+
+    run.end();
+    sendTestRunFinishedEvent(request);
+    if (results.length > 0) {
+        outputTestResults(results);
+    }
+}
+
+function setResultsForTestItems(results: ALTestAssembly[], request: vscode.TestRunRequest, run: vscode.TestRun) {
+    if (results.length == 0) {
+        return;
+    }
+    
+    let testItems: vscode.TestItem[] = [];
+    if (request.include) {
+        testItems = request.include;
+    }
+    else {
+        alTestController.items.forEach(testCodeunit => {
+            testItems.push(testCodeunit);
+        });
+    }
+
+    testItems!.forEach(testItem => {
         if (testItem.parent) {
             const result = getResultForTestItem(results, testItem, testItem.parent)
             setResultForTestItem(result, testItem, run);
@@ -95,13 +116,7 @@ export async function runTestHandler(request: vscode.TestRunRequest) {
                 setResultForTestItem(result, test, run);
             });
         }
-    }
-
-    run.end();
-    sendTestRunFinishedEvent(request);
-    if (results.length > 0) {
-        outputTestResults(results);
-    }
+    });
 }
 
 export function readyToRunTests(): Promise<Boolean> {
@@ -160,6 +175,28 @@ export async function runAllTests(extensionId?: string, extensionName?: string):
                 }
 
                 const results: ALTestAssembly[] = await invokeTestRunner('Invoke-ALTestRunner -Tests All -ExtensionId ' + extensionId + ' -ExtensionName "' + extensionName + '"');
+                resolve(results);
+            }
+        });
+    });
+}
+
+export async function runSelectedTests(request: vscode.TestRunRequest, extensionId?: string, extensionName?: string): Promise<ALTestAssembly[]> {
+    return new Promise(async (resolve) => {
+        await readyToRunTests().then(async ready => {
+            if (ready) {
+                if (extensionId === undefined) {
+                    extensionId = getAppJsonKey('id');
+                }
+
+                if (extensionName === undefined) {
+                    extensionName = getAppJsonKey('name');
+                }
+
+                const disabledTests = getDisabledTestsForRequest(request);
+                const disabledTestsJson = JSON.stringify(disabledTests);
+
+                const results: ALTestAssembly[] = await invokeTestRunner(`Invoke-ALTestRunner -Tests All -ExtensionId "${extensionId}" -ExtensionName "${extensionName}" -DisabledTests ('${disabledTestsJson}' | ConvertFrom-Json)`)
                 resolve(results);
             }
         });
@@ -277,4 +314,65 @@ export async function deleteTestItemForFilename(filename: string) {
     if (testItem) {
         alTestController.items.delete(testItem.id);
     }
+}
+
+export function getDisabledTestsForRequest(request: vscode.TestRunRequest, testContoller?: vscode.TestController): TestName[] {
+    let disabledTests: TestName[] = [];
+    let testCodeunitsToRun: vscode.TestItem[] = getTestCodeunitsIncludedInRequest(request);
+    let controller;
+    if (testContoller) {
+        controller = testContoller;
+    }
+    else {
+        controller = alTestController;
+    }
+
+    if (!controller) {
+        return disabledTests;
+    }
+
+    if (!controller.items) {
+        return disabledTests;
+    }
+
+    //tests which are in codeunits where some tests are included, but the tests themselves are not included
+    testCodeunitsToRun.forEach(testCodeunit => {
+        //unless the codeunit itself is included, then iterate over its children to test which ones need to be disabled
+        if (request.include?.indexOf(testCodeunit) == -1) {
+            testCodeunit.children.forEach(testItem => {
+                if (request.include?.indexOf(testItem) == -1) {
+                    disabledTests.push({ codeunitName: testCodeunit.label, method: testItem.label });
+                }
+            });
+        }
+    });
+
+    //test codeunits where none of their tests are included
+    controller.items.forEach(testCodeunit => {
+        if (testCodeunitsToRun.indexOf(testCodeunit) == -1) {
+            disabledTests.push({ codeunitName: testCodeunit.label, method: '*' })
+        }
+    });
+
+    return disabledTests;
+}
+
+export function getTestCodeunitsIncludedInRequest(request: vscode.TestRunRequest): vscode.TestItem[] {
+    let testCodeunits: vscode.TestItem[] = [];
+
+    if (request.include) {
+        request.include.forEach(testItem => {
+            if (testItem.children.size > 0) {
+                testCodeunits.push(testItem);
+            }
+
+            if (testItem.parent) {
+                if (testCodeunits.indexOf(testItem.parent) == -1) {
+                    testCodeunits.push(testItem.parent);
+                }
+            }
+        });
+    }
+
+    return testCodeunits;
 }

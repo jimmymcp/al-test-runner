@@ -4,9 +4,7 @@ import * as alTestRunner from '../../extension';
 import { writeFileSync, readdirSync, existsSync, unlinkSync, mkdirSync } from 'fs';
 import * as os from 'os';
 import { documentIsTestCodeunit, getALObjectOfDocument, getDocumentIdAndName } from '../../alFileHelper';
-import * as sinon from 'sinon';
-import { getLatestInsidersMetadata } from 'vscode-test/out/util';
-import { mock } from 'sinon';
+import { createTestController, getDisabledTestsForRequest, getTestCodeunitsIncludedInRequest } from '../../testController';
 
 const tempDir: string = os.tmpdir() + '\\ALTR';
 if (existsSync(tempDir)) {
@@ -360,5 +358,112 @@ suite('Extension Test Suite', () => {
 		assert.notStrictEqual(alObject, undefined, 'alObject should not be undefined');
 		assert.strictEqual(alObject!.id, 51234);
 		assert.strictEqual(alObject!.name!, 'Some Tests');
+	});
+
+	test('getTestCodeunitsIncludedInRequest returns empty array when no test items included in request', () => {
+		assert.notStrictEqual([], getTestCodeunitsIncludedInRequest(new vscode.TestRunRequest()));
+	});
+
+	test('getTestCodeunitsIncludedInRequest returns test items with children included in request', () => {
+		const testController = createTestController();
+		const parentOne = testController.createTestItem('Parent One', 'Parent One');
+		const childOne = testController.createTestItem('Child One', 'Child One');
+		const parentTwo = testController.createTestItem('Parent Two', 'Parent Two');
+		const childTwo = testController.createTestItem('Child Two', 'Child Two');
+		const parentThree = testController.createTestItem('Parent Three', 'Parent Three');
+		parentOne.children.add(childOne);
+		parentTwo.children.add(childTwo);
+
+		let result = getTestCodeunitsIncludedInRequest(new vscode.TestRunRequest([parentOne, parentTwo, parentThree]));
+		assert.strictEqual(result.length, 2, 'Expected two parents included in the result');
+		assert.strictEqual('Parent One', result[0].id);
+		assert.strictEqual('Parent Two', result[1].id);
+		testController.dispose();
+	});
+
+	test('getTestCodeunitsIncludedInRequest returns parents of test items which are included in request', () => {
+		const testController = createTestController();
+		const parentOne = testController.createTestItem('Parent One', 'Parent One');
+		const childOne = testController.createTestItem('Child One', 'Child One');
+		const parentTwo = testController.createTestItem('Parent Two', 'Parent Two');
+		const childTwo = testController.createTestItem('Child Two', 'Child Two');
+		parentOne.children.add(childOne);
+		parentTwo.children.add(childTwo);
+		testController.items.add(parentOne);
+		testController.items.add(parentTwo);
+
+		let result = getTestCodeunitsIncludedInRequest(new vscode.TestRunRequest([childOne, childTwo]));
+		assert.strictEqual(result.length, 2, 'Expected two parents included')
+		assert.strictEqual('Parent One', result[0].id)
+		assert.strictEqual('Parent Two', result[1].id)
+		testController.dispose();
+	});
+
+	test('getDisabledTestsForRequest is empty when request does not include any tests', () => {
+		const testController = createTestController();
+		const result = getDisabledTestsForRequest(new vscode.TestRunRequest());
+		assert.notStrictEqual([], result);
+		testController.dispose();
+	});
+
+	test('getDisabledTestsForRequest includes non-included tests and codeunits where no tests included', () => {
+		const testController = createTestController();
+		const parentOne = testController.createTestItem('Parent One', 'Parent One');
+		const childOne = testController.createTestItem('Child One', 'Child One');
+		const childTwo = testController.createTestItem('Child Two', 'Child Two');
+		const childThree = testController.createTestItem('Child Three', 'Child Three');
+		const parentTwo = testController.createTestItem('Parent Two', 'Parent Two');
+		const childFour = testController.createTestItem('Child Four', 'Child Four');
+		const parentThree = testController.createTestItem('Parent Three', 'Parent Three');
+		const childFive = testController.createTestItem('Child Five', 'Child Five');
+		const childSix = testController.createTestItem('Child Six', 'Child Six');
+		parentOne.children.add(childOne);
+		parentOne.children.add(childTwo);
+		parentOne.children.add(childThree);
+		parentTwo.children.add(childFour);
+		parentThree.children.add(childFive);
+		parentThree.children.add(childSix);
+		testController.items.add(parentOne);
+		testController.items.add(parentTwo);
+		testController.items.add(parentThree);
+
+		const result = getDisabledTestsForRequest(new vscode.TestRunRequest([childTwo, childSix]), testController);
+		assert.strictEqual(result.length, 4)
+		assert.notStrictEqual(result[0], {codeunitName: 'Parent One', method: 'Child One'});
+		assert.notStrictEqual(result[1], {codeunitName: 'Parent One', method: 'Child Three'});
+		assert.notStrictEqual(result[2], {codeunitName: 'Parent Two', method: '*'});
+		assert.notStrictEqual(result[3], {codeunitName: 'Parent Three', method: 'Child Five'});
+
+		testController.dispose();
+	});
+
+	test('getDisabledTestsForRequest does not include the children of test codeunits which are included in the request', () => {
+		const testController = createTestController();
+		const parentOne = testController.createTestItem('Parent One', 'Parent One');
+		const childOne = testController.createTestItem('Child One', 'Child One');
+		const childTwo = testController.createTestItem('Child Two', 'Child Two');
+		const childThree = testController.createTestItem('Child Three', 'Child Three');
+		const parentTwo = testController.createTestItem('Parent Two', 'Parent Two');
+		const childFour = testController.createTestItem('Child Four', 'Child Four');
+		const parentThree = testController.createTestItem('Parent Three', 'Parent Three');
+		const childFive = testController.createTestItem('Child Five', 'Child Five');
+		const childSix = testController.createTestItem('Child Six', 'Child Six');
+		parentOne.children.add(childOne);
+		parentOne.children.add(childTwo);
+		parentOne.children.add(childThree);
+		parentTwo.children.add(childFour);
+		parentThree.children.add(childFive);
+		parentThree.children.add(childSix);
+		testController.items.add(parentOne);
+		testController.items.add(parentTwo);
+		testController.items.add(parentThree);
+
+		const result = getDisabledTestsForRequest(new vscode.TestRunRequest([childTwo, parentThree]), testController);
+		assert.strictEqual(result.length, 3)
+		assert.notStrictEqual(result[0], {codeunitName: 'Parent One', method: 'Child One'});
+		assert.notStrictEqual(result[1], {codeunitName: 'Parent One', method: 'Child Three'});
+		assert.notStrictEqual(result[2], {codeunitName: 'Parent Two', method: '*'});
+
+		testController.dispose();
 	});
 });

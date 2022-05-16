@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.7.8
+- Do not include testRunnerCodeunitId parameter when running tests in BC14 container - [issue 63](https://github.com/jimmymcp/al-test-runner/issues/63)
+- Telemetry update
+
 ## 0.7.7
 - Optionally publish apps using PowerShell rather than running AL extension commands. Allows for better control of when to stop a test run if publishing the app has failed for any reason
 

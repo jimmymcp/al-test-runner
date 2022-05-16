@@ -102,5 +102,11 @@ export type PublishResult = {
 export enum RunType {
 	All,
 	Codeunit,
-	Test
+	Test,
+	Selection
+}
+
+export type TestName = {
+	codeunitName: string;
+	method: string;
 }
