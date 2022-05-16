@@ -54,6 +54,10 @@ function sendTestRunEvent(eventName: string, request: vscode.TestRunRequest) {
         runType = RunType.All;
         testCount = numberOfTests;
     }
+    else if (request.include.length > 1) {
+        runType = RunType.Selection;
+        testCount = numberOfTests;
+    }
     else {
         const testItem = request.include[0]!;
         if (testItem.parent) {

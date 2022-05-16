@@ -24,7 +24,9 @@ function Invoke-RunTests {
         [Parameter(Mandatory = $false)]
         [switch]$GetCodeCoverage,
         [Parameter(Mandatory=$false)]
-        [int]$TestRunnerCodeunitId = 130450
+        [int]$TestRunnerCodeunitId = 130450,
+        [Parameter(Mandatory = $false)]
+        $DisabledTests
     )
 
     $ResultId = [Guid]::NewGuid().Guid + ".xml"
@@ -71,6 +73,10 @@ function Invoke-RunTests {
     if ($TestRunnerCodeunitId -ne 0) {
         $Params.Add('testRunnerCodeunitId', $TestRunnerCodeunitId)
         $Message += ", test runner $TestRunnerCodeunitId"
+    }
+
+    if ($null -ne $DisabledTests) {
+        $Params.Add('disabledTests', $DisabledTests)
     }
 
     [int]$AttemptNo = 1

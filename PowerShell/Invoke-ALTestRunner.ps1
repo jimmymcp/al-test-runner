@@ -12,7 +12,9 @@ function Invoke-ALTestRunner {
         [Parameter(Mandatory=$false)]
         [string]$ExtensionName,
         [Parameter(Mandatory = $false)]
-        [switch]$GetCodeCoverage
+        [switch]$GetCodeCoverage,
+        [Parameter(Mandatory = $false)]
+        $DisabledTests
         )
 
     Import-ContainerHelper
@@ -87,6 +89,10 @@ function Invoke-ALTestRunner {
     }
     elseif ((Get-ValueFromALTestRunnerConfig -KeyName 'testRunnerCodeunitId') -gt 0) {
         $Params.Add('TestRunnerCodeunitId', (Get-ValueFromALTestRunnerConfig -KeyName 'testRunnerCodeunitId'))
+    }
+
+    if ($null -ne $DisabledTests) {
+        $Params.Add('DisabledTests', $DisabledTests)
     }
     
     Invoke-RunTests @Params
