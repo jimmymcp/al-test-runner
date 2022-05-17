@@ -155,7 +155,7 @@ export async function runTest(filename?: string, selectionStart?: number, extens
                     extensionName = getAppJsonKey('name');
                 }
 
-                const results: ALTestAssembly[] = await invokeTestRunner('Invoke-ALTestRunner -Tests Test -ExtensionId ' + extensionId + ' -ExtensionName "' + extensionName + '" -FileName "' + filename + '" -SelectionStart ' + selectionStart);
+                const results: ALTestAssembly[] = await invokeTestRunner(`Invoke-ALTestRunner -Tests Test -ExtensionId "${extensionId}" -ExtensionName "${extensionName}" -FileName "${filename}" -SelectionStart ${selectionStart}`);
                 resolve(results);
             }
         })
@@ -174,7 +174,7 @@ export async function runAllTests(extensionId?: string, extensionName?: string):
                     extensionName = getAppJsonKey('name');
                 }
 
-                const results: ALTestAssembly[] = await invokeTestRunner('Invoke-ALTestRunner -Tests All -ExtensionId ' + extensionId + ' -ExtensionName "' + extensionName + '"');
+                const results: ALTestAssembly[] = await invokeTestRunner(`Invoke-ALTestRunner -Tests All -ExtensionId "${extensionId}" -ExtensionName "${extensionName}"`);
                 resolve(results);
             }
         });
