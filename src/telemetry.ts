@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import TelemetryReporter, { TelemetryEventMeasurements, TelemetryEventProperties } from "@vscode/extension-telemetry";
 import { appInsightsKey } from "./constants";
 import { getExtension, telemetryReporter } from "./extension";
-import { numberOfTests } from './testController';
+import { getDisabledTestsForRequest, numberOfTests } from './testController';
 import { getCurrentWorkspaceConfig } from './config';
 import { RunType } from './types'
 
@@ -56,7 +56,7 @@ function sendTestRunEvent(eventName: string, request: vscode.TestRunRequest) {
     }
     else if (request.include.length > 1) {
         runType = RunType.Selection;
-        testCount = numberOfTests;
+        testCount = numberOfTests - getDisabledTestsForRequest(request).length;
     }
     else {
         const testItem = request.include[0]!;
