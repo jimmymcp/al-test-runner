@@ -364,5 +364,12 @@
 		"system-sleep": "^1.3.7",
 		"xml2js": "^0.4.23",
 		"@vscode/extension-telemetry": "0.5.0"
+	},
+	"__metadata": {
+		"id": "f819914f-db9b-4d2d-89ff-90b11b3f9109",
+		"publisherDisplayName": "James Pearson",
+		"publisherId": "4cdb0146-0f5a-4955-8fa1-24763da60923",
+		"isPreReleaseVersion": true,
+		"preRelease": true
 	}
 }
