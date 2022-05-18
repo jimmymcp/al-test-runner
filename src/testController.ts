@@ -94,7 +94,7 @@ function setResultsForTestItems(results: ALTestAssembly[], request: vscode.TestR
     if (results.length == 0) {
         return;
     }
-    
+
     let testItems: vscode.TestItem[] = [];
     if (request.include) {
         testItems = request.include;
@@ -375,4 +375,33 @@ export function getTestCodeunitsIncludedInRequest(request: vscode.TestRunRequest
     }
 
     return testCodeunits;
+}
+
+export function getTestItemsIncludedInRequest(request: vscode.TestRunRequest): vscode.TestItem[] {
+    let testItems: vscode.TestItem[] = [];
+
+    if (request.include) {
+        //iterate through the test items with children (i.e. the test codeunits) first
+        //add all the children of each included codeunit
+        request.include.filter(testItem => {
+            return !testItem.parent;
+        }).forEach(testCodeunit => {
+            if (testCodeunit.children) {
+                testCodeunit.children.forEach(testItem => {
+                    testItems.push(testItem);
+                });
+            }
+        });
+
+        //then add any included children as long as they are not already in the collection
+        request.include.filter(testItem => {
+            return testItem.parent;
+        }).forEach(testItem => {
+            if (testItems.indexOf(testItem) == -1) {
+                testItems.push(testItem);
+            }
+        });
+    }
+
+    return testItems;
 }
