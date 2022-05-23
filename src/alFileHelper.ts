@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ALFile, ALObject } from './types';
+import { ALFile, ALMethodRange, ALObject } from './types';
 import { activeEditor, alFiles } from './extension';
 import { readFileSync } from 'fs';
 import { getCurrentWorkspaceConfig } from './config';
@@ -48,7 +48,7 @@ function getObjectDeclarationFromDocument(document: vscode.TextDocument): string
 	}
 }
 
-function getDocumentName(document: vscode.TextDocument): string {
+export function getDocumentName(document: vscode.TextDocument): string {
 	const idAndName = getDocumentIdAndName(document);
 	return idAndName.substr(idAndName.indexOf(' ') + 1);
 }
@@ -183,4 +183,26 @@ export function activeEditorIsOpenToTestAppJson(): Boolean {
 	}
 
 	return activeEditor.document.uri.fsPath === getPathOfTestAppJson();
+}
+
+export function getMethodNameFromDocumentAndLine(document: vscode.TextDocument, lineNumber: number): string {
+	const line = document.lineAt(lineNumber - 1);
+	return line.text.substring(line.text.indexOf('procedure ') + 'procedure '.length, line.text.indexOf('('));
+}
+
+export function getMethodRangesFromDocument(document: vscode.TextDocument): ALMethodRange[] {
+	let alMethodRanges: ALMethodRange[] = [];
+	const regEx = /(?:procedure )(\w*)(?:\()/gi;
+	const text = document.getText();
+	
+	let match;
+	while (match = regEx.exec(text)) {
+		const alMethodRange: ALMethodRange = {
+			name: match[1],
+			range: new vscode.Range(document.positionAt(match.index), document.positionAt(match.index + match[1].length))
+		};
+		alMethodRanges.push(alMethodRange);
+	}
+
+	return alMethodRanges;
 }

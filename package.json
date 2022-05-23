@@ -113,6 +113,11 @@
 				"command": "altestrunner.showTableData",
 				"title": "Show Table Data",
 				"category": "AL Test Runner"
+			},
+			{
+				"command": "altestrunner.showRelatedTests",
+				"title": "Show Related Tests",
+				"category": "AL Test Runner"
 			}
 		],
 		"keybindings": [

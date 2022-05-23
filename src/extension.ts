@@ -2,8 +2,8 @@ import * as vscode from 'vscode';
 import { readFileSync, existsSync, readdirSync, unlinkSync } from 'fs';
 import * as xml2js from 'xml2js';
 import * as types from './types';
-import { CodelensProvider } from './CodelensProvider';
-import { updateCodeCoverageDecoration, outputCodeCoverage } from './CodeCoverage';
+import { CodelensProvider } from './codeLensProvider';
+import { updateCodeCoverageDecoration, outputCodeCoverage, createCodeCoverageStatusBarItem, toggleCodeCoverageDisplay } from './codeCoverage';
 import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getFilePathByCodeunitId } from './alFileHelper';
 import { getALTestRunnerConfig, getALTestRunnerConfigPath, getALTestRunnerPath, getCurrentWorkspaceConfig, getDebugConfigurationsFromLaunchJson, getLaunchJsonPath, getTestWorkspaceFolder, setALTestRunnerConfig } from './config';
 import { showTableData } from './showTableData';
@@ -14,16 +14,19 @@ import { awaitFileExistence } from './file';
 import { join } from 'path';
 import TelemetryReporter from '@vscode/extension-telemetry';
 import { createTelemetryReporter } from './telemetry';
+import { TestCoverageCodeLensProvider } from './testCoverageCodeLensProvider';
+import { CodeCoverageCodeLensProvider } from './codeCoverageCodeLensProvider';
+import { runRelatedTests, showRelatedTests } from './testCoverage';
 
 let terminal: vscode.Terminal;
 export let activeEditor = vscode.window.activeTextEditor;
 export let alFiles: types.ALFile[];
-let showCodeCoverage: Boolean = false;
 const config = vscode.workspace.getConfiguration('al-test-runner');
 const passingTestColor = 'rgba(' + config.passingTestsColor.red + ',' + config.passingTestsColor.green + ',' + config.passingTestsColor.blue + ',' + config.passingTestsColor.alpha + ')';
 const failingTestColor = 'rgba(' + config.failingTestsColor.red + ',' + config.failingTestsColor.green + ',' + config.failingTestsColor.blue + ',' + config.failingTestsColor.alpha + ')';
 const untestedTestColor = 'rgba(' + config.untestedTestsColor.red + ',' + config.untestedTestsColor.green + ',' + config.untestedTestsColor.blue + ',' + config.untestedTestsColor.alpha + ')';
-export const outputWriter: OutputWriter = getOutputWriter();
+export const outputWriter: OutputWriter = getOutputWriter(vscode.workspace.getConfiguration('al-test-runner').testOutputLocation);
+export const channelWriter: OutputWriter = getOutputWriter(types.OutputType.Channel);
 
 if (getTestWorkspaceFolder(true) != '') {
 	const testAppsPath = join(getTestWorkspaceFolder(true), '*.app');
@@ -66,6 +69,12 @@ export function activate(context: vscode.ExtensionContext) {
 
 	let codelensProvider = new CodelensProvider();
 	vscode.languages.registerCodeLensProvider("*", codelensProvider);
+
+	let testCoverageCodeLensProvider = new TestCoverageCodeLensProvider();
+	vscode.languages.registerCodeLensProvider("*", testCoverageCodeLensProvider);
+
+	let codeCoverageCodeLensProvider = new CodeCoverageCodeLensProvider();
+	vscode.languages.registerCodeLensProvider("*", codeCoverageCodeLensProvider);
 
 	context.subscriptions.push(alTestController);
 
@@ -169,9 +178,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(command);
 
-	command = vscode.commands.registerCommand('altestrunner.toggleCodeCoverage', async () => {
-		showCodeCoverage = !showCodeCoverage;
-		updateCodeCoverageDecoration(showCodeCoverage);
+	command = vscode.commands.registerCommand('altestrunner.toggleCodeCoverage', async (newCodeCoverageDisplay?: types.CodeCoverageDisplay) => {
+		toggleCodeCoverageDisplay(newCodeCoverageDisplay);
 	});
 
 	context.subscriptions.push(command);
@@ -180,14 +188,26 @@ export function activate(context: vscode.ExtensionContext) {
 		showTableData();
 	});
 
+	command = vscode.commands.registerCommand('altestrunner.showRelatedTests', method => {
+		showRelatedTests(method);
+	})
+
+	command = vscode.commands.registerCommand('altestrunner.runRelatedTests', method => {
+		runRelatedTests(method);
+	})
+
 	context.subscriptions.push(command);
+
+	context.subscriptions.push(createCodeCoverageStatusBarItem());
 
 	vscode.window.onDidChangeActiveTextEditor(editor => {
 		activeEditor = editor;
 		if (editor) {
 			if (documentIsTestCodeunit(activeEditor!.document)) {
 				triggerUpdateDecorations();
-				updateCodeCoverageDecoration(showCodeCoverage);
+			}
+			else {
+				updateCodeCoverageDecoration();
 			}
 		}
 	}, null, context.subscriptions);
@@ -352,7 +372,7 @@ function updateDecorations() {
 		return;
 	}
 
-	let testMethodRanges: types.ALTestMethodRange[] = getTestMethodRangesFromDocument(activeEditor!.document);
+	let testMethodRanges: types.ALMethodRange[] = getTestMethodRangesFromDocument(activeEditor!.document);
 
 	let resultFileName = getALTestRunnerPath() + '\\Results\\' + sanitize(getDocumentIdAndName(activeEditor!.document)) + '.xml';
 	if (!(existsSync(resultFileName))) {
@@ -417,7 +437,7 @@ function setDecorations(passingTests: vscode.DecorationOptions[], failingTests: 
 	}
 }
 
-function getUntestedTestDecorations(testMethodRanges: types.ALTestMethodRange[]): vscode.DecorationOptions[] {
+function getUntestedTestDecorations(testMethodRanges: types.ALMethodRange[]): vscode.DecorationOptions[] {
 	let untestedTests: vscode.DecorationOptions[] = [];
 	if (testMethodRanges.length > 0) {
 		testMethodRanges.forEach(element => {
@@ -453,10 +473,10 @@ if (activeEditor) {
 	}
 }
 
-export function getTestMethodRangesFromDocument(document: vscode.TextDocument): types.ALTestMethodRange[] {
+export function getTestMethodRangesFromDocument(document: vscode.TextDocument): types.ALMethodRange[] {
 	const documentText = document.getText();
 	const regEx = /\[Test\]/gi;
-	let testMethods: types.ALTestMethodRange[] = [];
+	let testMethods: types.ALMethodRange[] = [];
 	let match;
 
 	while (match = regEx.exec(documentText)) {
@@ -483,7 +503,7 @@ export function getTestMethodRangesFromDocument(document: vscode.TextDocument): 
 			}
 
 			if (procedureCommentedOut !== true) {
-				const testMethod: types.ALTestMethodRange = {
+				const testMethod: types.ALMethodRange = {
 					name: subDocumentText.substr(methodMatch!.index!, methodMatch![0].length - 1),
 					range: new vscode.Range(startPos, endPos)
 				};

@@ -56,7 +56,7 @@ export type ALTestResult = {
 	}]
 };
 
-export type ALTestMethodRange = {
+export type ALMethodRange = {
 	name: string;
 	range: vscode.Range;
 };
@@ -106,7 +106,29 @@ export enum RunType {
 	Selection
 }
 
-export type TestName = {
+export type ALMethod = {
+	objectName: string;
+	methodName: string;
+	object?: ALObject;
+}
+
+export type DisabledTest = {
 	codeunitName: string;
 	method: string;
+}
+
+export type TestCoverage = {
+	method: ALMethod;
+	testMethod: ALMethod;
+}
+
+export enum CodeCoverageDisplay {
+	Off = 'Off',
+	Previous = 'Previous',
+	All = 'All'
+}
+
+export enum OutputType {
+	Editor = 'Editor',
+	Channel = 'Output'
 }

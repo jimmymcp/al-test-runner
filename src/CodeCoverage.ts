@@ -1,12 +1,16 @@
 import * as vscode from 'vscode';
 import { getALObjectOfDocument, getALFileForALObject } from './alFileHelper';
-import { existsSync, readFileSync } from 'fs';
-import { ALObject, CodeCoverageLine, CodeCoverageObject } from './types';
+import { copyFileSync, existsSync, readFileSync } from 'fs';
+import { ALObject, CodeCoverageDisplay, CodeCoverageLine, CodeCoverageObject } from './types';
 import { activeEditor, passingTestDecorationType, outputWriter } from './extension';
-import { join, basename } from 'path';
+import { join, basename, dirname } from 'path';
 import { getALTestRunnerConfig, getTestWorkspaceFolder } from './config';
+import { padString, writeTable } from './output';
 
-export async function updateCodeCoverageDecoration(show: Boolean) {
+let codeCoverageStatusBarItem: vscode.StatusBarItem;
+let codeCoverageDisplay: CodeCoverageDisplay = CodeCoverageDisplay.Off;
+
+export async function updateCodeCoverageDecoration() {
     if (!activeEditor) {
         return;
     }
@@ -20,8 +24,8 @@ export async function updateCodeCoverageDecoration(show: Boolean) {
 
     let testedRanges: vscode.Range[] = [];
 
-    if (show) {
-        let codeCoverage: CodeCoverageLine[] = await readCodeCoverage();
+    if (codeCoverageDisplay != CodeCoverageDisplay.Off) {
+        let codeCoverage: CodeCoverageLine[] = await readCodeCoverage(codeCoverageDisplay);
         codeCoverage = filterCodeCoverageByObject(codeCoverage, alObject!);
         codeCoverage.forEach(element => {
             testedRanges.push(document.lineAt(parseInt(element.LineNo) - 1).range);
@@ -31,10 +35,10 @@ export async function updateCodeCoverageDecoration(show: Boolean) {
     activeEditor.setDecorations(passingTestDecorationType, testedRanges);
 }
 
-function readCodeCoverage(): Promise<CodeCoverageLine[]> {
-    return new Promise(async (resolve, reject) => {
+export function readCodeCoverage(codeCoverageDisplay?: CodeCoverageDisplay): Promise<CodeCoverageLine[]> {
+    return new Promise(async (resolve) => {
         let codeCoverage: CodeCoverageLine[] = [];
-        let codeCoveragePath = await getCodeCoveragePath();
+        let codeCoveragePath = await getCodeCoveragePath(codeCoverageDisplay);
         if (codeCoveragePath) {
             if (existsSync(codeCoveragePath)) {
                 codeCoverage = JSON.parse(readFileSync(codeCoveragePath, { encoding: 'utf-8' }));
@@ -42,12 +46,17 @@ function readCodeCoverage(): Promise<CodeCoverageLine[]> {
         }
 
         resolve(codeCoverage);
-    })
-
+    });
 }
 
-export async function getCodeCoveragePath(): Promise<string | null> {
-    return new Promise(async (resolve, reject) => {
+export async function getCodeCoveragePath(codeCoverageType?: CodeCoverageDisplay): Promise<string | null> {
+    return new Promise(async (resolve) => {
+        if (codeCoverageType == CodeCoverageDisplay.All) {
+            const path = await getCodeCoveragePath(CodeCoverageDisplay.Previous);
+            if (path) {
+                resolve(join(dirname(path), 'codeCoverageAll.json'));
+            }
+        }
         let config = vscode.workspace.getConfiguration('al-test-runner');
         if (config.codeCoveragePath) {
             resolve(join(getTestWorkspaceFolder(), config.codeCoveragePath));
@@ -55,6 +64,18 @@ export async function getCodeCoveragePath(): Promise<string | null> {
         else {
             let discoveredPath = await discoverCodeCoveragePath();
             resolve(discoveredPath);
+        }
+    });
+}
+
+export async function saveAllTestsCodeCoverage(): Promise<void> {
+    return new Promise(async () => {
+        const path = await getCodeCoveragePath(CodeCoverageDisplay.Previous);
+        if (path) {
+            const allTestsPath = await getCodeCoveragePath(CodeCoverageDisplay.All);
+            if (allTestsPath) {
+                copyFileSync(path, allTestsPath);
+            }
         }
     });
 }
@@ -77,12 +98,21 @@ function getCodeCoverageFileName(): string {
     return basename(config.codeCoveragePath);
 }
 
-function filterCodeCoverageByObject(codeCoverage: CodeCoverageLine[], alObject: ALObject, includeZeroHits: Boolean = false): CodeCoverageLine[] {
+export function filterCodeCoverageByObject(codeCoverage: CodeCoverageLine[], alObject: ALObject, includeZeroHits: Boolean = false): CodeCoverageLine[] {
     return codeCoverage.filter((element) => {
         return ((element.ObjectType.toLowerCase() === alObject.type.toLowerCase()) &&
-            (element.ObjectID === alObject.id.toString()) &&
-            ((element.NoOfHits !== "0") || includeZeroHits) &&
-            (element.LineNo !== "0") &&
+            (parseInt(element.ObjectID) === alObject.id) &&
+            ((parseInt(element.NoOfHits) !== 0) || includeZeroHits) &&
+            (parseInt(element.LineNo) !== 0) &&
+            (element.LineType === "Code"));
+    });
+}
+
+export function filterCodeCoverageByLineNoRange(codeCoverage: CodeCoverageLine[], startLineNumber: number, endLineNumber: number, includeZeroHits: boolean = false): CodeCoverageLine[] {
+    return codeCoverage.filter(element => {
+        const lineNumber = parseInt(element.LineNo);
+        return (lineNumber >= startLineNumber && lineNumber <= endLineNumber &&
+            (parseInt(element.NoOfHits) !== 0 || includeZeroHits) &&
             (element.LineType === "Code"));
     });
 }
@@ -91,13 +121,12 @@ export async function outputCodeCoverage() {
     const codeCoverage: CodeCoverageLine[] = await readCodeCoverage();
     let alObjects: ALObject[] = getALObjectsFromCodeCoverage(codeCoverage);
     let coverageObjects: CodeCoverageObject[] = [];
-    let maxObjectNameLength: number = 0;
-    let maxObjectTypeLength: number = 0;
     let maxNoOfHitLinesLength: number = 0;
     let maxNoOfLinesLength: number = 0;
     let totalLinesHit: number = 0;
     let totalLines: number = 0;
     let totalCodeCoverage: number = 0;
+    let codeCoverageOutput: any[] = [];
 
     for (let alObject of alObjects) {
         const alFile = getALFileForALObject(alObject);
@@ -114,12 +143,6 @@ export async function outputCodeCoverage() {
             totalLinesHit += coverageObject.noOfHitLines;
 
             coverageObjects.push(coverageObject);
-            if (alFile.object.name!.length > maxObjectNameLength) {
-                maxObjectNameLength = alFile.object.name!.length;
-            }
-            if (alFile.object.type!.length > maxObjectTypeLength) {
-                maxObjectTypeLength = alFile.object.type!.length;
-            }
             if (coverageObject.noOfHitLines.toString().length > maxNoOfHitLinesLength) {
                 maxNoOfHitLinesLength = coverageObject.noOfHitLines.toString().length;
             }
@@ -135,21 +158,17 @@ export async function outputCodeCoverage() {
 
     const codeCoverageSummary = `Code Coverage ${totalCodeCoverage}% (${totalLinesHit}/${totalLines})`;
 
-    outputWriter.write(' ');
-    outputWriter.write(codeCoverageSummary);
-    outputWriter.write(padString('', codeCoverageSummary.length, '-'));
-
     coverageObjects.forEach(element => {
-        outputWriter.write(`${padString(element.coverage!.toString() + '%', 4)} | ${padString(element.noOfHitLines.toString(), maxNoOfHitLinesLength)} / ${padString(element.noOfLines.toString(), maxNoOfLinesLength)} | ${padString(element.file.object.type, maxObjectTypeLength)} | ${padString(element.file.object.name!, maxObjectNameLength)} | ${element.file.path}`);
+        codeCoverageOutput.push({
+            coverage: element.coverage!.toString() + '%',
+            hitLines: `${padString(element.noOfHitLines.toString(), maxNoOfHitLinesLength)} / ${padString(element.noOfLines.toString(), maxNoOfLinesLength)}`,
+            type: element.file.object.type,
+            name: element.file.object.name!,
+            path: element.file.path
+        });
     });
-}
 
-function padString(string: string, length: number, padWith: string = ' '): string {
-    let result = string;
-    for (let i = result.length; i < length; i++) {
-        result += padWith;
-    }
-    return result;
+    writeTable(outputWriter, codeCoverageOutput, ['coverage', 'hitLines', 'type', 'name', 'path'], false, false, codeCoverageSummary);
 }
 
 function getALObjectsFromCodeCoverage(codeCoverage: CodeCoverageLine[]): ALObject[] {
@@ -172,10 +191,60 @@ function getALObjectFromCodeCoverageLine(codeCoverageLine: CodeCoverageLine): AL
 }
 
 function getCodeCoveragePercentageForCoverageObject(coverageObject: CodeCoverageObject): number {
-    if (coverageObject.noOfLines == 0) {
-        return 0;
+    return getCodeCoveragePercentage(coverageObject.noOfHitLines, coverageObject.noOfLines);
+}
+
+export function getCodeCoveragePercentage(hitLines: number, totalLines: number): number {
+    if (totalLines == 0) {
+        return 0
     }
     else {
-        return Math.round((coverageObject.noOfHitLines / coverageObject.noOfLines) * 100);
+        return Math.round(hitLines / totalLines * 100);
     }
+}
+
+export function createCodeCoverageStatusBarItem(): vscode.StatusBarItem {
+    codeCoverageStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
+    codeCoverageStatusBarItem.command = 'altestrunner.toggleCodeCoverage';
+    updateCodeCoverageStatusBarItemText();
+    return codeCoverageStatusBarItem;
+}
+
+function updateCodeCoverageStatusBarItemText() {
+    codeCoverageStatusBarItem.text = `Code Coverage: ${codeCoverageDisplay}`;
+    if (codeCoverageDisplay == CodeCoverageDisplay.Off) {
+        codeCoverageStatusBarItem.backgroundColor = undefined;
+    }
+    else {
+        codeCoverageStatusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+    }
+    codeCoverageStatusBarItem.show();
+}
+
+export function toggleCodeCoverageDisplay(newCodeCoverageDisplay?: CodeCoverageDisplay) {
+    if (newCodeCoverageDisplay) {
+        if (codeCoverageDisplay == newCodeCoverageDisplay) {
+            //so the user can click the coverage % code lens a second time to turn the coverage off
+            codeCoverageDisplay = CodeCoverageDisplay.Off;
+        }
+        else {
+            codeCoverageDisplay = newCodeCoverageDisplay
+        }
+    }
+    else {
+        switch (codeCoverageDisplay) {
+            case CodeCoverageDisplay.Off:
+                codeCoverageDisplay = CodeCoverageDisplay.Previous
+                break;
+            case CodeCoverageDisplay.Previous:
+                codeCoverageDisplay = CodeCoverageDisplay.All;
+                break;
+            default:
+                codeCoverageDisplay = CodeCoverageDisplay.Off;
+                break;
+        }
+    }
+
+    updateCodeCoverageStatusBarItemText();
+    updateCodeCoverageDecoration();
 }

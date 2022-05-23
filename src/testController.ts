@@ -2,9 +2,11 @@ import * as vscode from 'vscode';
 import { documentIsTestCodeunit, getALFilesInWorkspace, getALObjectOfDocument } from './alFileHelper';
 import { getCurrentWorkspaceConfig, launchConfigIsValid, selectLaunchConfig, setALTestRunnerConfig } from './config';
 import { alTestController, attachDebugger, getAppJsonKey, getTestMethodRangesFromDocument, initDebugTest, invokeDebugTest, invokeTestRunner, outputTestResults } from './extension';
-import { ALTestAssembly, ALTestResult, TestName } from './types';
+import { ALTestAssembly, ALTestResult, ALMethod, DisabledTest } from './types';
 import * as path from 'path';
 import { sendTestDebugStartEvent, sendTestRunFinishedEvent, sendTestRunStartEvent } from './telemetry';
+import { buildTestCoverageFromTestItem } from './testCoverage';
+import { saveAllTestsCodeCoverage } from './codeCoverage';
 
 export let numberOfTests: number;
 
@@ -62,6 +64,7 @@ export async function runTestHandler(request: vscode.TestRunRequest) {
     let results: ALTestAssembly[];
     if (request.include === undefined) {
         results = await runAllTests();
+        saveAllTestsCodeCoverage();
     }
     else if (request.include.length > 1) {
         results = await runSelectedTests(request);
@@ -79,6 +82,7 @@ export async function runTestHandler(request: vscode.TestRunRequest) {
         }
 
         results = await runTest(filename, lineNumber);
+        buildTestCoverageFromTestItem(testItem);
     }
 
     setResultsForTestItems(results, request, run);
@@ -316,8 +320,8 @@ export async function deleteTestItemForFilename(filename: string) {
     }
 }
 
-export function getDisabledTestsForRequest(request: vscode.TestRunRequest, testContoller?: vscode.TestController): TestName[] {
-    let disabledTests: TestName[] = [];
+export function getDisabledTestsForRequest(request: vscode.TestRunRequest, testContoller?: vscode.TestController): DisabledTest[] {
+    let disabledTests: DisabledTest[] = [];
     let testCodeunitsToRun: vscode.TestItem[] = getTestCodeunitsIncludedInRequest(request);
     let controller;
     if (testContoller) {
@@ -404,4 +408,11 @@ export function getTestItemsIncludedInRequest(request: vscode.TestRunRequest): v
     }
 
     return testItems;
+}
+
+export function getTestItemForMethod(method: ALMethod): vscode.TestItem | undefined {
+    let testCodeunit = alTestController.items.get(method.objectName);
+    if (testCodeunit) {
+        return testCodeunit.children.get(method.methodName);
+    }
 }
