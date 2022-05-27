@@ -519,11 +519,16 @@ suite('Extension Test Suite', () => {
 	});
 
 	test('getMaxLengthOfPropertyFromArray returns the max length of values of a given non-string property from the array', () => {
-		const array = [{ month: "January", days: 31 }, { month: "February", days: 28 }, { month: "March", days: 31 }, { month: "April", days: 30 }]
-		assert.strictEqual(getMaxLengthOfPropertyFromArray(array, 'days'), 2);
+		const array = [{ month: "January", d: 31 }, { month: "February", d: 28 }, { month: "March", d: 31 }, { month: "April", d: 30 }]
+		assert.strictEqual(getMaxLengthOfPropertyFromArray(array, 'd'), 2);
 	});
 
-	test('getMaxLengthOfPropertyFromArray called without propety returns max length of elements in array', () => {
+	test('getMaxLengthOfPropertyFromArray returns the length of the property name when longer than any of its values', () => {
+		const array = [{ month: "January", days: 31 }, { month: "February", days: 28 }, { month: "March", days: 31 }, { month: "April", days: 30 }]
+		assert.strictEqual(getMaxLengthOfPropertyFromArray(array, 'days'), 4);
+	});
+
+	test('getMaxLengthOfPropertyFromArray called without property returns max length of elements in array', () => {
 		const array = ["one", "two", "three", "four"];
 		assert.strictEqual(getMaxLengthOfPropertyFromArray(array), 5);
 	})
