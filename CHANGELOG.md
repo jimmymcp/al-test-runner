@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.7.9
+- Support for running selected tests from the Test Explorer. All other tests are excluded through use of the DisabledTests parameter in the bccontainerhelper module
+
 ## 0.7.8
 - Do not include testRunnerCodeunitId parameter when running tests in BC14 container - [issue 63](https://github.com/jimmymcp/al-test-runner/issues/63)
 - Telemetry update
