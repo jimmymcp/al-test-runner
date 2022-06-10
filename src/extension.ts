@@ -4,7 +4,7 @@ import * as xml2js from 'xml2js';
 import * as types from './types';
 import { CodelensProvider } from './codeLensProvider';
 import { updateCodeCoverageDecoration, outputCodeCoverage, createCodeCoverageStatusBarItem, toggleCodeCoverageDisplay } from './codeCoverage';
-import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getFilePathByCodeunitId } from './alFileHelper';
+import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getFilePathOfObject } from './alFileHelper';
 import { getALTestRunnerConfig, getALTestRunnerConfigPath, getALTestRunnerPath, getCurrentWorkspaceConfig, getDebugConfigurationsFromLaunchJson, getLaunchJsonPath, getTestWorkspaceFolder, setALTestRunnerConfig } from './config';
 import { showTableData } from './showTableData';
 import { getOutputWriter, OutputWriter } from './output';
@@ -20,7 +20,7 @@ import { runRelatedTests, showRelatedTests } from './testCoverage';
 
 let terminal: vscode.Terminal;
 export let activeEditor = vscode.window.activeTextEditor;
-export let alFiles: types.ALFile[];
+export let alFiles: types.ALFile[] = [];
 const config = vscode.workspace.getConfiguration('al-test-runner');
 const passingTestColor = 'rgba(' + config.passingTestsColor.red + ',' + config.passingTestsColor.green + ',' + config.passingTestsColor.blue + ',' + config.passingTestsColor.alpha + ')';
 const failingTestColor = 'rgba(' + config.failingTestsColor.red + ',' + config.failingTestsColor.green + ',' + config.failingTestsColor.blue + ',' + config.failingTestsColor.alpha + ')';
@@ -601,16 +601,17 @@ export async function outputTestResults(assemblies: types.ALTestAssembly[]): Pro
 			for (let test of assembly.collection[0].test) {
 				const testTime = parseFloat(test.$.time);
 				let filePath = '';
+				const codeunitName = assembly.$.name.substring(assembly.$.name.indexOf(' ') + 1);
 				switch (test.$.result) {
 					case 'Pass':
 						outputWriter.write('\t✅ ' + test.$.method + '\t' + testTime.toFixed(2) + 's');
 						break;
 					case 'Skip':
-						filePath = await getFilePathByCodeunitId(getCodeunitIdFromAssemblyName(assembly.$.name), test.$.method);
+						filePath = await getFilePathOfObject({ type: 'codeunit', id: 0, name: codeunitName }, test.$.method);
 						outputWriter.write('\t❓ ' + test.$.method + '\t' + testTime.toFixed(2) + 's ' + filePath);
 						break;
 					case 'Fail':
-						filePath = await getFilePathByCodeunitId(getCodeunitIdFromAssemblyName(assembly.$.name), test.$.method);
+						filePath = await getFilePathOfObject({ type: 'codeunit', id: 0, name: codeunitName }, test.$.method);
 						outputWriter.write('\t❌ ' + test.$.method + '\t' + testTime.toFixed(2) + "s " + filePath);
 						outputWriter.write('\t\t' + test.failure[0].message);
 						break;
