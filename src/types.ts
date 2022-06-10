@@ -110,6 +110,7 @@ export type ALMethod = {
 	objectName: string;
 	methodName: string;
 	object?: ALObject;
+	path?: string;
 }
 
 export type DisabledTest = {
