@@ -143,7 +143,7 @@ export async function showRelatedTests(method?: ALMethod) {
     writeTable(channelWriter, relatedTestMethods, ["objectName", "methodName", "path"], true, true, `${method.objectName}.${method.methodName} tested by:`, ["Codeunit", "Test", "Path"]);
     channelWriter.write(' ');
     channelWriter.write(`${relatedTestMethods.length} test(s) call ${method.methodName}.`);
-    channelWriter.write('The test coverage map is updated when single tests are run and when code coverage is enabled.');
+    channelWriter.write('The test coverage map is updated when single tests are run and when code coverage is enabled. For more information see https://jimmymcp.github.io/al-test-runner-docs/articles/test-coverage.html');
     channelWriter.show();
 }
 
