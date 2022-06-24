@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getMethodNameFromDocumentAndLine } from './alFileHelper';
+import { getALFilesInWorkspace, getFilePathOfObject, getMethodNameFromDocumentAndLine } from './alFileHelper';
 import { getCodeCoveragePath, readCodeCoverage } from './CodeCoverage';
 import { alFiles, channelWriter } from "./extension";
 import { ALFile, ALMethod, CodeCoverageLine, TestCoverage } from "./types";
@@ -134,23 +134,27 @@ export function getTestCoverageForMethod(method: ALMethod): TestCoverage[] {
     });
 }
 
-export function showRelatedTests(method?: ALMethod) {
+export async function showRelatedTests(method?: ALMethod) {
     if (!method) {
         return;
     }
 
-    const relatedTestMethods: any[] = getRelatedTests(method);
-    writeTable(channelWriter, relatedTestMethods, ["objectName", "methodName"], true, true, `${method.objectName}.${method.methodName} tested by:`, ["Codeunit", "Test"]);
+    const relatedTestMethods: any[] = await getRelatedTests(method);
+    writeTable(channelWriter, relatedTestMethods, ["objectName", "methodName", "path"], true, true, `${method.objectName}.${method.methodName} tested by:`, ["Codeunit", "Test", "Path"]);
+    channelWriter.write(' ');
+    channelWriter.write(`${relatedTestMethods.length} test(s) call ${method.methodName}.`);
+    channelWriter.write('The test coverage map is updated when single tests are run and when code coverage is enabled. For more information see https://jimmymcp.github.io/al-test-runner-docs/articles/test-coverage.html');
     channelWriter.show();
 }
 
-export function runRelatedTests(method?: ALMethod) {
+export async function runRelatedTests(method?: ALMethod) {
     if (!method) {
         return;
     }
 
     let testItems: vscode.TestItem[] = [];
-    getRelatedTests(method).forEach(test => {
+    const relatedTests = await getRelatedTests(method);
+    relatedTests.forEach(test => {
         const testItem = getTestItemForMethod(test);
         if (testItem) {
             testItems.push(testItem);
@@ -164,10 +168,18 @@ export function runRelatedTests(method?: ALMethod) {
     }
 }
 
-function getRelatedTests(method: ALMethod): ALMethod[] {
-    let relatedTestMethods: ALMethod[] = [];
-    getTestCoverageForMethod(method).forEach(testCoverage => {
-        relatedTestMethods.push({ objectName: testCoverage.testMethod.objectName, methodName: testCoverage.testMethod.methodName });
+async function getRelatedTests(method: ALMethod): Promise<ALMethod[]> {
+    const files = await getALFilesInWorkspace();
+
+    return new Promise(resolve => {
+        let relatedTestMethods: ALMethod[] = [];
+        const testCoverages = getTestCoverageForMethod(method);
+        testCoverages.forEach(async (testCoverage, index) => {
+            const path = await getFilePathOfObject({ type: 'codeunit', id: 0, name: testCoverage.testMethod.objectName }, testCoverage.testMethod.methodName, files);
+            relatedTestMethods.push({ objectName: testCoverage.testMethod.objectName, methodName: testCoverage.testMethod.methodName, path: path });
+            if (index == testCoverages.length - 1) {
+                resolve(relatedTestMethods);
+            }
+        });
     });
-    return relatedTestMethods;
 }
