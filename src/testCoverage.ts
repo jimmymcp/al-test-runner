@@ -7,6 +7,7 @@ import { join, dirname } from 'path'
 import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { writeTable } from './output';
 import { getTestItemForMethod, runTestHandler } from './testController';
+import { sendShowRelatedTestsEvent } from './telemetry';
 
 export let testCoverage: TestCoverage[] = [];
 readTestCoverage();
@@ -138,6 +139,8 @@ export async function showRelatedTests(method?: ALMethod) {
     if (!method) {
         return;
     }
+
+    sendShowRelatedTestsEvent();
 
     const relatedTestMethods: any[] = await getRelatedTests(method);
     writeTable(channelWriter, relatedTestMethods, ["objectName", "methodName", "path"], true, true, `${method.objectName}.${method.methodName} tested by:`, ["Codeunit", "Test", "Path"]);
