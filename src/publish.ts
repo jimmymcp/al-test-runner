@@ -2,7 +2,7 @@ import { existsSync, readFileSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import * as vscode from 'vscode';
 import { activeEditorIsOpenToTestAppJson, openEditorToTestFileIfNotAlready } from './alFileHelper';
-import { getALTestRunnerPath, getCurrentWorkspaceConfig, getTestWorkspaceFolder } from './config';
+import { getALTestRunnerPath, getCurrentWorkspaceConfig } from './config';
 import { failedToPublishMessage } from './constants';
 import { getALTestRunnerTerminal } from './extension';
 import { awaitFileExistence } from './file';

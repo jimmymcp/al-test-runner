@@ -9,7 +9,7 @@ import { getALTestRunnerConfig, getALTestRunnerConfigPath, getALTestRunnerPath, 
 import { showTableData } from './showTableData';
 import { getOutputWriter, OutputWriter } from './output';
 import { createTestController, debugTestHandler, deleteTestItemForFilename, discoverTests, discoverTestsInDocument, getTestItemFromFileNameAndSelection, runTestHandler } from './testController';
-import { displayPublishTerminal as displayTerminal, onChangeAppFile, publishApp } from './publish';
+import { onChangeAppFile, publishApp } from './publish';
 import { awaitFileExistence } from './file';
 import { join } from 'path';
 import TelemetryReporter from '@vscode/extension-telemetry';
