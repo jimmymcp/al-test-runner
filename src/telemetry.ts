@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import TelemetryReporter, { TelemetryEventMeasurements, TelemetryEventProperties } from "@vscode/extension-telemetry";
-import { appInsightsKey } from "./constants";
+import { appInsightsKey, failedToPublishMessage } from "./constants";
 import { getExtension, telemetryReporter } from "./extension";
 import { getTestItemsIncludedInRequest, numberOfTests } from './testController';
 import { getCurrentWorkspaceConfig } from './config';
@@ -26,6 +26,31 @@ export function sendTestDebugStartEvent(request: vscode.TestRunRequest) {
 
 export function sendShowTableDataEvent() {
     sendEvent('004-ShowTableData');
+}
+
+export function sendShowRelatedTestsEvent() {
+    sendEvent('005 ShowRelatedTests');
+}
+
+export function sendNoTestFolderNameError(): string {
+    return sendError('E01-NoTestFolderNameSet', 'Please set the name of the workspace folder which contains your test app in the extension settings (see "Test Folder Name").');
+}
+
+export function sendFailedToPublishError(detail?: string): string {
+    let message: string = '';
+    if (detail) {
+        message = detail;
+    }
+    else {
+        message = failedToPublishMessage;
+    }
+    return sendError('E02-PowerShellPublishingFailed', message);
+}
+
+function sendError(eventName: string, errorMessage: string): string {
+    telemetryReporter.sendTelemetryErrorEvent(eventName);
+    vscode.window.showErrorMessage(errorMessage);
+    return errorMessage;
 }
 
 function sendTestRunEvent(eventName: string, request: vscode.TestRunRequest) {

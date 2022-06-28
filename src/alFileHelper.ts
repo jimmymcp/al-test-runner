@@ -120,8 +120,12 @@ export function getALFileForALObject(alObject: ALObject): ALFile | undefined {
 export async function openEditorToTestFileIfNotAlready(): Promise<Boolean> {
 	return new Promise(async resolve => {
 		if (!activeEditorOpenToTestFile()) {
-			await openTestAppJson();
-			resolve(true);
+			if (await openTestAppJson()) {
+				resolve(true);
+			}
+			else {
+				resolve(false);
+			}
 		}
 		else {
 			resolve(false);
@@ -143,10 +147,16 @@ function activeEditorOpenToTestFile(): Boolean {
 	}
 }
 
-async function openTestAppJson(): Promise<vscode.TextEditor> {
+async function openTestAppJson(): Promise<vscode.TextEditor | undefined> {
 	return new Promise(async resolve => {
+		const appJsonPath = getPathOfTestAppJson();
+		if (appJsonPath) {
 		vscode.commands.executeCommand('workbench.action.keepEditor');
-		resolve(await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(getPathOfTestAppJson()!)));
+			resolve(await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(appJsonPath)));
+		}
+		else {
+			resolve(undefined);
+		}
 	});
 }
 

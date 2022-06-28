@@ -6,6 +6,7 @@ import { getALTestRunnerPath, getCurrentWorkspaceConfig } from './config';
 import { failedToPublishMessage } from './constants';
 import { getALTestRunnerTerminal } from './extension';
 import { awaitFileExistence } from './file';
+import { sendFailedToPublishError, sendNoTestFolderNameError } from './telemetry';
 import { PublishResult, PublishType } from "./types";
 
 let shouldPublishApp: Boolean = false;
@@ -23,6 +24,10 @@ export function publishApp(publishType: PublishType): Promise<PublishResult> {
         let command: string = '';
 
         if (getCurrentWorkspaceConfig().enablePublishingFromPowerShell) {
+            if (getCurrentWorkspaceConfig().testFolderName == '') {
+                resolve({ success: false, message: sendNoTestFolderNameError() });
+            }
+            
             shouldPublishApp = true;
             if (existsSync(getPublishCompletionPath())) {
                 unlinkSync(getPublishCompletionPath());
@@ -35,11 +40,12 @@ export function publishApp(publishType: PublishType): Promise<PublishResult> {
                 success = content.trim() === '1';
                 if (!success) {
                     message = content;
+                    sendFailedToPublishError(content);
                 }
             }
             else {
                 success = false;
-                message = failedToPublishMessage;
+                sendFailedToPublishError();
             }
         }
         else {
