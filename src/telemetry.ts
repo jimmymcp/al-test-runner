@@ -33,7 +33,7 @@ export function sendShowRelatedTestsEvent() {
 }
 
 export function sendNoTestFolderNameError(): string {
-    return sendError('006-NoTestFolderNameSet', 'Please set the name of the workspace folder which contains your test app in the extension settings (see "Test Folder Name").');
+    return sendError('E01-NoTestFolderNameSet', 'Please set the name of the workspace folder which contains your test app in the extension settings (see "Test Folder Name").');
 }
 
 export function sendFailedToPublishError(detail?: string): string {
@@ -44,7 +44,7 @@ export function sendFailedToPublishError(detail?: string): string {
     else {
         message = failedToPublishMessage;
     }
-    return sendError('007-PowerShellPublishingFailed', message);
+    return sendError('E02-PowerShellPublishingFailed', message);
 }
 
 function sendError(eventName: string, errorMessage: string): string {
