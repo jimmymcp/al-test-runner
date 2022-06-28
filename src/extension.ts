@@ -241,11 +241,6 @@ export async function invokeTestRunner(command: string): Promise<types.ALTestAss
 		const result = await publishApp(publishType);
 		if (!result.success) {
 			const results: types.ALTestAssembly[] = [];
-			vscode.window.showWarningMessage(result.message, "Show Terminal").then(value => {
-				if (value === "Show Terminal") {
-					displayTerminal();
-				}
-			});
 			resolve(results);
 			return;
 		}
