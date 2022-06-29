@@ -29,7 +29,7 @@ export function sendShowTableDataEvent() {
 }
 
 export function sendShowRelatedTestsEvent() {
-    sendEvent('005 ShowRelatedTests');
+    sendEvent('005-ShowRelatedTests');
 }
 
 function sendTestRunEvent(eventName: string, request: vscode.TestRunRequest) {
