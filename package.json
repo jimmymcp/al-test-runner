@@ -95,11 +95,6 @@
 				"category": "AL Test Runner"
 			},
 			{
-				"command": "altestrunner.outputTestResults",
-				"title": "Output Test Results",
-				"category": "AL Test Runner"
-			},
-			{
 				"command": "altestrunner.installTestRunnerService",
 				"title": "Install Test Runner Service",
 				"category": "AL Test Runner"
@@ -112,6 +107,11 @@
 			{
 				"command": "altestrunner.showTableData",
 				"title": "Show Table Data",
+				"category": "AL Test Runner"
+			},
+			{
+				"command": "altestrunner.showRelatedTests",
+				"title": "Show Related Tests",
 				"category": "AL Test Runner"
 			}
 		],

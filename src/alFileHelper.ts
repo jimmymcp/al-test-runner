@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { ALFile, ALObject } from './types';
+import { ALFile, ALMethodRange, ALObject } from './types';
 import { activeEditor, alFiles } from './extension';
 import { readFileSync } from 'fs';
 import { getCurrentWorkspaceConfig } from './config';
@@ -48,25 +48,23 @@ function getObjectDeclarationFromDocument(document: vscode.TextDocument): string
 	}
 }
 
-function getDocumentName(document: vscode.TextDocument): string {
+export function getDocumentName(document: vscode.TextDocument): string {
 	const idAndName = getDocumentIdAndName(document);
 	return idAndName.substr(idAndName.indexOf(' ') + 1);
 }
 
-export async function getFilePathByCodeunitId(codeunitId: number, method?: string): Promise<string> {
+export async function getFilePathOfObject(object: ALObject, method?: string, files?: ALFile[]): Promise<string> {
 	return new Promise(async resolve => {
-		const alFile = getALFileForALObject({ type: 'codeunit', id: codeunitId });
+		const alFile = getALFileForALObject(object, files);
 		if (alFile) {
 			const text = readFileSync(alFile.path, { encoding: 'utf-8' });
-			const matches = text.match('procedure.*' + method);
-			if (matches !== null) {
+			const matches = text.match(`procedure.*${method}`);
+			if (matches) {
 				const document = await vscode.workspace.openTextDocument(alFile.path);
-				const lineNo = document.positionAt(matches!.index!).line + 1;
-				resolve(alFile.path + ':' + lineNo);
+				const lineNo = document.positionAt(matches.index!).line + 1;
+				resolve(`${alFile.path}:${lineNo}`);
 			}
 		}
-
-		resolve('could not find codeunit ' + codeunitId);
 	});
 }
 
@@ -101,11 +99,20 @@ function excludePath(path: string, excludePattern: string | undefined): boolean 
 	return false;
 }
 
-export function getALFileForALObject(alObject: ALObject): ALFile | undefined {
-	const filteredFiles = alFiles.filter(file => {
+export function getALFileForALObject(object: ALObject, files?: ALFile[]): ALFile | undefined {
+	if (!files) {
+		files = alFiles;
+	}
+	const filteredFiles = files.filter(file => {
 		if (file.object) {
-			return ((file.object.type.toLowerCase() === alObject.type.toLowerCase()) &&
-				(file.object.id === alObject.id));
+			if (object.name) {
+				return file.object.type.toLowerCase() === object.type.toLowerCase() &&
+					file.object.name === object.name;
+			}
+			else {
+				return file.object.type.toLowerCase() === object.type.toLowerCase() &&
+					file.object.id === object.id;
+			}
 		}
 	});
 
@@ -193,4 +200,26 @@ export function activeEditorIsOpenToTestAppJson(): Boolean {
 	}
 
 	return activeEditor.document.uri.fsPath === getPathOfTestAppJson();
+}
+
+export function getMethodNameFromDocumentAndLine(document: vscode.TextDocument, lineNumber: number): string {
+	const line = document.lineAt(lineNumber - 1);
+	return line.text.substring(line.text.indexOf('procedure ') + 'procedure '.length, line.text.indexOf('('));
+}
+
+export function getMethodRangesFromDocument(document: vscode.TextDocument): ALMethodRange[] {
+	let alMethodRanges: ALMethodRange[] = [];
+	const regEx = /(?:procedure )(\w*)(?:\()/gi;
+	const text = document.getText();
+
+	let match;
+	while (match = regEx.exec(text)) {
+		const alMethodRange: ALMethodRange = {
+			name: match[1],
+			range: new vscode.Range(document.positionAt(match.index), document.positionAt(match.index + match[1].length))
+		};
+		alMethodRanges.push(alMethodRange);
+	}
+
+	return alMethodRanges;
 }

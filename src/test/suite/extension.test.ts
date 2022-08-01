@@ -3,8 +3,9 @@ import * as vscode from 'vscode';
 import * as alTestRunner from '../../extension';
 import { writeFileSync, readdirSync, existsSync, unlinkSync, mkdirSync } from 'fs';
 import * as os from 'os';
-import { documentIsTestCodeunit, getALObjectOfDocument, getDocumentIdAndName } from '../../alFileHelper';
-import { createTestController, getDisabledTestsForRequest, getTestCodeunitsIncludedInRequest, getTestItemsIncludedInRequest } from '../../testController';
+import { documentIsTestCodeunit, getALObjectOfDocument, getDocumentIdAndName, getMethodRangesFromDocument } from '../../alFileHelper';
+import { createTestController, getDisabledTestsForRequest, getTestCodeunitsIncludedInRequest, getTestItemsIncludedInRequest, runSelectedTests } from '../../testController';
+import { getMaxLengthOfPropertyFromArray } from '../../output';
 
 const tempDir: string = os.tmpdir() + '\\ALTR';
 
@@ -439,6 +440,31 @@ suite('Extension Test Suite', () => {
 		assert.strictEqual(result[2].id, 'C3');
 	});
 
+	test('getMethodRangesFromDocument find method ranges in document', async () => {
+		const text = `codeunit 51234 "Some Tests
+		{
+			//some file content
+			internal procedure ThisIsAProcedure()
+			begin
+			end;
+
+			local procedure ThisIsAnotherProcedure(Customer: Record Customer)
+			begin
+			end;
+
+			procedure AndAnotherProcedure(var a: Integer; TempSalesLine: Record "Sales Line" temporary)
+			begin
+			end;
+		}`
+
+		const doc = await createTextDocument('15.al', text);
+		const result = getMethodRangesFromDocument(doc);
+		assert.strictEqual(result.length, 3);
+		assert.strictEqual(result[0].name, 'ThisIsAProcedure');
+		assert.strictEqual(result[1].name, 'ThisIsAnotherProcedure');
+		assert.strictEqual(result[2].name, 'AndAnotherProcedure');
+	});
+
 	function getTestController(): vscode.TestController {
 		const testController = createTestController();
 		const parentOne = testController.createTestItem('P1', 'Parent One');
@@ -486,4 +512,24 @@ suite('Extension Test Suite', () => {
 
 		return testItems;
 	}
+
+	test('getMaxLengthOfPropertyFromArray returns the max length of values of a given string property from the array', () => {
+		const array = [{ month: "January" }, { month: "February" }, { month: "March" }, { month: "April" }]
+		assert.strictEqual(getMaxLengthOfPropertyFromArray(array, 'month'), 8);
+	});
+
+	test('getMaxLengthOfPropertyFromArray returns the max length of values of a given non-string property from the array', () => {
+		const array = [{ month: "January", d: 31 }, { month: "February", d: 28 }, { month: "March", d: 31 }, { month: "April", d: 30 }]
+		assert.strictEqual(getMaxLengthOfPropertyFromArray(array, 'd'), 2);
+	});
+
+	test('getMaxLengthOfPropertyFromArray returns the length of the property name when longer than any of its values', () => {
+		const array = [{ month: "January", days: 31 }, { month: "February", days: 28 }, { month: "March", days: 31 }, { month: "April", days: 30 }]
+		assert.strictEqual(getMaxLengthOfPropertyFromArray(array, 'days'), 4);
+	});
+
+	test('getMaxLengthOfPropertyFromArray called without property returns max length of elements in array', () => {
+		const array = ["one", "two", "three", "four"];
+		assert.strictEqual(getMaxLengthOfPropertyFromArray(array), 5);
+	})
 });
