@@ -1,6 +1,7 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import * as vscode from 'vscode';
 import { getWorkspaceFolder } from "./extension";
+import { sendDebugEvent } from './telemetry';
 import * as types from './types';
 
 export function getTestWorkspaceFolder(onlyTest: boolean = false): string {
@@ -86,6 +87,8 @@ function createALTestRunnerDir() {
 }
 
 export function launchConfigIsValid(alTestRunnerConfig?: types.ALTestRunnerConfig): boolean {
+	sendDebugEvent('launchConfigIsValid-start');
+
 	if (alTestRunnerConfig === undefined) {
 		alTestRunnerConfig = getALTestRunnerConfig();
 	}
@@ -110,6 +113,8 @@ export function getLaunchJsonPath() {
 }
 
 export async function selectLaunchConfig() {
+	sendDebugEvent('selectLaunchConfig-start');
+
 	let debugConfigurations = getDebugConfigurationsFromLaunchJson('launch');
 	let selectedConfig;
 

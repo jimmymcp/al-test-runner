@@ -47,6 +47,12 @@ export function sendFailedToPublishError(detail?: string): string {
     return sendError('E02-PowerShellPublishingFailed', message);
 }
 
+export function sendDebugEvent(name: string) {
+    if (getCurrentWorkspaceConfig().sendDebugTelemetry) {
+        telemetryReporter.sendTelemetryEvent(name, { 'isDebugEvent': 'true' });
+    }
+}
+
 function sendError(eventName: string, errorMessage: string): string {
     telemetryReporter.sendTelemetryErrorEvent(eventName);
     vscode.window.showErrorMessage(errorMessage);
@@ -67,7 +73,7 @@ function sendTestRunEvent(eventName: string, request: vscode.TestRunRequest) {
     }
 
     publishBeforeTest = config.publishBeforeTest;
-    
+
     if (config.enablePublishingFromPowerShell) {
         enablePublishingFromPowerShell = 'true';
     }

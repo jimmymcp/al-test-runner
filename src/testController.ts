@@ -4,7 +4,7 @@ import { getCurrentWorkspaceConfig, launchConfigIsValid, selectLaunchConfig, set
 import { alTestController, attachDebugger, getAppJsonKey, getTestMethodRangesFromDocument, initDebugTest, invokeDebugTest, invokeTestRunner, outputTestResults } from './extension';
 import { ALTestAssembly, ALTestResult, ALMethod, DisabledTest } from './types';
 import * as path from 'path';
-import { sendTestDebugStartEvent, sendTestRunFinishedEvent, sendTestRunStartEvent } from './telemetry';
+import { sendDebugEvent, sendTestDebugStartEvent, sendTestRunFinishedEvent, sendTestRunStartEvent } from './telemetry';
 import { buildTestCoverageFromTestItem } from './testCoverage';
 import { saveAllTestsCodeCoverage } from './codeCoverage';
 
@@ -125,6 +125,8 @@ function setResultsForTestItems(results: ALTestAssembly[], request: vscode.TestR
 
 export function readyToRunTests(): Promise<Boolean> {
     return new Promise((resolve, reject) => {
+        sendDebugEvent('readyToRunTests-start');
+
         if (!(launchConfigIsValid())) {
             //clear the credentials and company name if the launch config is not valid
             setALTestRunnerConfig('userName', '');
@@ -134,6 +136,7 @@ export function readyToRunTests(): Promise<Boolean> {
         }
 
         if (launchConfigIsValid()) {
+            sendDebugEvent('readyToRunTests-launchConfigIsValid');
             resolve(true);
         }
         else {
