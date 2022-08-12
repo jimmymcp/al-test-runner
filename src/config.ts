@@ -13,14 +13,12 @@ export function getTestWorkspaceFolder(onlyTest: boolean = false): string {
 				return element.name == config.testFolderName;
 			});
 			if (testFolder.length == 1) {
-				sendDebugEvent('getTestWorkspaceFolder-getTestFolderName');
 				return testFolder.shift()!.uri.fsPath;
 			}
 		}
 	}
 
 	if (!onlyTest) {
-		sendDebugEvent('getTestWorkspaceFolder-getWorkspaceFolder');
 		return getWorkspaceFolder();
 	}
 	return '';
