@@ -2,17 +2,18 @@ import { existsSync, readFileSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import * as vscode from 'vscode';
 import { activeEditorIsOpenToTestAppJson, openEditorToTestFileIfNotAlready } from './alFileHelper';
-import { getALTestRunnerPath, getCurrentWorkspaceConfig, getTestWorkspaceFolder } from './config';
+import { getALTestRunnerPath, getCurrentWorkspaceConfig } from './config';
 import { failedToPublishMessage } from './constants';
 import { getALTestRunnerTerminal } from './extension';
 import { awaitFileExistence } from './file';
-import { sendFailedToPublishError, sendNoTestFolderNameError } from './telemetry';
+import { sendDebugEvent, sendFailedToPublishError, sendNoTestFolderNameError } from './telemetry';
 import { PublishResult, PublishType } from "./types";
 
 let shouldPublishApp: Boolean = false;
 
 export function publishApp(publishType: PublishType): Promise<PublishResult> {
     return new Promise(async resolve => {
+        sendDebugEvent('publishApp-start', { publishType: publishType.toString() });
         let success: boolean = false;
         let message: string = '';
         if (publishType === PublishType.None) {
@@ -24,6 +25,7 @@ export function publishApp(publishType: PublishType): Promise<PublishResult> {
         let command: string = '';
 
         if (getCurrentWorkspaceConfig().enablePublishingFromPowerShell) {
+            sendDebugEvent('publishApp-publishFromPowerShell');
             if (getCurrentWorkspaceConfig().testFolderName == '') {
                 resolve({ success: false, message: sendNoTestFolderNameError() });
             }
@@ -49,6 +51,7 @@ export function publishApp(publishType: PublishType): Promise<PublishResult> {
             }
         }
         else {
+            sendDebugEvent('publishApp-publishWithALCommand');
             switch (publishType) {
                 case PublishType.Publish:
                     command = 'al.publishNoDebug';

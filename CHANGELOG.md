@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.7.11
+- Test Coverage Map - see [https://jimmymcp.github.io/al-test-runner-docs/articles/test-coverage.html](https://jimmymcp.github.io/al-test-runner-docs/articles/test-coverage.html)
+
+## 0.7.10
+- Fix issue 65 - new file editor opens when running tests when ```Test Folder Name``` extension setting is not set. Improved error handling and telemetry for errors.
+
 ## 0.7.9
 - Support for running selected tests from the Test Explorer. All other tests are excluded through use of the DisabledTests parameter in the bccontainerhelper module
 

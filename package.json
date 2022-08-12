@@ -321,6 +321,12 @@
 						"scope": "resource",
 						"description": "Automatically publish apps to the container when compiling",
 						"default": false
+					},
+					"al-test-runner.sendDebugTelemetry": {
+						"type": "boolean",
+						"scope": "resource",
+						"description": "Include debug events in the telemetry to help with troubleshooting",
+						"default": false
 					}
 				}
 			}

@@ -1,22 +1,23 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import * as vscode from 'vscode';
 import { getWorkspaceFolder } from "./extension";
+import { sendDebugEvent } from './telemetry';
 import * as types from './types';
 
 export function getTestWorkspaceFolder(onlyTest: boolean = false): string {
-    let config = vscode.workspace.getConfiguration('al-test-runner');
-    if (config.testFolderName) {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (workspaceFolders) {
-            let testFolder = workspaceFolders.filter(element => {
-                return element.name == config.testFolderName;
-            });
-            if (testFolder.length == 1) {
-                return testFolder.shift()!.uri.fsPath;
-            }
-        }
+	let config = vscode.workspace.getConfiguration('al-test-runner');
+	if (config.testFolderName) {
+		const workspaceFolders = vscode.workspace.workspaceFolders;
+		if (workspaceFolders) {
+			let testFolder = workspaceFolders.filter(element => {
+				return element.name == config.testFolderName;
+			});
+			if (testFolder.length == 1) {
+				return testFolder.shift()!.uri.fsPath;
+			}
+		}
 	}
-	
+
 	if (!onlyTest) {
 		return getWorkspaceFolder();
 	}
@@ -33,12 +34,14 @@ export function getALTestRunnerConfigPath(): string {
 }
 
 export function getALTestRunnerConfig() {
+	sendDebugEvent('getALTestRunnerConfig-start')
 	let alTestRunnerConfigPath = getALTestRunnerConfigPath();
 	let data: string;
 
 	try {
 		data = readFileSync(alTestRunnerConfigPath, { encoding: 'utf-8' });
 	} catch (error) {
+		sendDebugEvent('getALTestRunnerConfig-unableToReadConfigFile');
 		createALTestRunnerConfig();
 		data = readFileSync(alTestRunnerConfigPath, { encoding: 'utf-8' });
 	}
@@ -48,6 +51,12 @@ export function getALTestRunnerConfig() {
 }
 
 export function setALTestRunnerConfig(keyName: string, keyValue: string | undefined) {
+	let debugKeyValue = '';
+	if (keyValue) {
+		debugKeyValue = keyValue;
+	}
+	sendDebugEvent('setALTestRunnerConfig', { keyName: keyName, keyValue: debugKeyValue })
+
 	let config = getALTestRunnerConfig();
 	//@ts-ignore
 	config[keyName] = keyValue;
@@ -86,6 +95,8 @@ function createALTestRunnerDir() {
 }
 
 export function launchConfigIsValid(alTestRunnerConfig?: types.ALTestRunnerConfig): boolean {
+	sendDebugEvent('launchConfigIsValid-start');
+
 	if (alTestRunnerConfig === undefined) {
 		alTestRunnerConfig = getALTestRunnerConfig();
 	}
@@ -110,6 +121,8 @@ export function getLaunchJsonPath() {
 }
 
 export async function selectLaunchConfig() {
+	sendDebugEvent('selectLaunchConfig-start');
+
 	let debugConfigurations = getDebugConfigurationsFromLaunchJson('launch');
 	let selectedConfig;
 

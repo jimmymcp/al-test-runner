@@ -9,11 +9,11 @@ import { getALTestRunnerConfig, getALTestRunnerConfigPath, getALTestRunnerPath, 
 import { showTableData } from './showTableData';
 import { getOutputWriter, OutputWriter } from './output';
 import { createTestController, debugTestHandler, deleteTestItemForFilename, discoverTests, discoverTestsInDocument, getTestItemFromFileNameAndSelection, runTestHandler } from './testController';
-import { displayPublishTerminal as displayTerminal, onChangeAppFile, publishApp } from './publish';
+import { onChangeAppFile, publishApp } from './publish';
 import { awaitFileExistence } from './file';
 import { join } from 'path';
 import TelemetryReporter from '@vscode/extension-telemetry';
-import { createTelemetryReporter } from './telemetry';
+import { createTelemetryReporter, sendDebugEvent } from './telemetry';
 import { TestCoverageCodeLensProvider } from './testCoverageCodeLensProvider';
 import { CodeCoverageCodeLensProvider } from './codeCoverageCodeLensProvider';
 import { runRelatedTests, showRelatedTests } from './testCoverage';
@@ -243,6 +243,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 export async function invokeTestRunner(command: string): Promise<types.ALTestAssembly[]> {
 	return new Promise(async (resolve) => {
+		sendDebugEvent('invokeTestRunner-start');
 		const config = getCurrentWorkspaceConfig();
 		getALFilesInWorkspace(config.codeCoverageExcludeFiles).then(files => { alFiles = files });
 		let publishType: types.PublishType = types.PublishType.None;
@@ -515,6 +516,7 @@ function getTerminalName() {
 }
 
 export function getALTestRunnerTerminal(terminalName: string): vscode.Terminal {
+	sendDebugEvent('getALTestRunnerTerminal-start', { terminalName: terminalName });
 	let terminals = vscode.window.terminals.filter(element => element.name === terminalName);
 	let terminal;
 	if (terminals) {
@@ -522,6 +524,7 @@ export function getALTestRunnerTerminal(terminalName: string): vscode.Terminal {
 	}
 
 	if (!terminal) {
+		sendDebugEvent('getALTestRunnerTerminal-createTerminal', { terminalName: terminalName });
 		terminal = vscode.window.createTerminal(terminalName);
 	}
 

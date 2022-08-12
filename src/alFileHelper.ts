@@ -5,6 +5,7 @@ import { readFileSync } from 'fs';
 import { getCurrentWorkspaceConfig } from './config';
 import { join } from 'path';
 import { objectDeclarationRegEx } from './constants';
+import { sendDebugEvent } from './telemetry';
 
 export function getALObjectOfDocument(document: vscode.TextDocument): ALObject | undefined {
 	const objectDeclaration = getObjectDeclarationFromDocument(document);
@@ -70,6 +71,7 @@ export async function getFilePathOfObject(object: ALObject, method?: string, fil
 
 export async function getALFilesInWorkspace(excludePattern?: string, glob?: string): Promise<ALFile[]> {
 	return new Promise(async (resolve) => {
+		sendDebugEvent('getALFilesInWorkspace-start');
 		let alFiles: ALFile[] = [];
 		let files;
 		if (glob) {
@@ -126,6 +128,7 @@ export function getALFileForALObject(object: ALObject, files?: ALFile[]): ALFile
 
 export async function openEditorToTestFileIfNotAlready(): Promise<Boolean> {
 	return new Promise(async resolve => {
+		sendDebugEvent('openEditorToTestFileIfNotAlready-start');
 		if (!activeEditorOpenToTestFile()) {
 			if (await openTestAppJson()) {
 				resolve(true);
