@@ -13,6 +13,13 @@ export function createTelemetryReporter(): TelemetryReporter {
 }
 
 export function sendTestRunStartEvent(request: vscode.TestRunRequest) {
+    if (getCurrentWorkspaceConfig().sendDebugTelemetry) {
+        vscode.window.showInformationMessage("Sending AL Test Runner debug telemetry events...", 'Disable').then(value => {
+            if (value === 'Disable') {
+                setSendDebugEvents(false);
+            }
+        });
+    }
     sendTestRunEvent('001-TestStarted', request);
 }
 
@@ -47,9 +54,11 @@ export function sendFailedToPublishError(detail?: string): string {
     return sendError('E02-PowerShellPublishingFailed', message);
 }
 
-export function sendDebugEvent(name: string) {
+export function sendDebugEvent(name: string, properties?: TelemetryEventProperties) {
+    const debugEventProperty = { 'isDebugEvent': 'true' };
+    const combinedProperties = {...properties, ...debugEventProperty}
     if (getCurrentWorkspaceConfig().sendDebugTelemetry) {
-        telemetryReporter.sendTelemetryEvent(name, { 'isDebugEvent': 'true' });
+        telemetryReporter.sendTelemetryEvent('DEBUG-' + name, combinedProperties);
     }
 }
 
@@ -106,4 +115,8 @@ function sendTestRunEvent(eventName: string, request: vscode.TestRunRequest) {
 
 export function sendEvent(eventName: string, properties?: TelemetryEventProperties, measurements?: TelemetryEventMeasurements) {
     telemetryReporter.sendTelemetryEvent(eventName, properties, measurements);
+}
+
+function setSendDebugEvents(newSendTelemetryEvents: boolean) {
+    vscode.workspace.getConfiguration().update('al-test-runner.sendDebugTelemetry', newSendTelemetryEvents);
 }

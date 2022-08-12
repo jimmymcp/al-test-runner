@@ -128,6 +128,7 @@ export function readyToRunTests(): Promise<Boolean> {
         sendDebugEvent('readyToRunTests-start');
 
         if (!(launchConfigIsValid())) {
+            sendDebugEvent('readyToRunTests-launchConfigNotValid');
             //clear the credentials and company name if the launch config is not valid
             setALTestRunnerConfig('userName', '');
             setALTestRunnerConfig('securePassword', '');
@@ -162,6 +163,8 @@ export async function runTest(filename?: string, selectionStart?: number, extens
                     extensionName = getAppJsonKey('name');
                 }
 
+                sendDebugEvent('runTest-ready');
+
                 const results: ALTestAssembly[] = await invokeTestRunner(`Invoke-ALTestRunner -Tests Test -ExtensionId "${extensionId}" -ExtensionName "${extensionName}" -FileName "${filename}" -SelectionStart ${selectionStart}`);
                 resolve(results);
             }
@@ -181,6 +184,8 @@ export async function runAllTests(extensionId?: string, extensionName?: string):
                     extensionName = getAppJsonKey('name');
                 }
 
+                sendDebugEvent('runAllTests-ready');
+
                 const results: ALTestAssembly[] = await invokeTestRunner(`Invoke-ALTestRunner -Tests All -ExtensionId "${extensionId}" -ExtensionName "${extensionName}"`);
                 resolve(results);
             }
@@ -199,6 +204,8 @@ export async function runSelectedTests(request: vscode.TestRunRequest, extension
                 if (extensionName === undefined) {
                     extensionName = getAppJsonKey('name');
                 }
+
+                sendDebugEvent('runSelectedTests-ready');
 
                 const disabledTests = getDisabledTestsForRequest(request);
                 const disabledTestsJson = JSON.stringify(disabledTests);

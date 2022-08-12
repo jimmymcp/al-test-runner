@@ -5,20 +5,22 @@ import { sendDebugEvent } from './telemetry';
 import * as types from './types';
 
 export function getTestWorkspaceFolder(onlyTest: boolean = false): string {
-    let config = vscode.workspace.getConfiguration('al-test-runner');
-    if (config.testFolderName) {
-        const workspaceFolders = vscode.workspace.workspaceFolders;
-        if (workspaceFolders) {
-            let testFolder = workspaceFolders.filter(element => {
-                return element.name == config.testFolderName;
-            });
-            if (testFolder.length == 1) {
-                return testFolder.shift()!.uri.fsPath;
-            }
-        }
+	let config = vscode.workspace.getConfiguration('al-test-runner');
+	if (config.testFolderName) {
+		const workspaceFolders = vscode.workspace.workspaceFolders;
+		if (workspaceFolders) {
+			let testFolder = workspaceFolders.filter(element => {
+				return element.name == config.testFolderName;
+			});
+			if (testFolder.length == 1) {
+				sendDebugEvent('getTestWorkspaceFolder-getTestFolderName');
+				return testFolder.shift()!.uri.fsPath;
+			}
+		}
 	}
-	
+
 	if (!onlyTest) {
+		sendDebugEvent('getTestWorkspaceFolder-getWorkspaceFolder');
 		return getWorkspaceFolder();
 	}
 	return '';
@@ -34,12 +36,14 @@ export function getALTestRunnerConfigPath(): string {
 }
 
 export function getALTestRunnerConfig() {
+	sendDebugEvent('getALTestRunnerConfig-start')
 	let alTestRunnerConfigPath = getALTestRunnerConfigPath();
 	let data: string;
 
 	try {
 		data = readFileSync(alTestRunnerConfigPath, { encoding: 'utf-8' });
 	} catch (error) {
+		sendDebugEvent('getALTestRunnerConfig-unableToReadConfigFile');
 		createALTestRunnerConfig();
 		data = readFileSync(alTestRunnerConfigPath, { encoding: 'utf-8' });
 	}
@@ -49,6 +53,12 @@ export function getALTestRunnerConfig() {
 }
 
 export function setALTestRunnerConfig(keyName: string, keyValue: string | undefined) {
+	let debugKeyValue = '';
+	if (keyValue) {
+		debugKeyValue = keyValue;
+	}
+	sendDebugEvent('setALTestRunnerConfig', { keyName: keyName, keyValue: debugKeyValue })
+
 	let config = getALTestRunnerConfig();
 	//@ts-ignore
 	config[keyName] = keyValue;
