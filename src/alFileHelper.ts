@@ -83,7 +83,12 @@ export async function getALFilesInWorkspace(excludePattern?: string, glob?: stri
 		for (let file of files) {
 			const document = await vscode.workspace.openTextDocument(file);
 			const alObject = getALObjectOfDocument(document);
-			alFiles.push({ object: alObject!, path: file.fsPath, excludeFromCodeCoverage: excludePath(file.fsPath, excludePattern) });
+			if (alObject) {
+				alFiles.push({ object: alObject, path: file.fsPath, excludeFromCodeCoverage: excludePath(file.fsPath, excludePattern) });
+			}
+			else {
+				sendDebugEvent('getALFilesInWorkspace-alObjectUndefined', {"path": file.fsPath})
+			}
 		};
 
 		resolve(alFiles);
