@@ -465,6 +465,31 @@ suite('Extension Test Suite', () => {
 		assert.strictEqual(result[2].name, 'AndAnotherProcedure');
 	});
 
+	test('getMethodRangesFromDocument does not return methods which are commented out', async () => {
+		const text = `codeunit 51234 "Some Tests"
+		{
+			//this method has been commented out
+			//procedure CommentedOutMethod()
+			//begin
+			//end;
+			
+			/*this method has been commented out as well
+			procedure AnotherCommentedOutMethod()
+			begin
+			end;
+			*/
+
+			procedure ThisIsAnActiveMethod()
+			begin
+			end;
+		}`;
+
+		const doc = await createTextDocument('16.al', text);
+		const result = getMethodRangesFromDocument(doc);
+		assert.strictEqual(result.length, 1);
+		assert.strictEqual(result[0].name, 'ThisIsAnActiveMethod');
+	});
+
 	function getTestController(): vscode.TestController {
 		const testController = createTestController();
 		const parentOne = testController.createTestItem('P1', 'Parent One');
