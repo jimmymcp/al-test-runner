@@ -223,12 +223,33 @@ export function getMethodRangesFromDocument(document: vscode.TextDocument): ALMe
 
 	let match;
 	while (match = regEx.exec(text)) {
-		const alMethodRange: ALMethodRange = {
-			name: match[1],
-			range: new vscode.Range(document.positionAt(match.index), document.positionAt(match.index + match[1].length))
-		};
-		alMethodRanges.push(alMethodRange);
+		if (!documentLineIsCommentedOut(document, text, match.index)) {
+			const alMethodRange: ALMethodRange = {
+				name: match[1],
+				range: new vscode.Range(document.positionAt(match.index), document.positionAt(match.index + match[1].length))
+			};
+			alMethodRanges.push(alMethodRange);
+		}
 	}
 
 	return alMethodRanges;
+}
+
+function documentLineIsCommentedOut(document: vscode.TextDocument, text: string, index: number): boolean {
+	//if the line startsWith (excluding whitespace at the beginning of the line) // then it has been commented out
+	const textLine = document.lineAt(document.positionAt(index).line);
+	if (textLine.text.substring(textLine.firstNonWhitespaceCharacterIndex).startsWith('//')) {
+		return true;
+	}
+
+	//if there is a match on /* before the line and not a */ after that match then the line has been block commented out
+	const lastIndexBlockCommentStart = text.substring(0, index).lastIndexOf('/*');
+	if (lastIndexBlockCommentStart > -1) {
+		const lastIndexBlockCommentEnd = text.substring(lastIndexBlockCommentStart, index).lastIndexOf('*/');
+		if (lastIndexBlockCommentEnd == -1) {
+			return true;
+		}
+	}
+
+	return false;
 }
