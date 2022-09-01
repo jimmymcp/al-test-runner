@@ -81,13 +81,14 @@ export async function getALFilesInWorkspace(excludePattern?: string, glob?: stri
 			files = await vscode.workspace.findFiles('**/*.al');
 		}
 		for (let file of files) {
+			sendDebugEvent('getALFilesInWorkspace-openTextDocument', { "path": file.fsPath });
 			const document = await vscode.workspace.openTextDocument(file);
 			const alObject = getALObjectOfDocument(document);
 			if (alObject) {
 				alFiles.push({ object: alObject, path: file.fsPath, excludeFromCodeCoverage: excludePath(file.fsPath, excludePattern) });
 			}
 			else {
-				sendDebugEvent('getALFilesInWorkspace-alObjectUndefined', {"path": file.fsPath})
+				sendDebugEvent('getALFilesInWorkspace-alObjectUndefined', { "path": file.fsPath })
 			}
 		};
 
@@ -166,7 +167,7 @@ async function openTestAppJson(): Promise<vscode.TextEditor | undefined> {
 	return new Promise(async resolve => {
 		const appJsonPath = getPathOfTestAppJson();
 		if (appJsonPath) {
-		vscode.commands.executeCommand('workbench.action.keepEditor');
+			vscode.commands.executeCommand('workbench.action.keepEditor');
 			resolve(await vscode.window.showTextDocument(await vscode.workspace.openTextDocument(appJsonPath)));
 		}
 		else {
