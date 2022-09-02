@@ -26,7 +26,9 @@ function Invoke-RunTests {
         [Parameter(Mandatory=$false)]
         [int]$TestRunnerCodeunitId = 130450,
         [Parameter(Mandatory = $false)]
-        $DisabledTests
+        $DisabledTests,
+        [Parameter(Mandatory = $false)]
+        $Culture = 'en-US'
     )
 
     $ResultId = [Guid]::NewGuid().Guid + ".xml"
@@ -40,6 +42,7 @@ function Invoke-RunTests {
         containerName       = $ContainerName
         companyName         = $CompanyName 
         XUnitResultFileName = $ContainerResultFile
+        culture             = $Culture
     }
     
     if ($null -ne $Credential) {
@@ -78,6 +81,8 @@ function Invoke-RunTests {
     if ($null -ne $DisabledTests) {
         $Params.Add('disabledTests', $DisabledTests)
     }
+
+    $Message += ", culture $Culture"
 
     [int]$AttemptNo = 1
     [bool]$BreakTestLoop = $false

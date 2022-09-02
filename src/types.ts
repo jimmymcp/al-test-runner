@@ -14,6 +14,7 @@ export type ALTestRunnerConfig = {
 	newPSSessionOptions: string;
 	testRunnerServiceUrl: string;
 	codeCoveragePath: string;
+	culture: string;
 };
 
 export type ALTestAssembly = {

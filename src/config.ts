@@ -77,7 +77,8 @@ function createALTestRunnerConfig() {
 		dockerHost: "",
 		newPSSessionOptions: "",
 		testRunnerServiceUrl: "",
-		codeCoveragePath: ".//.altestrunner//codecoverage.json"
+		codeCoveragePath: ".//.altestrunner//codecoverage.json",
+		culture: "en-US"
 	};
 
 	createALTestRunnerDir();
