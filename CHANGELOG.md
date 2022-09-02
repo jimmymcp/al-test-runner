@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.7.12
+- Exclude methods which have been commented out from code lens, test explorer - [issue 68](https://github.com/jimmymcp/al-test-runner/issues/68)
+
 ## 0.7.11
 - Test Coverage Map - see [https://jimmymcp.github.io/al-test-runner-docs/articles/test-coverage.html](https://jimmymcp.github.io/al-test-runner-docs/articles/test-coverage.html)
 

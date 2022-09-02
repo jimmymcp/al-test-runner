@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+import { getTestWorkspaceFolder } from './config';
 import { activeEditor, getALTestRunnerTerminal } from './extension';
 import { sendShowTableDataEvent } from './telemetry';
 
@@ -9,6 +10,7 @@ export async function showTableData() {
     if (recordName !== '') {
         vscode.window.showInformationMessage(`Opening browser to table ${recordName}...`);
         let showTableDataTerminal = getALTestRunnerTerminal('al-test-runner-2');
+        showTableDataTerminal.sendText(`cd "${getTestWorkspaceFolder()}"`);
         showTableDataTerminal.sendText(`Show-TableData '${recordName}'`);
     }
     else {
