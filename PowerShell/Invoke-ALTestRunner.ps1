@@ -94,6 +94,10 @@ function Invoke-ALTestRunner {
     if ($null -ne $DisabledTests) {
         $Params.Add('DisabledTests', $DisabledTests)
     }
+
+    if ($null -ne (Get-ValueFromALTestRunnerConfig -KeyName 'culture')) {
+        $Params.Add('Culture', (Get-ValueFromALTestRunnerConfig -KeyName 'culture'))
+    }
     
     Invoke-RunTests @Params
 }

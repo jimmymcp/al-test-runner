@@ -59,6 +59,10 @@
         "testRunnerCodeunitId": {
             "type": "number",
             "description": "The id of the test runner codeunit to use when running tests (130450 = codeunit isolation, 130451 = isolation disabled)"
+        },
+        "culture": {
+            "type": "string",
+            "description": "The culture to run tests with. Defaults to en-US."
         }
     }
 }
