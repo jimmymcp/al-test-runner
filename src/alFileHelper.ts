@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
-import { ALFile, ALMethodRange, ALObject } from './types';
+import { ALFile, ALMethodRange, ALObject, OutputType } from './types';
 import { activeEditor, alFiles } from './extension';
 import { readFileSync } from 'fs';
 import { getCurrentWorkspaceConfig } from './config';
 import { join } from 'path';
 import { objectDeclarationRegEx } from './constants';
 import { sendDebugEvent } from './telemetry';
+import { getOutputWriter, writeTable } from './output';
 
 export function getALObjectOfDocument(document: vscode.TextDocument): ALObject | undefined {
 	const objectDeclaration = getObjectDeclarationFromDocument(document);
@@ -252,4 +253,27 @@ function documentLineIsCommentedOut(document: vscode.TextDocument, text: string,
 	}
 
 	return false;
+}
+
+export async function listALFiles() {
+	vscode.window.showInformationMessage('Reading AL files in workspace...');
+	const outputEditor = getOutputWriter(OutputType.Editor);
+	const startTime = new Date();
+	let results: any[] = [];
+	const files: ALFile[] = await getALFilesInWorkspace();
+	files.forEach(file => {
+		let result;
+		if (file.object) {
+			result = { path: file.path, type: file.object.type, id: file.object.id, name: file.object.name };
+		}
+		else {
+			result = { path: file.path, type: 'undefined', id: 'undefined', name: 'undefined' };
+		}
+		results.push(result);
+	});
+	writeTable(outputEditor, results, ['path', 'type', 'id', 'name'], true, true);
+	const endTime = new Date();
+	outputEditor.write(`Started at: ${startTime.toTimeString()}`);
+	outputEditor.write(`Ended at  : ${endTime.toTimeString()}`);
+	outputEditor.show();
 }

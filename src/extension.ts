@@ -4,7 +4,7 @@ import * as xml2js from 'xml2js';
 import * as types from './types';
 import { CodelensProvider } from './codeLensProvider';
 import { updateCodeCoverageDecoration, outputCodeCoverage, createCodeCoverageStatusBarItem, toggleCodeCoverageDisplay } from './codeCoverage';
-import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getFilePathOfObject } from './alFileHelper';
+import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getFilePathOfObject, listALFiles } from './alFileHelper';
 import { getALTestRunnerConfig, getALTestRunnerConfigPath, getALTestRunnerPath, getCurrentWorkspaceConfig, getDebugConfigurationsFromLaunchJson, getLaunchJsonPath, getTestWorkspaceFolder, setALTestRunnerConfig } from './config';
 import { showTableData } from './showTableData';
 import { getOutputWriter, OutputWriter } from './output';
@@ -194,6 +194,12 @@ export function activate(context: vscode.ExtensionContext) {
 
 	command = vscode.commands.registerCommand('altestrunner.runRelatedTests', method => {
 		runRelatedTests(method);
+	})
+
+	context.subscriptions.push(command);
+
+	command = vscode.commands.registerCommand('altestrunner.listALFiles', async () => {
+		await listALFiles();
 	})
 
 	context.subscriptions.push(command);

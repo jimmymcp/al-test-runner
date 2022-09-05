@@ -1,4 +1,7 @@
 # Change Log
+## 0.7.13
+- Add culture to config file, pass to Run-TestsInBcContainer [issue 70](https://github.com/jimmymcp/al-test-runner/issues/70)
+- Open al-test-runner-2 (for Show Table Data action) to the test folder [issue 67](https://github.com/jimmymcp/al-test-runner/issues/67)
 
 ## 0.7.12
 - Exclude methods which have been commented out from code lens, test explorer - [issue 68](https://github.com/jimmymcp/al-test-runner/issues/68)
