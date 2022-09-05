@@ -113,6 +113,11 @@
 				"command": "altestrunner.showRelatedTests",
 				"title": "Show Related Tests",
 				"category": "AL Test Runner"
+			},
+			{
+				"command": "altestrunner.listALFiles",
+				"title": "List AL Files",
+				"category": "AL Test Runner"
 			}
 		],
 		"keybindings": [
