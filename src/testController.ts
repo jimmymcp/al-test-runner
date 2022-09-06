@@ -1,12 +1,13 @@
 import * as vscode from 'vscode';
-import { documentIsTestCodeunit, getALFilesInWorkspace, getALObjectOfDocument } from './alFileHelper';
+import { documentIsTestCodeunit, getALFilesInWorkspace, getALObjectOfDocument, getFilePathOfObject } from './alFileHelper';
 import { getCurrentWorkspaceConfig, launchConfigIsValid, selectLaunchConfig, setALTestRunnerConfig } from './config';
-import { alTestController, attachDebugger, getAppJsonKey, getTestMethodRangesFromDocument, initDebugTest, invokeDebugTest, invokeTestRunner, outputTestResults } from './extension';
+import { alTestController, attachDebugger, getAppJsonKey, getTestMethodRangesFromDocument, initDebugTest, invokeDebugTest, invokeTestRunner, outputWriter } from './extension';
 import { ALTestAssembly, ALTestResult, ALMethod, DisabledTest } from './types';
 import * as path from 'path';
+import * as types from './types';
 import { sendDebugEvent, sendTestDebugStartEvent, sendTestRunFinishedEvent, sendTestRunStartEvent } from './telemetry';
 import { buildTestCoverageFromTestItem } from './testCoverage';
-import { saveAllTestsCodeCoverage } from './codeCoverage';
+import { outputCodeCoverage, saveAllTestsCodeCoverage } from './codeCoverage';
 
 export let numberOfTests: number;
 
@@ -425,4 +426,84 @@ export function getTestItemForMethod(method: ALMethod): vscode.TestItem | undefi
     if (testCodeunit) {
         return testCodeunit.children.get(method.methodName);
     }
+}
+
+async function outputTestResults(assemblies: types.ALTestAssembly[]): Promise<Boolean> {
+	return new Promise(async (resolve) => {
+		let noOfTests: number = 0;
+		let noOfFailures: number = 0;
+		let noOfSkips: number = 0;
+		let totalTime: number = 0;
+
+		if (assemblies.length > 0) {
+			outputWriter.clear();
+		}
+
+		for (let assembly of assemblies) {
+			noOfTests += parseInt(assembly.$.total);
+			const assemblyTime = parseFloat(assembly.$.time);
+			totalTime += assemblyTime;
+			const failed = parseInt(assembly.$.failed);
+			noOfFailures += failed;
+			const skipped = parseInt(assembly.$.skipped);
+			noOfSkips += skipped;
+
+			if (failed > 0) {
+				outputWriter.write('❌ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
+			}
+			else {
+				outputWriter.write('✅ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
+			}
+			for (let test of assembly.collection[0].test) {
+				const testTime = parseFloat(test.$.time);
+				let filePath = '';
+				const codeunitName = assembly.$.name.substring(assembly.$.name.indexOf(' ') + 1);
+				switch (test.$.result) {
+					case 'Pass':
+						outputWriter.write('\t✅ ' + test.$.method + '\t' + testTime.toFixed(2) + 's');
+						break;
+					case 'Skip':
+						filePath = await getFilePathOfObject({ type: 'codeunit', id: 0, name: codeunitName }, test.$.method);
+						outputWriter.write('\t❓ ' + test.$.method + '\t' + testTime.toFixed(2) + 's ' + filePath);
+						break;
+					case 'Fail':
+						filePath = await getFilePathOfObject({ type: 'codeunit', id: 0, name: codeunitName }, test.$.method);
+						outputWriter.write('\t❌ ' + test.$.method + '\t' + testTime.toFixed(2) + "s " + filePath);
+						outputWriter.write('\t\t' + test.failure[0].message);
+						break;
+					default:
+						break;
+				}
+			}
+		}
+
+        let statusBarItem = vscode.window.createStatusBarItem('altestrunner.summary', vscode.StatusBarAlignment.Right);
+        let summaryText, backgroundColor: string;
+
+		if ((noOfFailures + noOfSkips) === 0) {
+            summaryText = `✅ ${noOfTests} test(s) ran in ${totalTime.toFixed(2)}s at ${assemblies[0].$!["run-time"]}`;
+            backgroundColor = 'statusBarItem.prominentBackground';
+		}
+		else {
+			summaryText = `❌ ${noOfTests} test(s) ran in ${totalTime.toFixed(2)}s - ${noOfFailures + noOfSkips} test(s) failed/skipped at ${assemblies[0].$!["run-time"]}`;
+            backgroundColor = 'statusBarItem.errorBackground';
+        }
+
+        outputWriter.write(summaryText);
+        statusBarItem.text = summaryText;
+        statusBarItem.backgroundColor = new vscode.ThemeColor(backgroundColor);
+        statusBarItem.command = 'workbench.view.testing.focus';
+        statusBarItem.show();
+
+        setTimeout(() => {
+            statusBarItem.dispose();
+        }, 10000);
+
+		if (getCurrentWorkspaceConfig().enableCodeCoverage) {
+			await outputCodeCoverage();
+		}
+
+		outputWriter.show();
+		resolve(true);
+	});
 }

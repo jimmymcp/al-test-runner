@@ -3,8 +3,8 @@ import { readFileSync, existsSync, readdirSync, unlinkSync } from 'fs';
 import * as xml2js from 'xml2js';
 import * as types from './types';
 import { CodelensProvider } from './codeLensProvider';
-import { updateCodeCoverageDecoration, outputCodeCoverage, createCodeCoverageStatusBarItem, toggleCodeCoverageDisplay } from './codeCoverage';
-import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getFilePathOfObject, listALFiles } from './alFileHelper';
+import { updateCodeCoverageDecoration,  createCodeCoverageStatusBarItem, toggleCodeCoverageDisplay } from './codeCoverage';
+import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, listALFiles } from './alFileHelper';
 import { getALTestRunnerConfig, getALTestRunnerConfigPath, getALTestRunnerPath, getCurrentWorkspaceConfig, getDebugConfigurationsFromLaunchJson, getLaunchJsonPath, getTestWorkspaceFolder, setALTestRunnerConfig } from './config';
 import { showTableData } from './showTableData';
 import { getOutputWriter, OutputWriter } from './output';
@@ -574,72 +574,6 @@ export function getCodeunitIdFromAssemblyName(assemblyName: string): number {
 	}
 
 	return (0);
-}
-
-export async function outputTestResults(assemblies: types.ALTestAssembly[]): Promise<Boolean> {
-	return new Promise(async (resolve) => {
-		let noOfTests: number = 0;
-		let noOfFailures: number = 0;
-		let noOfSkips: number = 0;
-		let totalTime: number = 0;
-
-		if (assemblies.length > 0) {
-			outputWriter.clear();
-		}
-
-		for (let assembly of assemblies) {
-			noOfTests += parseInt(assembly.$.total);
-			const assemblyTime = parseFloat(assembly.$.time);
-			totalTime += assemblyTime;
-			const failed = parseInt(assembly.$.failed);
-			noOfFailures += failed;
-			const skipped = parseInt(assembly.$.skipped);
-			noOfSkips += skipped;
-
-			if (failed > 0) {
-				outputWriter.write('❌ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
-			}
-			else {
-				outputWriter.write('✅ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
-			}
-			for (let test of assembly.collection[0].test) {
-				const testTime = parseFloat(test.$.time);
-				let filePath = '';
-				const codeunitName = assembly.$.name.substring(assembly.$.name.indexOf(' ') + 1);
-				switch (test.$.result) {
-					case 'Pass':
-						outputWriter.write('\t✅ ' + test.$.method + '\t' + testTime.toFixed(2) + 's');
-						break;
-					case 'Skip':
-						filePath = await getFilePathOfObject({ type: 'codeunit', id: 0, name: codeunitName }, test.$.method);
-						outputWriter.write('\t❓ ' + test.$.method + '\t' + testTime.toFixed(2) + 's ' + filePath);
-						break;
-					case 'Fail':
-						filePath = await getFilePathOfObject({ type: 'codeunit', id: 0, name: codeunitName }, test.$.method);
-						outputWriter.write('\t❌ ' + test.$.method + '\t' + testTime.toFixed(2) + "s " + filePath);
-						outputWriter.write('\t\t' + test.failure[0].message);
-						break;
-					default:
-						break;
-				}
-			}
-		}
-
-		if ((noOfFailures + noOfSkips) === 0) {
-			outputWriter.write('✅ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's at ' + assemblies[0].$!["run-time"]);
-		}
-		else {
-			outputWriter.write('❌ ' + noOfTests + ' test(s) ran in ' + totalTime.toFixed(2) + 's - ' + (noOfFailures + noOfSkips) + ' test(s) failed/skipped at ' + assemblies[0].$!["run-time"]);
-		}
-
-		if (getCurrentWorkspaceConfig().enableCodeCoverage) {
-			await outputCodeCoverage();
-		}
-
-		outputWriter.show();
-		resolve(true);
-	});
-
 }
 
 export function getLaunchJson() {
