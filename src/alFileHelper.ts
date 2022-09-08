@@ -189,9 +189,16 @@ function getTestFolderPath(): string | undefined {
 		return element.name === config.testFolderName;
 	})
 
-	if (wsFolders) {
+	if (wsFolders.length > 0) {
 		return wsFolders[0].uri.fsPath;
 	}
+	
+	vscode.window.showErrorMessage(`Could not find a test workspace folder with name "${config.testFolderName}". Please check the Test Folder Name setting.`, 'Open Settings').then(button => {
+		if (button == 'Open Settings') {
+			vscode.commands.executeCommand('workbench.action.openSettings2');
+		}
+	});
+	return undefined;
 }
 
 export function activeEditorIsOpenToTestAppJson(): Boolean {

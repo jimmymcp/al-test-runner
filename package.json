@@ -294,7 +294,7 @@
 					"al-test-runner.testFolderName": {
 						"type": "string",
 						"scope": "resource",
-						"description": "The name of the workspace folder that contains the test app"
+						"description": "The name of the workspace folder that contains the test app. Please reload VS Code after changing this setting."
 					},
 					"al-test-runner.testOutputLocation": {
 						"enum": [
