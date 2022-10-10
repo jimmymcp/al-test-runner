@@ -237,6 +237,10 @@ export function activate(context: vscode.ExtensionContext) {
 		});
 	});
 
+	vscode.workspace.onDidChangeTextDocument(event => {
+		discoverTestsInDocument(event.document);
+	});
+
 	telemetryReporter = createTelemetryReporter();
 	context.subscriptions.push(telemetryReporter);
 
