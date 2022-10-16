@@ -7,7 +7,13 @@ function Get-ServiceUrl {
     [string]$ServiceUrl = (Get-ValueFromALTestRunnerConfig -KeyName 'testRunnerServiceUrl')
 
     if ([String]::IsNullOrEmpty($ServiceUrl)) {
-        throw 'Please set the OData url to the test runner service (testRunnerServiceUrl key in AL Test Runner config).'
+        $ServiceUrl = Suggest-ServiceUrl
+        Set-ALTestRunnerConfigValue -KeyName 'testRunnerServiceUrl' -KeyValue $ServiceUrl
+
+        #if the service url is blank then test runner service may not be installed either no check that now
+        if (!(Get-TestRunnerIsInstalled -ContainerName (Get-ContainerName))) {
+            Install-TestRunnerService
+        }
     }
 
     if ($ServiceUrl.Contains('_RunTest')) {
