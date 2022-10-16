@@ -17,6 +17,7 @@ import { createTelemetryReporter, sendDebugEvent } from './telemetry';
 import { TestCoverageCodeLensProvider } from './testCoverageCodeLensProvider';
 import { CodeCoverageCodeLensProvider } from './codeCoverageCodeLensProvider';
 import { runRelatedTests, showRelatedTests } from './testCoverage';
+import { readyToDebug } from './debug';
 
 let terminal: vscode.Terminal;
 export let activeEditor = vscode.window.activeTextEditor;
@@ -339,7 +340,7 @@ export async function attachDebugger() {
 	const attachConfigs = getDebugConfigurationsFromLaunchJson('attach');
 
 	if (attachConfigs.length === 0) {
-		throw new Error('Please define a debug configuration in launch.json before debugging tests.');
+		vscode.window.showErrorMessage('Please define a debug configuration in launch.json before debugging tests.');
 	}
 
 	const attachConfig = attachConfigs.shift() as vscode.DebugConfiguration;
@@ -521,7 +522,7 @@ export function getTestMethodRangesFromDocument(document: vscode.TextDocument): 
 	return testMethods;
 }
 
-function getTerminalName() {
+export function getTerminalName() {
 	return 'al-test-runner';
 }
 
