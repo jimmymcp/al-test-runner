@@ -238,7 +238,7 @@
 						],
 						"description": "The AL publishing command to call before running tests",
 						"scope": "resource",
-						"default": "None"
+						"default": "Publish"
 					},
 					"al-test-runner.highlightFailingLine": {
 						"type": "boolean",
