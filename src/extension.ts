@@ -329,7 +329,8 @@ export async function attachDebugger() {
 	const attachConfigs = getDebugConfigurationsFromLaunchJson('attach');
 
 	if (attachConfigs.length === 0) {
-		vscode.window.showErrorMessage('Please define a debug configuration in launch.json before debugging tests.');
+		vscode.window.showErrorMessage("Please define a debug configuration in launch.json before debugging tests. See [https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-attach-debug-next](https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/developer/devenv-attach-debug-next)");
+		throw 'Please define a debug configuration in launch.json before debugging tests.';
 	}
 
 	const attachConfig = attachConfigs.shift() as vscode.DebugConfiguration;
