@@ -135,6 +135,7 @@ export function readyToRunTests(): Promise<Boolean> {
             setALTestRunnerConfig('userName', '');
             setALTestRunnerConfig('securePassword', '');
             setALTestRunnerConfig('companyName', '');
+            setALTestRunnerConfig('testRunnerServiceUrl', '')
             selectLaunchConfig();
         }
 
