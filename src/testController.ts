@@ -8,6 +8,7 @@ import * as types from './types';
 import { sendDebugEvent, sendTestDebugStartEvent, sendTestRunFinishedEvent, sendTestRunStartEvent } from './telemetry';
 import { buildTestCoverageFromTestItem } from './testCoverage';
 import { outputCodeCoverage, saveAllTestsCodeCoverage } from './codeCoverage';
+import { readyToDebug } from './debug';
 
 export let numberOfTests: number;
 
@@ -134,6 +135,7 @@ export function readyToRunTests(): Promise<Boolean> {
             setALTestRunnerConfig('userName', '');
             setALTestRunnerConfig('securePassword', '');
             setALTestRunnerConfig('companyName', '');
+            setALTestRunnerConfig('testRunnerServiceUrl', '')
             selectLaunchConfig();
         }
 
@@ -248,10 +250,12 @@ export async function debugTest(filename: string, selectionStart: number) {
         selectionStart = vscode.window.activeTextEditor!.selection.start.line;
     }
 
-    initDebugTest(filename);
+    const ready = await readyToDebug();
+	if (!ready) {
+		vscode.window.showErrorMessage('AL Test Runner is not ready to debug. Please check that the Test Runner Service app is installed and the testRunnerServiceUrl in config.json is correct.');
+    }
 
-    const config = getCurrentWorkspaceConfig();
-    await new Promise(r => setTimeout(r, config.testRunnerInitialisationTime));
+    initDebugTest(filename);
 
     await attachDebugger();
     invokeDebugTest(filename, selectionStart);

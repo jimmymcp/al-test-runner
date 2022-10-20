@@ -4,7 +4,6 @@ function Install-TestRunnerService {
             $ContainerName
         )
 
-        Import-ContainerHelper
         $LocalPath = "$($Env:TEMP)\TestRunnerService.app"
         if (Test-Path $LocalPath) {
             Remove-Item $LocalPath
