@@ -90,7 +90,11 @@ function Invoke-RunTests {
     while (!$BreakTestLoop) {
         try {
             Write-Host $Message -ForegroundColor Green
-
+            $refreshToken = Get-ValueFromALTestRunnerConfig -KeyName 'refreshToken'
+            if ($null -ne $refreshToken) {
+                $authContext = New-BcAuthContext -refreshToken $refreshToken
+                $Params.Add('bcAuthContext', $authContext)
+            }
             Invoke-CommandOnDockerHost { Param($Params) Run-TestsInBCContainer @Params -detailed -Verbose } -Parameters $Params
             
             if (Get-DockerHostIsRemote) {
