@@ -1,4 +1,12 @@
 # Change Log
+
+## 0.8.0
+- Improvements to debugging, better messages when setup incomplete, better checks before attempting to debug tests
+- Automatically attempt to install Test Runner Service app when required
+- Automatically suggest testRunnerServiceUrl when required
+- Change Publish Before Test default value to Publish
+- Flash result of test run into status bar
+
 ## 0.7.13
 - Add culture to config file, pass to Run-TestsInBcContainer [issue 70](https://github.com/jimmymcp/al-test-runner/issues/70)
 - Open al-test-runner-2 (for Show Table Data action) to the test folder [issue 67](https://github.com/jimmymcp/al-test-runner/issues/67)
