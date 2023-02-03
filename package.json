@@ -24,11 +24,6 @@
 		"Testing"
 	],
 	"activationEvents": [
-		"onCommand:altestrunner.runAllTests",
-		"onCommand:altestrunner.runTestsCodeunit",
-		"onCommand:altestrunner.runTest",
-		"onCommand:altestrunner.setContainerCredential",
-		"onCommand:altestrunner.setVMCredential",
 		"workspaceContains:.altestrunner",
 		"onLanguage:al"
 	],

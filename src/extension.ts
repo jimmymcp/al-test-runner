@@ -13,11 +13,10 @@ import { onChangeAppFile, publishApp } from './publish';
 import { awaitFileExistence } from './file';
 import { join } from 'path';
 import TelemetryReporter from '@vscode/extension-telemetry';
-import { createTelemetryReporter, sendDebugEvent } from './telemetry';
+import { createTelemetryReporter, sendDebugEvent, setSendDebugEvents } from './telemetry';
 import { TestCoverageCodeLensProvider } from './testCoverageCodeLensProvider';
 import { CodeCoverageCodeLensProvider } from './codeCoverageCodeLensProvider';
 import { runRelatedTests, showRelatedTests } from './testCoverage';
-import { readyToDebug } from './debug';
 
 let terminal: vscode.Terminal;
 export let activeEditor = vscode.window.activeTextEditor;
@@ -248,6 +247,8 @@ export function activate(context: vscode.ExtensionContext) {
 	alTestController = createTestController();
 	context.subscriptions.push(alTestController);
 	discoverTests();
+
+	setSendDebugEvents(false);
 
 	return alTestRunnerAPI;
 }
