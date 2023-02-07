@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.8.2
+- Revert disabling debug telemetry on activation
+
 ## 0.8.1
 - Thanks to CPSTOS for contributing support for AAD authentication against a local Docker container [https://github.com/jimmymcp/al-test-runner/pull/77](https://github.com/jimmymcp/al-test-runner/pull/77)
 - Tidy up some obsolete activation events in package.json
