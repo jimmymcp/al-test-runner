@@ -248,8 +248,6 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(alTestController);
 	discoverTests();
 
-	setSendDebugEvents(false);
-
 	return alTestRunnerAPI;
 }
 
