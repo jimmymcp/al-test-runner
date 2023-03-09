@@ -14,12 +14,14 @@ function Invoke-ALTestRunner {
         [Parameter(Mandatory = $false)]
         [switch]$GetCodeCoverage,
         [Parameter(Mandatory = $false)]
-        $DisabledTests
+        $DisabledTests,
+        [Parameter(Mandatory = $false)]
+        $LaunchConfig
         )
 
     Import-ContainerHelper
 
-    $ContainerName = Get-ContainerName
+    $ContainerName = Get-ContainerName -LaunchConfig $LaunchConfig
     if (!(Get-ContainerIsRunning $ContainerName)) {
         throw "Container $ContainerName is not running. Please start the container and retry. Please note that container names are case-sensitive."
     }
@@ -55,7 +57,7 @@ function Invoke-ALTestRunner {
         GetCodeCoverage = $GetCodeCoverage
     }
 
-    $Tenant = Get-TenantFromLaunchJson
+    $Tenant = Get-TenantFromLaunchJson -LaunchConfig $LaunchConfig
     if ($Tenant) {
         $Params.Add('Tenant', $Tenant)
     }
@@ -79,7 +81,7 @@ function Invoke-ALTestRunner {
         }
     }
 
-    if ((Get-ValueFromLaunchJson -KeyName 'authentication') -eq 'UserPassword') {
+    if ((Get-ValueFromLaunchJson -KeyName 'authentication' -LaunchConfig $LaunchConfig) -eq 'UserPassword') {
         $Credential = Get-ALTestRunnerCredential
         $Params.Add('Credential', $Credential)
     }
