@@ -1,12 +1,26 @@
 function Get-ValueFromLaunchJson {
     param (
         [Parameter(Mandatory=$false)]
-        [string]$LaunchJsonPath = (Get-LaunchJsonPath),
+        [string]$LaunchJsonPath,
         [Parameter(Mandatory=$false)]
-        $ConfigName = (Get-ValueFromALTestRunnerConfig -KeyName 'launchConfigName'),
+        $ConfigName,
         [Parameter(Mandatory=$true)]
-        $KeyName
+        $KeyName,
+        [Parameter(Mandatory=$false)]
+        $LaunchConfig
     )
+
+    if (![String]::IsNullOrEmpty($LaunchConfig)) {
+        return ($LaunchConfig | ConvertFrom-Json).$KeyName
+    }
+
+    if ([String]::IsNullOrEmpty($LaunchJsonPath)) {
+        $LaunchJsonPath = Get-LaunchJsonPath
+    }
+
+    if ([String]::IsNullOrEmpty($ConfigName)) {
+        $ConfigName = (Get-ValueFromALTestRunnerConfig -KeyName 'launchConfigName')
+    }
     
     $LaunchJson = Get-LaunchJson -Path $LaunchJsonPath
     ($LaunchJson.configurations | Where-Object name -eq $ConfigName).$KeyName

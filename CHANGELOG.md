@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.8.2
+- Revert disabling debug telemetry on activation
+
+## 0.8.1
+- Thanks to CPSTOS for contributing support for AAD authentication against a local Docker container [https://github.com/jimmymcp/al-test-runner/pull/77](https://github.com/jimmymcp/al-test-runner/pull/77)
+- Tidy up some obsolete activation events in package.json
+
 ## 0.8.0
 - Improvements to debugging, better messages when setup incomplete, better checks before attempting to debug tests
 - Automatically attempt to install Test Runner Service app when required

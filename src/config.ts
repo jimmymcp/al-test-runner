@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import { getWorkspaceFolder } from "./extension";
 import { sendDebugEvent } from './telemetry';
 import * as types from './types';
+import { config } from 'process';
 
 export function getTestWorkspaceFolder(onlyTest: boolean = false): string {
 	let config = vscode.workspace.getConfiguration('al-test-runner');
@@ -112,7 +113,7 @@ export function launchConfigIsValid(alTestRunnerConfig?: types.ALTestRunnerConfi
 }
 
 export function getDebugConfigurationsFromLaunchJson(type: string) {
-	const configuration = vscode.workspace.getConfiguration('launch', vscode.Uri.file(getLaunchJsonPath()));
+	const configuration = vscode.workspace.getConfiguration('launch', vscode.workspace.workspaceFolders![0]);
 	const debugConfigurations = configuration.configurations as Array<vscode.DebugConfiguration>;
 	return debugConfigurations.filter(element => { return element.request === type; }).slice();
 }
@@ -146,4 +147,10 @@ export async function selectLaunchConfig() {
 
 export function getCurrentWorkspaceConfig() {
 	return vscode.workspace.getConfiguration('al-test-runner', vscode.Uri.file(getTestWorkspaceFolder()));
+}
+
+export function getLaunchConfiguration(configName: string): string {
+	const configs = getDebugConfigurationsFromLaunchJson('launch') as Array<vscode.DebugConfiguration>;
+	const config = JSON.stringify(configs.filter(element => element.name == configName)[0]);
+	return config;
 }
