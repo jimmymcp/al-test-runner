@@ -55,6 +55,7 @@ function Invoke-ALTestRunner {
         TestSuiteName = $TestSuiteName
         ExtensionName = $ExtensionName
         GetCodeCoverage = $GetCodeCoverage
+        LaunchConfig = $LaunchConfig
     }
 
     $Tenant = Get-TenantFromLaunchJson -LaunchConfig $LaunchConfig
