@@ -18,7 +18,7 @@ function Publish-App {
         Remove-Item $CompletionPath -Force
     }
 
-    $Credential = Get-ALTestRunnerCredential
+    $Credential = Get-ALTestRunnerCredential -LaunchConfig $LaunchConfig
     Import-ContainerHelper
     
     try {

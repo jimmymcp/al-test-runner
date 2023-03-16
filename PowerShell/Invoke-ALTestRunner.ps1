@@ -83,7 +83,7 @@ function Invoke-ALTestRunner {
     }
 
     if ((Get-ValueFromLaunchJson -KeyName 'authentication' -LaunchConfig $LaunchConfig) -eq 'UserPassword') {
-        $Credential = Get-ALTestRunnerCredential
+        $Credential = Get-ALTestRunnerCredential -LaunchConfig $LaunchConfig
         $Params.Add('Credential', $Credential)
     }
     
