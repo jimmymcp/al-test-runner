@@ -28,7 +28,9 @@ function Invoke-RunTests {
         [Parameter(Mandatory = $false)]
         $DisabledTests,
         [Parameter(Mandatory = $false)]
-        $Culture = 'en-US'
+        $Culture = 'en-US',
+        [Parameter(Mandatory = $false)]
+        $LaunchConfig
     )
 
     $ResultId = [Guid]::NewGuid().Guid + ".xml"
@@ -115,7 +117,7 @@ function Invoke-RunTests {
                 } -Parameters ($ContainerResultFile, $ResultId)
 
                 if ($GetCodeCoverage.IsPreset) {
-                    Get-CodeCoverage
+                    Get-CodeCoverage -LaunchConfig $LaunchConfig
                 }
 
                 Write-Host "Copy C:\BCContainerTests\$ResultId to $LastResultFile"
@@ -125,7 +127,7 @@ function Invoke-RunTests {
             else {
                 if (Test-Path $ContainerResultFile) {
                     if ($GetCodeCoverage.IsPresent) {
-                        Get-CodeCoverage
+                        Get-CodeCoverage -LaunchConfig $LaunchConfig
                     }
                     
                     Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath $ResultFile

@@ -1,23 +1,25 @@
 function Get-ServiceUrl {
     param (
         [Parameter(Mandatory = $false)]
-        [string]$Method
+        [string]$Method,
+        [Parameter(Mandatory = $false)]
+        $LaunchConfig
     )
 
     [string]$ServiceUrl = (Get-ValueFromALTestRunnerConfig -KeyName 'testRunnerServiceUrl')
 
     if ([String]::IsNullOrEmpty($ServiceUrl)) {
-        $ServiceUrl = Suggest-ServiceUrl
+        $ServiceUrl = Suggest-ServiceUrl -LaunchConfig $LaunchConfig
         Set-ALTestRunnerConfigValue -KeyName 'testRunnerServiceUrl' -KeyValue $ServiceUrl
 
         #if the service url is blank then test runner service may not be installed either no check that now
-        if (!(Get-TestRunnerIsInstalled -ContainerName (Get-ContainerName))) {
-            Install-TestRunnerService
+        if (!(Get-TestRunnerIsInstalled -ContainerName (Get-ContainerName -LaunchConfig $LaunchConfig))) {
+            Install-TestRunnerService -LaunchConfig $LaunchConfig
         }
     }
 
     if ($ServiceUrl.Contains('_RunTest')) {
-        $ServiceUrl = $ServiceUrl.Replace('_RunTest','')
+        $ServiceUrl = $ServiceUrl.Replace('_RunTest', '')
         Set-ALTestRunnerConfigValue -KeyName 'testRunnerServiceUrl' -KeyValue $ServiceUrl
     }
 
