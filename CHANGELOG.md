@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.8.3
+- Support for workspace level launch configuration
+
 ## 0.8.2
 - Revert disabling debug telemetry on activation
 
