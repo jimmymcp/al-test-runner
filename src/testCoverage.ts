@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { getALFilesInWorkspace, getFilePathOfObject, getMethodNameFromDocumentAndLine } from './alFileHelper';
-import { getCodeCoveragePath, readCodeCoverage } from './CodeCoverage';
+import { getCodeCoveragePath, readCodeCoverage } from './codeCoverage';
 import { alFiles, channelWriter } from "./extension";
 import { ALFile, ALMethod, CodeCoverageLine, TestCoverage } from "./types";
 import { join, dirname } from 'path'

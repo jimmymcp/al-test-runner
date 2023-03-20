@@ -1,6 +1,9 @@
 function Get-ReadyToDebug {
     param(
-        [string]$Path
+        [Parameter(Mandatory = $true)]
+        [string]$Path,
+        [Parameter(Mandatory = $false)]
+        $LaunchConfig
     )
 
     Get-ServiceUrl # checks whether the service url is populated and the test runner app is installed

@@ -54,4 +54,10 @@ Describe Get-LaunchJson {
             (Get-LaunchJson -Path $LaunchPath).configurations.Length | should -be 1
         }
     }
+
+    Context "LaunchConfig is passed" {
+        It "returns the KeyName that is requested from the config" {
+            Get-ValueFromLaunchJson -LaunchConfig '{"name": "testconfig", "server": "serverone"}' -KeyName 'server' | should -be 'serverone'
+        }
+    }
 }

@@ -1,6 +1,11 @@
 function Suggest-ServiceUrl {
-    $ContainerName = Get-ContainerName
-    $ServerInstance = Get-ValueFromLaunchJson -KeyName 'serverInstance'
+    Param(
+        [Parameter(Mandatory=$false)]
+        $LaunchConfig
+    )
+
+    $ContainerName = Get-ContainerName -LaunchConfig $LaunchConfig
+    $ServerInstance = Get-ValueFromLaunchJson -KeyName 'serverInstance' -LaunchConfig $LaunchConfig
     $ODataPort = 7048
     $CompanyName = Get-ValueFromALTestRunnerConfig -KeyName 'companyName'
 

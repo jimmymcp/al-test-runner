@@ -1,6 +1,10 @@
 function Get-CodeCoverage {
-    $ServiceUrl = Get-ServiceUrl -Method 'GetCodeCoverage'
-    $Credential = Get-ALTestRunnerCredential
+    Param(
+        [Parameter(Mandatory = $false)]
+        $LaunchConfig
+    )
+    $ServiceUrl = Get-ServiceUrl -Method 'GetCodeCoverage' -LaunchConfig $LaunchConfig
+    $Credential = Get-ALTestRunnerCredential -LaunchConfig $LaunchConfig
 
     $CodeCoverageFile = Get-ValueFromALTestRunnerConfig -KeyName 'codeCoveragePath'
     if ([string]::IsNullOrEmpty($CodeCoverageFile)) {

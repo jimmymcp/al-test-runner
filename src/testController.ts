@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { documentIsTestCodeunit, getALFilesInWorkspace, getALObjectOfDocument, getFilePathOfObject } from './alFileHelper';
-import { getCurrentWorkspaceConfig, launchConfigIsValid, selectLaunchConfig, setALTestRunnerConfig } from './config';
+import { getALTestRunnerConfig, getCurrentWorkspaceConfig, getLaunchConfiguration, launchConfigIsValid, selectLaunchConfig, setALTestRunnerConfig } from './config';
 import { alTestController, attachDebugger, getAppJsonKey, getTestMethodRangesFromDocument, initDebugTest, invokeDebugTest, invokeTestRunner, outputWriter } from './extension';
 import { ALTestAssembly, ALTestResult, ALMethod, DisabledTest } from './types';
 import * as path from 'path';
@@ -168,7 +168,7 @@ export async function runTest(filename?: string, selectionStart?: number, extens
 
                 sendDebugEvent('runTest-ready');
 
-                const results: ALTestAssembly[] = await invokeTestRunner(`Invoke-ALTestRunner -Tests Test -ExtensionId "${extensionId}" -ExtensionName "${extensionName}" -FileName "${filename}" -SelectionStart ${selectionStart}`);
+                const results: ALTestAssembly[] = await invokeTestRunner(`Invoke-ALTestRunner -Tests Test -ExtensionId "${extensionId}" -ExtensionName "${extensionName}" -FileName "${filename}" -SelectionStart ${selectionStart} -LaunchConfig '${getLaunchConfiguration(getALTestRunnerConfig().launchConfigName)}'`);
                 resolve(results);
             }
         })
@@ -189,7 +189,7 @@ export async function runAllTests(extensionId?: string, extensionName?: string):
 
                 sendDebugEvent('runAllTests-ready');
 
-                const results: ALTestAssembly[] = await invokeTestRunner(`Invoke-ALTestRunner -Tests All -ExtensionId "${extensionId}" -ExtensionName "${extensionName}"`);
+                const results: ALTestAssembly[] = await invokeTestRunner(`Invoke-ALTestRunner -Tests All -ExtensionId "${extensionId}" -ExtensionName "${extensionName}" -LaunchConfig '${getLaunchConfiguration(getALTestRunnerConfig().launchConfigName)}'`);
                 resolve(results);
             }
         });
@@ -213,7 +213,7 @@ export async function runSelectedTests(request: vscode.TestRunRequest, extension
                 const disabledTests = getDisabledTestsForRequest(request);
                 const disabledTestsJson = JSON.stringify(disabledTests);
 
-                const results: ALTestAssembly[] = await invokeTestRunner(`Invoke-ALTestRunner -Tests All -ExtensionId "${extensionId}" -ExtensionName "${extensionName}" -DisabledTests ('${disabledTestsJson}' | ConvertFrom-Json)`)
+                const results: ALTestAssembly[] = await invokeTestRunner(`Invoke-ALTestRunner -Tests All -ExtensionId "${extensionId}" -ExtensionName "${extensionName}" -DisabledTests ('${disabledTestsJson}' | ConvertFrom-Json) -LaunchConfig '${getLaunchConfiguration(getALTestRunnerConfig().launchConfigName)}'`)
                 resolve(results);
             }
         });

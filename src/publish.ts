@@ -2,7 +2,7 @@ import { existsSync, readFileSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import * as vscode from 'vscode';
 import { activeEditorIsOpenToTestAppJson, openEditorToTestFileIfNotAlready } from './alFileHelper';
-import { getALTestRunnerPath, getCurrentWorkspaceConfig } from './config';
+import { getALTestRunnerConfig, getALTestRunnerPath, getCurrentWorkspaceConfig, getLaunchConfiguration } from './config';
 import { failedToPublishMessage } from './constants';
 import { getALTestRunnerTerminal } from './extension';
 import { awaitFileExistence } from './file';
@@ -81,7 +81,7 @@ export async function publishAppFile(uri: vscode.Uri): Promise<PublishResult> {
         const terminal = getALTestRunnerTerminal(getTerminalName());
         terminal.show(true);
         terminal.sendText(' ');
-        terminal.sendText(`Publish-App -AppFile "${uri.fsPath}" -CompletionPath "${getPublishCompletionPath()}"`);
+        terminal.sendText(`Publish-App -AppFile "${uri.fsPath}" -CompletionPath "${getPublishCompletionPath()}" -LaunchConfig '${getLaunchConfiguration(getALTestRunnerConfig().launchConfigName)}'`);
 
         const resultExists = await awaitFileExistence(getPublishCompletionPath(), getCurrentWorkspaceConfig().publishTimeout);
         if (resultExists) {

@@ -1,10 +1,15 @@
 function Get-WebClientUrl {
-    $Url = Get-ServerFromLaunchJson -IncludeProtocol
+    Param(
+        [Parameter(Mandatory=$false)]
+        $LaunchConfig
+    )
+
+    $Url = Get-ServerFromLaunchJson -IncludeProtocol -LaunchConfig $LaunchConfig
     if ($Url.Substring($Url.Length) -ne '/') {
         $Url += '/'
     }
 
-    $Url += Get-ValueFromLaunchJson -KeyName 'serverInstance'
+    $Url += Get-ValueFromLaunchJson -KeyName 'serverInstance' -LaunchConfig $LaunchConfig
     $Params = Get-ServiceUrl
     $Params = $Params.Substring($Params.IndexOf('?'))
     return $Url + $Params

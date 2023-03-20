@@ -1,4 +1,8 @@
 function Get-ContainerName {
+    Param(
+        [Parameter(Mandatory = $false)]
+        $LaunchConfig
+    )
     if (Get-DockerHostIsRemote) {
         $ContainerName = Get-ValueFromALTestRunnerConfig -KeyName remoteContainerName
         if ([string]::IsNullOrEmpty($ContainerName)) {
@@ -9,7 +13,7 @@ function Get-ContainerName {
         $ContainerName
     }
     else {
-        Get-ServerFromLaunchJson
+        Get-ServerFromLaunchJson -LaunchConfig $LaunchConfig
     }
 }
 

@@ -1,15 +1,24 @@
 function Publish-App {
     param(
-        [string]$ContainerName = (Get-ContainerName),
+        [Parameter(Mandatory = $false)]
+        [string]$ContainerName,
+        [Parameter(Mandatory = $true)]
         [string]$AppFile,
-        [string]$CompletionPath
+        [Parameter(Mandatory = $true)]
+        [string]$CompletionPath,
+        [Parameter(Mandatory = $false)]
+        $LaunchConfig
     )
+
+    if ([String]::IsNullOrEmpty($ContainerName)) {
+        $ContainerName = Get-ContainerName -LaunchConfig $LaunchConfig
+    }
 
     if (Test-Path $CompletionPath) {
         Remove-Item $CompletionPath -Force
     }
 
-    $Credential = Get-ALTestRunnerCredential
+    $Credential = Get-ALTestRunnerCredential -LaunchConfig $LaunchConfig
     Import-ContainerHelper
     
     try {

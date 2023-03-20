@@ -1,4 +1,8 @@
 function Install-TestRunnerService {
+    Param(
+        [Parameter(Mandatory = $false)]
+        $LaunchConfig
+    )
     Invoke-CommandOnDockerHost {
         Param(
             $ContainerName
@@ -14,7 +18,7 @@ function Install-TestRunnerService {
 
         Write-Host "Publishing into container $ContainerName"
         Publish-NavContainerApp $ContainerName -appFile $LocalPath -sync -install -skipVerification
-    } -Parameters (Get-ContainerName)
+    } -Parameters (Get-ContainerName -LaunchConfig $LaunchConfig)
 }
 
 Export-ModuleMember -Function Install-TestRunnerService
