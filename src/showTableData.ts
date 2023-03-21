@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getTestWorkspaceFolder } from './config';
+import { getALTestRunnerConfig, getLaunchConfiguration, getTestWorkspaceFolder } from './config';
 import { activeEditor, getALTestRunnerTerminal } from './extension';
 import { sendShowTableDataEvent } from './telemetry';
 
@@ -11,7 +11,7 @@ export async function showTableData() {
         vscode.window.showInformationMessage(`Opening browser to table ${recordName}...`);
         let showTableDataTerminal = getALTestRunnerTerminal('al-test-runner-2');
         showTableDataTerminal.sendText(`cd "${getTestWorkspaceFolder()}"`);
-        showTableDataTerminal.sendText(`Show-TableData '${recordName}'`);
+        showTableDataTerminal.sendText(`Show-TableData '${recordName}' -LaunchConfig '${getLaunchConfiguration(getALTestRunnerConfig().launchConfigName)}'`);
     }
     else {
         vscode.window.showErrorMessage(`Could not find a record variable matching the name ${wordAtCursor}`);
