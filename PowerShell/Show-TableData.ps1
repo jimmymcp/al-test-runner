@@ -1,10 +1,12 @@
 function Show-TableData {
     param (
         [Parameter(Mandatory = $true)]
-        [string]$TableName
+        [string]$TableName,
+        [Parameter(Mandatory = $false)]
+        $LaunchConfig
     )
 
-    $ServiceUrl = Get-ServiceUrl -Method GetTableIDFromName
+    $ServiceUrl = Get-ServiceUrl -Method GetTableIDFromName -LaunchConfig $LaunchConfig
     $Credential = Get-ALTestRunnerCredential
 
     try {
@@ -14,7 +16,7 @@ function Show-TableData {
             -ContentType 'application/json'`
             -Body ("{`"tableName`": `"$TableName`"}") | ConvertFrom-Json
         $TableNo = $Result.value
-        $Url = Get-WebClientUrl
+        $Url = Get-WebClientUrl -LaunchConfig $LaunchConfig
         $Url += "&table=$TableNo"
         Start-Process $Url
     }

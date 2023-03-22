@@ -1,6 +1,6 @@
 import { existsSync, unlinkSync } from "fs";
 import { join } from "path";
-import { getALTestRunnerPath } from "./config";
+import { getALTestRunnerConfig, getALTestRunnerPath, getLaunchConfiguration } from "./config";
 import { getALTestRunnerTerminal, getTerminalName } from "./extension";
 import { awaitFileExistence } from "./file";
 
@@ -11,7 +11,7 @@ export async function readyToDebug(): Promise<Boolean> {
         if (existsSync(path)) {
             unlinkSync(path);
         }
-        terminal.sendText(`Get-ReadyToDebug -Path '${path}'`);
+        terminal.sendText(`Get-ReadyToDebug -Path '${path}' -LaunchConfig '${getLaunchConfiguration(getALTestRunnerConfig().launchConfigName)}'`);
         terminal.show();
         const ready = await awaitFileExistence(path, 30000);
         resolve(ready);
