@@ -1,5 +1,8 @@
 # Change Log
 
+# 0.8.5
+- Pass launch configuration to Get-ReadyToDebug command
+
 ## 0.8.4
 - Support for workspace level launch configuration for "Show Table Data" command
 
