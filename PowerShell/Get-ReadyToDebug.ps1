@@ -6,7 +6,7 @@ function Get-ReadyToDebug {
         $LaunchConfig
     )
 
-    Get-ServiceUrl # checks whether the service url is populated and the test runner app is installed
+    Get-ServiceUrl -LaunchConfig $LaunchConfig # checks whether the service url is populated and the test runner app is installed
     Set-Content -Path $Path -Value '1'
 }
 
