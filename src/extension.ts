@@ -503,9 +503,12 @@ export function getTestMethodRangesFromDocument(document: vscode.TextDocument): 
 			//otherwise if there is a /* present before the procedure and */ afterwards then it has been commented out
 			const commentStart = documentText.lastIndexOf('/*', match.index);
 			if (commentStart !== -1) {
-				const commentEnd = documentText.indexOf('*/', match.index);
-				if (commentEnd !== -1) {
-					procedureCommentedOut = true;
+				const lastCommentEnd = documentText.lastIndexOf('*/', match.index);
+				if (lastCommentEnd < commentStart) {
+					const commentEnd = documentText.indexOf('*/', match.index);
+					if (commentEnd !== -1) {
+						procedureCommentedOut = true;
+					}
 				}
 			}
 
