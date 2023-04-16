@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
-import { documentIsTestCodeunit, getALFilesInWorkspace, getALObjectOfDocument, getFilePathOfObject } from './alFileHelper';
+import { documentIsTestCodeunit, getALFilesInWorkspace, getALObjectOfDocument, getFilePathOfObject, getTestMethodRangesFromDocument } from './alFileHelper';
 import { getALTestRunnerConfig, getCurrentWorkspaceConfig, getLaunchConfiguration, launchConfigIsValid, selectLaunchConfig, setALTestRunnerConfig } from './config';
-import { alTestController, attachDebugger, getAppJsonKey, getTestMethodRangesFromDocument, initDebugTest, invokeDebugTest, invokeTestRunner, outputWriter } from './extension';
+import { alTestController, attachDebugger, getAppJsonKey, initDebugTest, invokeDebugTest, invokeTestRunner, outputWriter } from './extension';
 import { ALTestAssembly, ALTestResult, ALMethod, DisabledTest } from './types';
 import * as path from 'path';
 import * as types from './types';

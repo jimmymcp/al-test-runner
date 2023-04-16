@@ -1,6 +1,7 @@
 import * as assert from 'assert';
 import * as vscode from 'vscode';
 import * as alTestRunner from '../../extension';
+import { getTestMethodRangesFromDocument } from '../../alFileHelper';
 import { writeFileSync, readdirSync, existsSync, unlinkSync, mkdirSync } from 'fs';
 import * as os from 'os';
 import { documentIsTestCodeunit, getALObjectOfDocument, getDocumentIdAndName, getMethodRangesFromDocument } from '../../alFileHelper';
@@ -74,7 +75,7 @@ suite('Extension Test Suite', () => {
 			end;
 		}`;
 		const doc = await createTextDocument('03.al', text);
-		const testMethodRanges = alTestRunner.getTestMethodRangesFromDocument(doc);
+		const testMethodRanges = getTestMethodRangesFromDocument(doc);
 		assert.strictEqual(testMethodRanges.length, 2);
 	});
 
@@ -112,7 +113,7 @@ suite('Extension Test Suite', () => {
 		}`;
 
 		const doc = await createTextDocument('04.al', text);
-		const testMethodRanges = alTestRunner.getTestMethodRangesFromDocument(doc);
+		const testMethodRanges = getTestMethodRangesFromDocument(doc);
 		assert.strictEqual(testMethodRanges.length, 2);
 	});
 
@@ -126,7 +127,7 @@ suite('Extension Test Suite', () => {
 		}`;
 
 		const doc = await createTextDocument('04a.al', text);
-		const testMethodRanges = alTestRunner.getTestMethodRangesFromDocument(doc);
+		const testMethodRanges = getTestMethodRangesFromDocument(doc);
 		assert.strictEqual(testMethodRanges.shift()!.name, 'ThisIsATestMethodWithATrailingSemicolon');
 	});
 
@@ -140,7 +141,7 @@ suite('Extension Test Suite', () => {
 		}`;
 
 		const doc = await createTextDocument('04b.al', text);
-		const testMethodRanges = alTestRunner.getTestMethodRangesFromDocument(doc);
+		const testMethodRanges = getTestMethodRangesFromDocument(doc);
 		assert.strictEqual(testMethodRanges.shift()!.name, 'ThisIsATestMethodWithTrailingSpaces');
 	});
 
@@ -169,7 +170,7 @@ suite('Extension Test Suite', () => {
 		}`;
 
 		const doc = await createTextDocument('04c.al', text);
-		const testMethodRanges = alTestRunner.getTestMethodRangesFromDocument(doc);
+		const testMethodRanges = getTestMethodRangesFromDocument(doc);
 		assert.strictEqual(testMethodRanges.length, 4);
 	});
 
@@ -313,7 +314,7 @@ suite('Extension Test Suite', () => {
 		}`;
 
 		const doc = await createTextDocument('11.al', text);
-		const testMethodRanges = alTestRunner.getTestMethodRangesFromDocument(doc);
+		const testMethodRanges = getTestMethodRangesFromDocument(doc);
 
 		assert.strictEqual(testMethodRanges.length, 2);
 	});
@@ -488,6 +489,35 @@ suite('Extension Test Suite', () => {
 		const result = getMethodRangesFromDocument(doc);
 		assert.strictEqual(result.length, 1);
 		assert.strictEqual(result[0].name, 'ThisIsAnActiveMethod');
+	});
+
+	test('getMethodRangesFromDocument returns methods which are not commented out even when surrounded by comment blocks', async () => {
+		const text = `codeunit 51234 "Some Tests"
+		{
+			/*this method has been commented out
+			[Test]
+			procedure FirstCommentedOutTest()
+			begin
+			end;
+			*/
+
+			[Test]
+			procedure NotCommentedTest()
+			begin
+			end;
+
+			/*this method has also been commented out
+			[Test]
+			procedure SecondCommentedOutTest()
+			begin
+			end;
+			/*
+		}`;
+
+		const doc = await createTextDocument('17.al', text);
+		const result = getTestMethodRangesFromDocument(doc);
+		assert.strictEqual(result.length, 1);
+		assert.strictEqual(result[0].name, 'NotCommentedTest');
 	});
 
 	function getTestController(): vscode.TestController {

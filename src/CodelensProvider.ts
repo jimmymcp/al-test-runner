@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getTestMethodRangesFromDocument } from './extension';
+import { getTestMethodRangesFromDocument } from './alFileHelper';
 
 export class CodelensProvider implements vscode.CodeLensProvider {
     private codeLenses: vscode.CodeLens[] = [];
