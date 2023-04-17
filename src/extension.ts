@@ -4,7 +4,7 @@ import * as xml2js from 'xml2js';
 import * as types from './types';
 import { CodelensProvider } from './codeLensProvider';
 import { updateCodeCoverageDecoration,  createCodeCoverageStatusBarItem, toggleCodeCoverageDisplay } from './codeCoverage';
-import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, listALFiles } from './alFileHelper';
+import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getTestMethodRangesFromDocument, listALFiles } from './alFileHelper';
 import { getALTestRunnerConfig, getALTestRunnerConfigPath, getALTestRunnerPath, getCurrentWorkspaceConfig, getDebugConfigurationsFromLaunchJson, getLaunchJsonPath, getTestWorkspaceFolder, setALTestRunnerConfig } from './config';
 import { showTableData } from './showTableData';
 import { getOutputWriter, OutputWriter } from './output';
@@ -478,48 +478,6 @@ if (activeEditor) {
 	if (documentIsTestCodeunit(activeEditor.document)) {
 		triggerUpdateDecorations();
 	}
-}
-
-export function getTestMethodRangesFromDocument(document: vscode.TextDocument): types.ALMethodRange[] {
-	const documentText = document.getText();
-	const regEx = /\[Test\]/gi;
-	let testMethods: types.ALMethodRange[] = [];
-	let match;
-
-	while (match = regEx.exec(documentText)) {
-		let subDocumentText = documentText.substr(match.index, 300);
-		let methodMatch = subDocumentText.match('(?<=procedure ).*\\(');
-		if (methodMatch !== undefined) {
-			const startPos = document.positionAt(match.index + methodMatch!.index!);
-			const endPos = document.positionAt(match.index + methodMatch!.index! + methodMatch![0].length - 1);
-			let procedureCommentedOut = false;
-
-			//if the line has a double slash before the method name then it has been commented out, don't include in the results
-			const textLine = document.lineAt(startPos.line);
-			if (textLine.text.substr(textLine.firstNonWhitespaceCharacterIndex, 2) === '//') {
-				procedureCommentedOut = true;
-			}
-
-			//otherwise if there is a /* present before the procedure and */ afterwards then it has been commented out
-			const commentStart = documentText.lastIndexOf('/*', match.index);
-			if (commentStart !== -1) {
-				const commentEnd = documentText.indexOf('*/', match.index);
-				if (commentEnd !== -1) {
-					procedureCommentedOut = true;
-				}
-			}
-
-			if (procedureCommentedOut !== true) {
-				const testMethod: types.ALMethodRange = {
-					name: subDocumentText.substr(methodMatch!.index!, methodMatch![0].length - 1),
-					range: new vscode.Range(startPos, endPos)
-				};
-				testMethods.push(testMethod);
-			}
-		}
-	}
-
-	return testMethods;
 }
 
 export function getTerminalName() {
