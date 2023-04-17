@@ -7,6 +7,7 @@ import { join } from 'path';
 import { objectDeclarationRegEx } from './constants';
 import { sendDebugEvent } from './telemetry';
 import { getOutputWriter, writeTable } from './output';
+import * as types from './types';
 
 export function getALObjectOfDocument(document: vscode.TextDocument): ALObject | undefined {
 	const objectDeclaration = getObjectDeclarationFromDocument(document);
@@ -241,6 +242,32 @@ export function getMethodRangesFromDocument(document: vscode.TextDocument): ALMe
 	}
 
 	return alMethodRanges;
+}
+
+export function getTestMethodRangesFromDocument(document: vscode.TextDocument): types.ALMethodRange[] {
+	const documentText = document.getText();
+	const regEx = /\[Test\]/gi;
+	let testMethods: types.ALMethodRange[] = [];
+	let match;
+
+	while (match = regEx.exec(documentText)) {
+		let subDocumentText = documentText.substr(match.index, 300);
+		let methodMatch = subDocumentText.match('(?<=procedure ).*\\(');
+		if (methodMatch !== undefined) {
+			const startPos = document.positionAt(match.index + methodMatch!.index!);
+			const endPos = document.positionAt(match.index + methodMatch!.index! + methodMatch![0].length - 1);
+
+			if (!documentLineIsCommentedOut(document, documentText, match.index)) {
+				const testMethod: types.ALMethodRange = {
+					name: subDocumentText.substr(methodMatch!.index!, methodMatch![0].length - 1),
+					range: new vscode.Range(startPos, endPos)
+				};
+				testMethods.push(testMethod);
+			}
+		}
+	}
+
+	return testMethods;
 }
 
 function documentLineIsCommentedOut(document: vscode.TextDocument, text: string, index: number): boolean {
