@@ -1,5 +1,8 @@
 # Change Log
 
+# 0.8.6
+- Move getTestMethodRangesFromDocument to alFileHelper. Thanks Marcel Beeck for the pull request.
+
 # 0.8.5
 - Pass launch configuration to Get-ReadyToDebug command
 
