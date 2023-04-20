@@ -1,6 +1,6 @@
 function Get-ContainerIsRunning {
     Param(
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]$ContainerName
     )
 
@@ -11,7 +11,10 @@ function Get-ContainerIsRunning {
             $StatusJson = [String]::Join([Environment]::NewLine, $StatusJson)
             $Status = ConvertFrom-Json $StatusJson
 
-            if ($Status.Get(0).State.Running -eq 'True') {
+            if ($PSVersionTable.PSVersion.Major -ge 7) {
+                return $Status.State.Running
+            }
+            elseif ($Status.Get(0).State.Running -eq 'True') {
                 return $true
             }
         }
