@@ -2,10 +2,10 @@ import * as vscode from 'vscode';
 import { readFileSync, existsSync, readdirSync, unlinkSync } from 'fs';
 import * as xml2js from 'xml2js';
 import * as types from './types';
-import { CodelensProvider } from './codeLensProvider';
+import { CodelensProvider } from './CodelensProvider';
 import { updateCodeCoverageDecoration,  createCodeCoverageStatusBarItem, toggleCodeCoverageDisplay } from './codeCoverage';
 import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getTestMethodRangesFromDocument, listALFiles } from './alFileHelper';
-import { getALTestRunnerConfig, getALTestRunnerConfigPath, getALTestRunnerPath, getCurrentWorkspaceConfig, getDebugConfigurationsFromLaunchJson, getLaunchJsonPath, getTestWorkspaceFolder, setALTestRunnerConfig } from './config';
+import { getALTestRunnerConfig, getALTestRunnerConfigPath, getALTestRunnerPath, getCurrentWorkspaceConfig, getDebugConfigurationsFromLaunchJson, getLaunchConfiguration, getLaunchJsonPath, getTestWorkspaceFolder, setALTestRunnerConfig } from './config';
 import { showTableData } from './showTableData';
 import { getOutputWriter, OutputWriter } from './output';
 import { createTestController, debugTestHandler, deleteTestItemForFilename, discoverTests, discoverTestsInDocument, getTestItemFromFileNameAndSelection, runTestHandler } from './testController';
@@ -173,7 +173,7 @@ export function activate(context: vscode.ExtensionContext) {
 	command = vscode.commands.registerCommand('altestrunner.installTestRunnerService', async () => {
 		terminal = getALTestRunnerTerminal(getTerminalName());
 		terminal.show(true);
-		terminal.sendText('Install-TestRunnerService');
+		terminal.sendText(`Install-TestRunnerService -LaunchConfig '${getLaunchConfiguration(getALTestRunnerConfig().launchConfigName)}'`);
 	});
 
 	context.subscriptions.push(command);

@@ -94,8 +94,13 @@ async function discoverCodeCoveragePath(): Promise<string | null> {
 }
 
 function getCodeCoverageFileName(): string {
-    let config = getALTestRunnerConfig();
-    return basename(config.codeCoveragePath);
+    try {
+        let config = getALTestRunnerConfig();
+        return basename(config.codeCoveragePath);
+    }
+    catch {
+        return ''
+    }
 }
 
 export function filterCodeCoverageByObject(codeCoverage: CodeCoverageLine[], alObject: ALObject, includeZeroHits: Boolean = false): CodeCoverageLine[] {
