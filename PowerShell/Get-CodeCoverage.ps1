@@ -15,23 +15,15 @@ function Get-CodeCoverage {
 
     Write-Host "Downloading code coverage to $CodeCoverageFile"
 
-    try {
-        $Result = (Invoke-WebRequest $ServiceUrl `
-                -Credential $Credential `
-                -Method Post `
-                -ContentType application/json).Content | ConvertFrom-Json
-        $CodeCoverage = ConvertFrom-Csv $Result.value -Header ('ObjectType', 'ObjectID', 'LineType', 'LineNo', 'NoOfHits')
-        Set-Content -Path $CodeCoverageFile -Value (ConvertTo-Json $CodeCoverage)
+    $Params = @{
+        Uri         = $ServiceUrl
+        Credential  = $Credential
+        Method      = 'Post'
+        ContentType = 'application/json'
     }
-    catch {
-        try {
-            $ErrorDetails = ConvertFrom-Json $_.ErrorDetails
-            Write-Host $ErrorDetails.error.message -ForegroundColor DarkRed
-        }
-        catch {
-            Write-Host $_ -ForegroundColor DarkRed
-        }
-    }
+    $Result = (Invoke-InvokeWebRequest $Params).Content | ConvertFrom-Json
+    $CodeCoverage = ConvertFrom-Csv $Result.value -Header ('ObjectType', 'ObjectID', 'LineType', 'LineNo', 'NoOfHits')
+    Set-Content -Path $CodeCoverageFile -Value (ConvertTo-Json $CodeCoverage)
 }
 
 Export-ModuleMember -Function Get-CodeCoverage
