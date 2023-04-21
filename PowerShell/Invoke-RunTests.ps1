@@ -36,7 +36,7 @@ function Invoke-RunTests {
     $ResultId = [Guid]::NewGuid().Guid + ".xml"
     $ResultFile = Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) $ResultId
     $LastResultFile = Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) 'last.xml'
-    $ContainerResultFile = Join-Path (Get-ContainerResultPath) $ResultId
+    $ContainerResultFile = Join-Path (Get-ContainerResultPath -LaunchConfig $LaunchConfig) $ResultId
     
     $Message = "Running tests on $ContainerName, company $CompanyName"
 
