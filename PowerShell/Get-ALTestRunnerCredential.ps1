@@ -11,7 +11,7 @@ function Get-ALTestRunnerCredential {
         $VMSecurePassword = Get-ValueFromALTestRunnerConfig -KeyName 'vmSecurePassword'
 
         if (($VMUserName -eq '') -or ($VMSecurePassword -eq '')) {
-            $Credential = Get-Credential -UserName $VMUserName -Message ('Please enter the credentials to connect to vm {0}' -f (Get-ServerFromLaunchJson -LaunchConfig $LaunchConfig))
+            $Credential = Get-Credential -Message ('Please enter the credentials to connect to vm {0}' -f (Get-ServerFromLaunchJson -LaunchConfig $LaunchConfig))
             if ($null -eq $Credential) {
                 throw "Credentials not entered"
             }
@@ -26,7 +26,7 @@ function Get-ALTestRunnerCredential {
         $SecurePwd = Get-ValueFromALTestRunnerConfig -KeyName 'securePassword'
         
         if (($UserName -eq '') -or ($SecurePwd -eq '')) {
-            $Credential = Get-Credential -UserName $UserName -Message ('Please enter the credentials to connect to server {0}' -f (Get-ServerFromLaunchJson -LaunchConfig $LaunchConfig))
+            $Credential = Get-Credential -Message ('Please enter the credentials to connect to server {0}' -f (Get-ServerFromLaunchJson -LaunchConfig $LaunchConfig))
             if ($null -eq $Credential) {
                 throw "Credentials not entered"
             }
