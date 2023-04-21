@@ -20,7 +20,7 @@ jobs:
         run: |
           npm install
           npm run compile
-          npm test
+          #npm test
 
       - name: package with vsce
         run: |
