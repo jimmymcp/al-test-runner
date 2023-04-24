@@ -9,26 +9,19 @@ function Show-TableData {
     $ServiceUrl = Get-ServiceUrl -Method GetTableIDFromName -LaunchConfig $LaunchConfig
     $Credential = Get-ALTestRunnerCredential
 
-    try {
-        $Result = Invoke-WebRequest $ServiceUrl `
-            -Credential $Credential `
-            -Method Post `
-            -ContentType 'application/json'`
-            -Body ("{`"tableName`": `"$TableName`"}") | ConvertFrom-Json
-        $TableNo = $Result.value
-        $Url = Get-WebClientUrl -LaunchConfig $LaunchConfig
-        $Url += "&table=$TableNo"
-        Start-Process $Url
+    $Params = @{
+        Uri         = $ServiceUrl
+        Credential  = $Credential
+        Method      = 'Post' 
+        ContentType = 'application/json'
+        Body        = ("{`"tableName`": `"$TableName`"}")
     }
-    catch {
-        try {
-            $ErrorDetails = ConvertFrom-Json $_.ErrorDetails
-            Write-Host $ErrorDetails.error.message -ForegroundColor DarkRed
-        }
-        catch {
-            Write-Host $_ -ForegroundColor DarkRed
-        }
-    }
+    $Result = Invoke-InvokeWebRequest $Params
+    $Result = $Result | ConvertFrom-Json
+    $TableNo = $Result.value
+    $Url = Get-WebClientUrl -LaunchConfig $LaunchConfig
+    $Url += "&table=$TableNo"
+    Start-Process $Url
 }
 
 Export-ModuleMember -Function Show-TableData

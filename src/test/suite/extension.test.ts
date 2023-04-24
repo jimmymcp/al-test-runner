@@ -521,7 +521,7 @@ suite('Extension Test Suite', () => {
 	});
 
 	function getTestController(): vscode.TestController {
-		const testController = createTestController();
+		const testController = createTestController('testALTestController');
 		const parentOne = testController.createTestItem('P1', 'Parent One');
 		const childOne = testController.createTestItem('C1', 'Child One');
 		const childTwo = testController.createTestItem('C2', 'Child Two');

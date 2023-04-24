@@ -12,8 +12,8 @@ import { readyToDebug } from './debug';
 
 export let numberOfTests: number;
 
-export function createTestController(): vscode.TestController {
-    const alTestController = vscode.tests.createTestController('alTestController', 'AL Tests');
+export function createTestController(controllerId: string = 'alTestController'): vscode.TestController {
+    const alTestController = vscode.tests.createTestController(controllerId, 'AL Tests');
     alTestController.createRunProfile('Run', vscode.TestRunProfileKind.Run, request => {
         runTestHandler(request);
     });
