@@ -1,5 +1,8 @@
 # Change Log
 
+# 0.9.0
+- Fixed various compatibility issues with PowerShell 7
+
 # 0.8.6
 - Move getTestMethodRangesFromDocument to alFileHelper. Thanks Marcel Beeck for the pull request.
 
