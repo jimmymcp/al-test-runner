@@ -3,7 +3,7 @@ import { readFileSync, existsSync, readdirSync, unlinkSync } from 'fs';
 import * as xml2js from 'xml2js';
 import * as types from './types';
 import { CodelensProvider } from './CodelensProvider';
-import { updateCodeCoverageDecoration,  createCodeCoverageStatusBarItem, toggleCodeCoverageDisplay } from './codeCoverage';
+import { updateCodeCoverageDecoration,  createCodeCoverageStatusBarItem, toggleCodeCoverageDisplay } from './CodeCoverage';
 import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getTestMethodRangesFromDocument, listALFiles } from './alFileHelper';
 import { getALTestRunnerConfig, getALTestRunnerConfigPath, getALTestRunnerPath, getCurrentWorkspaceConfig, getDebugConfigurationsFromLaunchJson, getLaunchConfiguration, getLaunchJsonPath, getTestWorkspaceFolder, setALTestRunnerConfig } from './config';
 import { showTableData } from './showTableData';
@@ -13,7 +13,7 @@ import { onChangeAppFile, publishApp } from './publish';
 import { awaitFileExistence } from './file';
 import { join } from 'path';
 import TelemetryReporter from '@vscode/extension-telemetry';
-import { createTelemetryReporter, sendDebugEvent, setSendDebugEvents } from './telemetry';
+import { createTelemetryReporter, sendDebugEvent } from './telemetry';
 import { TestCoverageCodeLensProvider } from './testCoverageCodeLensProvider';
 import { CodeCoverageCodeLensProvider } from './codeCoverageCodeLensProvider';
 import { runRelatedTests, showRelatedTests } from './testCoverage';
@@ -571,6 +571,11 @@ export function getWorkspaceFolder() {
 		}
 	}
 
+	const discoveredTestFolder = discoverTestWorkspaceFolder(wsFolders);
+	if (discoveredTestFolder) {
+		return discoveredTestFolder;
+	}
+
 	if (activeEditor) {
 		const workspace = vscode.workspace.getWorkspaceFolder(activeEditor!.document.uri);
 		if (workspace) {
@@ -586,6 +591,21 @@ export function getWorkspaceFolder() {
 	}
 
 	throw new Error('Please open a file in the project you want to run the tests for.');
+}
+
+export function discoverTestWorkspaceFolder(workspaceFolders: readonly vscode.WorkspaceFolder[]): string | undefined {
+	const testFolders = workspaceFolders.filter(folder => {
+		if (folder.name.startsWith('Test') || folder.name.endsWith('Test') || folder.name.endsWith('Tests')) {
+			return true;
+		}
+	});
+
+	if (!testFolders) {
+		return undefined;
+	}
+	else {
+		return testFolders[0].uri.fsPath;
+	}
 }
 
 function callOnOutputTestResults(context: any) {
