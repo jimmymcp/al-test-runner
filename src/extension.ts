@@ -1,14 +1,13 @@
 import * as vscode from 'vscode';
-import { readFileSync, existsSync, readdirSync, unlinkSync } from 'fs';
+import { readFileSync, existsSync, unlinkSync } from 'fs';
 import * as xml2js from 'xml2js';
 import * as types from './types';
 import { CodelensProvider } from './CodelensProvider';
-import { updateCodeCoverageDecoration,  createCodeCoverageStatusBarItem, toggleCodeCoverageDisplay } from './CodeCoverage';
-import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getTestFolderPath, getTestMethodRangesFromDocument, listALFiles } from './alFileHelper';
-import { getALTestRunnerConfig, getALTestRunnerConfigPath, getALTestRunnerPath, getCurrentWorkspaceConfig, getDebugConfigurationsFromLaunchJson, getLaunchConfiguration, getLaunchJsonPath, setALTestRunnerConfig } from './config';
-import { showTableData } from './showTableData';
+import { updateCodeCoverageDecoration,  createCodeCoverageStatusBarItem } from './CodeCoverage';
+import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getTestFolderPath, getTestMethodRangesFromDocument } from './alFileHelper';
+import { getALTestRunnerPath, getCurrentWorkspaceConfig, getDebugConfigurationsFromLaunchJson, getLaunchJsonPath } from './config';
 import { getOutputWriter, OutputWriter } from './output';
-import { createTestController, debugTestHandler, deleteTestItemForFilename, discoverTests, discoverTestsInDocument, getTestItemFromFileNameAndSelection, runTestHandler } from './testController';
+import { createTestController, deleteTestItemForFilename, discoverTests, discoverTestsInDocument } from './testController';
 import { onChangeAppFile, publishApp } from './publish';
 import { awaitFileExistence } from './file';
 import { join } from 'path';
@@ -16,7 +15,7 @@ import TelemetryReporter from '@vscode/extension-telemetry';
 import { createTelemetryReporter, sendDebugEvent } from './telemetry';
 import { TestCoverageCodeLensProvider } from './testCoverageCodeLensProvider';
 import { CodeCoverageCodeLensProvider } from './codeCoverageCodeLensProvider';
-import { runRelatedTests, showRelatedTests } from './testCoverage';
+import { registerCommands } from './commands';
 
 let terminal: vscode.Terminal;
 export let activeEditor = vscode.window.activeTextEditor;
@@ -74,131 +73,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(alTestController);
 
-	let command = vscode.commands.registerCommand('altestrunner.runAllTests', async (extensionId?: string, extensionName?: string) => {
-		runTestHandler(new vscode.TestRunRequest());
-	});
-
-	context.subscriptions.push(command);
-
-	command = vscode.commands.registerCommand('altestrunner.runTestsCodeunit', async (filename?: string, extensionId?: string, extensionName?: string) => {
-		const testItem = await getTestItemFromFileNameAndSelection(filename, 0);
-		if (testItem) {
-			const request = new vscode.TestRunRequest([testItem]);
-			runTestHandler(request);
-		}
-	});
-
-	context.subscriptions.push(command);
-
-	command = vscode.commands.registerCommand('altestrunner.runTest', async (filename?: string, selectionStart?: number, extensionId?: string, extensionName?: string) => {
-		const testItem = await getTestItemFromFileNameAndSelection(filename, selectionStart);
-		if (testItem) {
-			const request = new vscode.TestRunRequest([testItem]);
-			runTestHandler(request);
-		}
-	});
-
-	context.subscriptions.push(command);
-
-	command = vscode.commands.registerCommand('altestrunner.debugTest', async (filename: string, selectionStart: number) => {
-		const testItem = await getTestItemFromFileNameAndSelection(filename, selectionStart);
-		if (testItem) {
-			const request = new vscode.TestRunRequest([testItem]);
-			debugTestHandler(request);
-		}
-	});
-
-	context.subscriptions.push(command);
-
-	command = vscode.commands.registerCommand('altestrunner.debugTestsCodeunit', async (filename: string) => {
-		const testItem = await getTestItemFromFileNameAndSelection(filename, 0);
-		if (testItem) {
-			const request = new vscode.TestRunRequest([testItem]);
-			debugTestHandler(request);
-		}
-	});
-
-	context.subscriptions.push(command);
-
-	command = vscode.commands.registerCommand('altestrunner.clearTestResults', async () => {
-		const resultsPath = getALTestRunnerPath() + '\\Results';
-		if (existsSync(resultsPath)) {
-			readdirSync(resultsPath).forEach(e => unlinkSync(resultsPath + '\\' + e));
-		}
-		triggerUpdateDecorations();
-		vscode.window.showInformationMessage('AL Test Runner results cleared');
-	});
-
-	context.subscriptions.push(command);
-
-	command = vscode.commands.registerCommand('altestrunner.clearCredentials', async () => {
-		setALTestRunnerConfig('userName', '');
-		setALTestRunnerConfig('securePassword', '');
-		vscode.window.showInformationMessage('AL Test Runner credentials cleared');
-	});
-
-	context.subscriptions.push(command);
-
-	command = vscode.commands.registerCommand('altestrunner.setContainerCredential', () => {
-		setALTestRunnerConfig('userName', '');
-		setALTestRunnerConfig('securePassword', '');
-		terminal = getALTestRunnerTerminal(getTerminalName());
-		terminal.sendText(' ');
-		terminal.sendText('Get-ALTestRunnerCredential');
-	});
-
-	context.subscriptions.push(command);
-
-	command = vscode.commands.registerCommand('altestrunner.setVMCredential', () => {
-		setALTestRunnerConfig('vmUserName', '');
-		setALTestRunnerConfig('vmSecurePassword', '');
-		terminal = getALTestRunnerTerminal(getTerminalName());
-		terminal.sendText(' ');
-		terminal.sendText('Get-ALTestRunnerCredential -VM');
-	});
-
-	context.subscriptions.push(command);
-
-	command = vscode.commands.registerCommand('altestrunner.openConfigFile', async () => {
-		getALTestRunnerConfig();
-		vscode.window.showTextDocument(await vscode.workspace.openTextDocument(getALTestRunnerConfigPath()));
-	});
-
-	context.subscriptions.push(command);
-
-	command = vscode.commands.registerCommand('altestrunner.installTestRunnerService', async () => {
-		terminal = getALTestRunnerTerminal(getTerminalName());
-		terminal.show(true);
-		terminal.sendText(`Install-TestRunnerService -LaunchConfig '${getLaunchConfiguration(getALTestRunnerConfig().launchConfigName)}'`);
-	});
-
-	context.subscriptions.push(command);
-
-	command = vscode.commands.registerCommand('altestrunner.toggleCodeCoverage', async (newCodeCoverageDisplay?: types.CodeCoverageDisplay) => {
-		toggleCodeCoverageDisplay(newCodeCoverageDisplay);
-	});
-
-	context.subscriptions.push(command);
-
-	command = vscode.commands.registerCommand('altestrunner.showTableData', async () => {
-		showTableData();
-	});
-
-	command = vscode.commands.registerCommand('altestrunner.showRelatedTests', method => {
-		showRelatedTests(method);
-	})
-
-	command = vscode.commands.registerCommand('altestrunner.runRelatedTests', method => {
-		runRelatedTests(method);
-	})
-
-	context.subscriptions.push(command);
-
-	command = vscode.commands.registerCommand('altestrunner.listALFiles', async () => {
-		await listALFiles();
-	})
-
-	context.subscriptions.push(command);
+	registerCommands(context);
 
 	context.subscriptions.push(createCodeCoverageStatusBarItem());
 
@@ -449,7 +324,7 @@ function getUntestedTestDecorations(testMethodRanges: types.ALMethodRange[]): vs
 	return untestedTests;
 }
 
-function triggerUpdateDecorations() {
+export function triggerUpdateDecorations() {
 	if (updateDecorationsTimeout) {
 		clearTimeout(updateDecorationsTimeout);
 		updateDecorationsTimeout = undefined;
