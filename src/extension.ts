@@ -4,8 +4,8 @@ import * as xml2js from 'xml2js';
 import * as types from './types';
 import { CodelensProvider } from './CodelensProvider';
 import { updateCodeCoverageDecoration,  createCodeCoverageStatusBarItem, toggleCodeCoverageDisplay } from './CodeCoverage';
-import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getTestMethodRangesFromDocument, listALFiles } from './alFileHelper';
-import { getALTestRunnerConfig, getALTestRunnerConfigPath, getALTestRunnerPath, getCurrentWorkspaceConfig, getDebugConfigurationsFromLaunchJson, getLaunchConfiguration, getLaunchJsonPath, getTestWorkspaceFolder, setALTestRunnerConfig } from './config';
+import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getTestFolderPath, getTestMethodRangesFromDocument, listALFiles } from './alFileHelper';
+import { getALTestRunnerConfig, getALTestRunnerConfigPath, getALTestRunnerPath, getCurrentWorkspaceConfig, getDebugConfigurationsFromLaunchJson, getLaunchConfiguration, getLaunchJsonPath, setALTestRunnerConfig } from './config';
 import { showTableData } from './showTableData';
 import { getOutputWriter, OutputWriter } from './output';
 import { createTestController, debugTestHandler, deleteTestItemForFilename, discoverTests, discoverTestsInDocument, getTestItemFromFileNameAndSelection, runTestHandler } from './testController';
@@ -28,8 +28,9 @@ const untestedTestColor = 'rgba(' + config.untestedTestsColor.red + ',' + config
 export const outputWriter: OutputWriter = getOutputWriter(vscode.workspace.getConfiguration('al-test-runner').testOutputLocation);
 export const channelWriter: OutputWriter = getOutputWriter(types.OutputType.Channel);
 
-if (getTestWorkspaceFolder(true) != '') {
-	const testAppsPath = join(getTestWorkspaceFolder(true), '*.app');
+const testFolderPath = getTestFolderPath();
+if (testFolderPath) {
+	const testAppsPath = join(testFolderPath, '*.app');
 	const appFileWatcher = vscode.workspace.createFileSystemWatcher(testAppsPath, false, false, true);
 	appFileWatcher.onDidChange(e => {
 		onChangeAppFile(e);
@@ -280,7 +281,7 @@ export async function invokeTestRunner(command: string): Promise<types.ALTestAss
 		terminal = getALTestRunnerTerminal(getTerminalName());
 		terminal.sendText(' ');
 		terminal.show(true);
-		terminal.sendText('cd "' + getTestWorkspaceFolder() + '"');
+		terminal.sendText('cd "' + getTestFolderPath() + '"');
 		invokeCommand(config.preTestCommand);
 		terminal.sendText(command);
 		invokeCommand(config.postTestCommand);
@@ -291,7 +292,6 @@ export async function invokeTestRunner(command: string): Promise<types.ALTestAss
 				resolve(results);
 
 				triggerUpdateDecorations();
-				callOnOutputTestResults({ event: 'create', filename: getLastResultPath() });
 			}
 		});
 	});
@@ -312,7 +312,7 @@ export function initDebugTest(filename: string) {
 	terminal = getALTestRunnerTerminal(getTerminalName());
 	terminal.sendText(' ');
 	terminal.show(true);
-	terminal.sendText('cd "' + getTestWorkspaceFolder() + '"');
+	terminal.sendText('cd "' + getTestFolderPath() + '"');
 	terminal.sendText('Invoke-TestRunnerService -FileName "' + filename + '" -Init');
 }
 
@@ -320,7 +320,7 @@ export function invokeDebugTest(filename: string, selectionStart: number) {
 	terminal = getALTestRunnerTerminal(getTerminalName());
 	terminal.sendText(' ');
 	terminal.show(true);
-	terminal.sendText('cd "' + getTestWorkspaceFolder() + '"');
+	terminal.sendText('cd "' + getTestFolderPath() + '"');
 	terminal.sendText('Invoke-TestRunnerService -FileName "' + filename + '" -SelectionStart ' + selectionStart);
 }
 
@@ -539,7 +539,7 @@ export function getLaunchJson() {
 }
 
 export function getAppJsonKey(keyName: string) {
-	const appJsonPath = getTestWorkspaceFolder() + '\\app.json';
+	const appJsonPath = getTestFolderPath() + '\\app.json';
 	const data = readFileSync(appJsonPath, { encoding: 'utf-8' });
 	const appJson = JSON.parse(data);
 	return appJson[keyName];
@@ -547,64 +547,6 @@ export function getAppJsonKey(keyName: string) {
 
 function getLastResultPath(): string {
 	return getALTestRunnerPath() + '\\last.xml';
-}
-
-export function getWorkspaceFolder() {
-	if (alTestRunnerAPI.getWorkspaceFolder) {
-		let override = alTestRunnerAPI.getWorkspaceFolder.call(null);
-		if (override && override.length > 0) {
-			return override;
-		}
-	}
-
-	const wsFolders = vscode.workspace.workspaceFolders!;
-	if (wsFolders !== undefined) {
-		if (wsFolders.length === 1) {
-			return wsFolders[0].uri.fsPath;
-		}
-	}
-
-	const discoveredTestFolder = discoverTestWorkspaceFolder(wsFolders);
-	if (discoveredTestFolder) {
-		return discoveredTestFolder;
-	}
-
-	if (activeEditor) {
-		const workspace = vscode.workspace.getWorkspaceFolder(activeEditor!.document.uri);
-		if (workspace) {
-			return workspace.uri.fsPath;
-		}
-	}
-
-	if (vscode.window.visibleTextEditors.length > 0) {
-		const workspace = vscode.workspace.getWorkspaceFolder(vscode.window.visibleTextEditors[0].document.uri);
-		if (workspace) {
-			return workspace.uri.fsPath;
-		}
-	}
-
-	throw new Error('Please open a file in the project you want to run the tests for.');
-}
-
-export function discoverTestWorkspaceFolder(workspaceFolders: readonly vscode.WorkspaceFolder[]): string | undefined {
-	const testFolders = workspaceFolders.filter(folder => {
-		if (folder.name.startsWith('Test') || folder.name.endsWith('Test') || folder.name.endsWith('Tests')) {
-			return true;
-		}
-	});
-
-	if (!testFolders) {
-		return undefined;
-	}
-	else {
-		return testFolders[0].uri.fsPath;
-	}
-}
-
-function callOnOutputTestResults(context: any) {
-	if (alTestRunnerAPI.onOutputTestResults) {
-		alTestRunnerAPI.onOutputTestResults.call(null, context);
-	}
 }
 
 // this method is called when your extension is deactivated
