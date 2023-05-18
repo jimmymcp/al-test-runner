@@ -26,9 +26,6 @@ export function publishApp(publishType: PublishType): Promise<PublishResult> {
 
         if (getCurrentWorkspaceConfig().enablePublishingFromPowerShell) {
             sendDebugEvent('publishApp-publishFromPowerShell');
-            if (getCurrentWorkspaceConfig().testFolderName == '') {
-                resolve({ success: false, message: sendNoTestFolderNameError() });
-            }
             
             shouldPublishApp = true;
             if (existsSync(getPublishCompletionPath())) {

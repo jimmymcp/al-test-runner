@@ -1,32 +1,12 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import * as vscode from 'vscode';
-import { getWorkspaceFolder } from "./extension";
 import { sendDebugEvent } from './telemetry';
 import * as types from './types';
-import { config } from 'process';
-
-export function getTestWorkspaceFolder(onlyTest: boolean = false): string {
-	let config = vscode.workspace.getConfiguration('al-test-runner');
-	if (config.testFolderName) {
-		const workspaceFolders = vscode.workspace.workspaceFolders;
-		if (workspaceFolders) {
-			let testFolder = workspaceFolders.filter(element => {
-				return element.name == config.testFolderName;
-			});
-			if (testFolder.length == 1) {
-				return testFolder.shift()!.uri.fsPath;
-			}
-		}
-	}
-
-	if (!onlyTest) {
-		return getWorkspaceFolder();
-	}
-	return '';
-}
+import { getTestFolderPath } from './alFileHelper';
+import { activeEditor } from './extension';
 
 export function getALTestRunnerPath(): string {
-	const alTestRunnerPath = getTestWorkspaceFolder() + '\\.altestrunner';
+	const alTestRunnerPath = getTestFolderPath() + '\\.altestrunner';
 	return alTestRunnerPath;
 }
 
@@ -119,7 +99,7 @@ export function getDebugConfigurationsFromLaunchJson(type: string) {
 }
 
 export function getLaunchJsonPath() {
-	return getTestWorkspaceFolder() + '\\.vscode\\launch.json';
+	return getTestFolderPath() + '\\.vscode\\launch.json';
 }
 
 export async function selectLaunchConfig() {
@@ -145,12 +125,92 @@ export async function selectLaunchConfig() {
 	setALTestRunnerConfig('launchConfigName', selectedConfig);
 }
 
-export function getCurrentWorkspaceConfig() {
-	return vscode.workspace.getConfiguration('al-test-runner', vscode.Uri.file(getTestWorkspaceFolder()));
+export function getCurrentWorkspaceConfig(forTestFolder: boolean = true) {
+	let testFolderPath: string | undefined;
+	if (forTestFolder) {
+		testFolderPath = getTestFolderPath();
+	}
+
+	if (testFolderPath) {
+		return vscode.workspace.getConfiguration('al-test-runner', vscode.Uri.file(testFolderPath));
+	}
+	else {
+		return vscode.workspace.getConfiguration('al-test-runner');
+	}
 }
 
 export function getLaunchConfiguration(configName: string): string {
 	const configs = getDebugConfigurationsFromLaunchJson('launch') as Array<vscode.DebugConfiguration>;
 	const config = JSON.stringify(configs.filter(element => element.name == configName)[0]);
 	return config;
+}
+
+export function getTestFolderFromConfig(config: vscode.WorkspaceConfiguration): string | undefined {
+	if (!config.testFolderName) {
+		return undefined;
+	}
+
+	let workspaceFolders = vscode.workspace.workspaceFolders;
+	if (!workspaceFolders) {
+		return undefined;
+	}
+
+	workspaceFolders = workspaceFolders.filter(folder => {
+		return folder.name === config.testFolderName;
+	});
+
+	if (workspaceFolders.length > 0) {
+		return workspaceFolders[0].uri.fsPath;
+	}
+}
+
+export function getWorkspaceFolder(): string {
+	const workspaceFolders = vscode.workspace.workspaceFolders;
+	if (!workspaceFolders) {
+		return '';
+	}
+
+	if (workspaceFolders.length === 1) {
+		return workspaceFolders[0].uri.fsPath;
+	}
+
+	const discoveredTestFolder = discoverTestWorkspaceFolder(workspaceFolders);
+	if (discoveredTestFolder) {
+		return discoveredTestFolder;
+	}
+
+	if (activeEditor) {
+		const workspace = vscode.workspace.getWorkspaceFolder(activeEditor!.document.uri);
+		if (workspace) {
+			return workspace.uri.fsPath;
+		}
+	}
+
+	if (vscode.window.visibleTextEditors.length > 0) {
+		const workspace = vscode.workspace.getWorkspaceFolder(vscode.window.visibleTextEditors[0].document.uri);
+		if (workspace) {
+			return workspace.uri.fsPath;
+		}
+	}
+
+	throw new Error('Please open a file in the project you want to run the tests for.');
+}
+
+export function discoverTestWorkspaceFolder(workspaceFolders: readonly vscode.WorkspaceFolder[]): string | undefined {
+	if (!workspaceFolders) {
+		return undefined;
+	}
+
+	const testFolders = workspaceFolders.filter(folder => {
+		if (folder.name.startsWith('Test') || folder.name.endsWith('Test') || folder.name.endsWith('Tests')) {
+			return true;
+		}
+	});
+
+	if (!testFolders) {
+		return undefined;
+	}
+	else {
+		return testFolders[0].uri.fsPath;
+	}
 }
