@@ -56,11 +56,6 @@ export const outputChannel = vscode.window.createOutputChannel(getTerminalName()
 let updateDecorationsTimeout: NodeJS.Timer | undefined = undefined;
 let discoverTestsTimeout: NodeJS.Timer | undefined = undefined;
 
-const alTestRunnerAPI = new class {
-	getWorkspaceFolder: Function | undefined;
-	onOutputTestResults: Function | undefined;
-};
-
 export let alTestController: vscode.TestController;
 export let telemetryReporter: TelemetryReporter;
 
@@ -247,8 +242,6 @@ export function activate(context: vscode.ExtensionContext) {
 	alTestController = createTestController();
 	context.subscriptions.push(alTestController);
 	discoverTests();
-
-	return alTestRunnerAPI;
 }
 
 export async function invokeTestRunner(command: string): Promise<types.ALTestAssembly[]> {
