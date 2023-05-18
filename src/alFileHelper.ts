@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { ALFile, ALMethodRange, ALObject, OutputType } from './types';
 import { activeEditor, alFiles } from './extension';
 import { readFileSync } from 'fs';
-import { getCurrentWorkspaceConfig } from './config';
+import { getCurrentWorkspaceConfig, getTestFolderFromConfig, getWorkspaceFolder } from './config';
 import { join } from 'path';
 import { objectDeclarationRegEx } from './constants';
 import { sendDebugEvent } from './telemetry';
@@ -185,23 +185,17 @@ function getPathOfTestAppJson(): string | undefined {
 	}
 }
 
-function getTestFolderPath(): string | undefined {
-	const config = getCurrentWorkspaceConfig();
-	if (!config.testFolderName) {
-		return undefined;
+export function getTestFolderPath(): string | undefined {
+	const config = getCurrentWorkspaceConfig(false);
+	const testFolderFromConfig = getTestFolderFromConfig(config);
+
+	if (testFolderFromConfig) {
+		return testFolderFromConfig;
 	}
 
-	let wsFolders = vscode.workspace.workspaceFolders;
-	if (!wsFolders) {
-		return undefined;
-	}
-
-	wsFolders = wsFolders.filter(element => {
-		return element.name === config.testFolderName;
-	})
-
-	if (wsFolders.length > 0) {
-		return wsFolders[0].uri.fsPath;
+	const workspaceFolder = getWorkspaceFolder();
+	if (workspaceFolder) {
+		return workspaceFolder;
 	}
 	
 	vscode.window.showErrorMessage(`Could not find a test workspace folder with name "${config.testFolderName}". Please check the Test Folder Name setting.`, 'Open Settings').then(button => {
