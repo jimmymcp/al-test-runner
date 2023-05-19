@@ -1,10 +1,10 @@
 import * as vscode from 'vscode';
-import { getALObjectOfDocument, getALFileForALObject } from './alFileHelper';
+import { getALObjectOfDocument, getALFileForALObject, getTestFolderPath } from './alFileHelper';
 import { copyFileSync, existsSync, readFileSync } from 'fs';
 import { ALObject, CodeCoverageDisplay, CodeCoverageLine, CodeCoverageObject } from './types';
 import { activeEditor, passingTestDecorationType, outputWriter } from './extension';
 import { join, basename, dirname } from 'path';
-import { getALTestRunnerConfig, getTestWorkspaceFolder } from './config';
+import { getALTestRunnerConfig } from './config';
 import { padString, writeTable } from './output';
 
 let codeCoverageStatusBarItem: vscode.StatusBarItem;
@@ -59,7 +59,10 @@ export async function getCodeCoveragePath(codeCoverageType?: CodeCoverageDisplay
         }
         let config = vscode.workspace.getConfiguration('al-test-runner');
         if (config.codeCoveragePath) {
-            resolve(join(getTestWorkspaceFolder(), config.codeCoveragePath));
+            const testFolderName = getTestFolderPath();
+            if (testFolderName) {
+                resolve(join(testFolderName, config.codeCoveragePath));
+            }
         }
         else {
             let discoveredPath = await discoverCodeCoveragePath();

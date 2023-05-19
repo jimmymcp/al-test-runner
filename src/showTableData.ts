@@ -1,7 +1,8 @@
 import * as vscode from 'vscode';
-import { getALTestRunnerConfig, getLaunchConfiguration, getTestWorkspaceFolder } from './config';
+import { getALTestRunnerConfig, getLaunchConfiguration } from './config';
 import { activeEditor, getALTestRunnerTerminal } from './extension';
 import { sendShowTableDataEvent } from './telemetry';
+import { getTestFolderPath } from './alFileHelper';
 
 export async function showTableData() {
     sendShowTableDataEvent();
@@ -10,7 +11,7 @@ export async function showTableData() {
     if (recordName !== '') {
         vscode.window.showInformationMessage(`Opening browser to table ${recordName}...`);
         let showTableDataTerminal = getALTestRunnerTerminal('al-test-runner-2');
-        showTableDataTerminal.sendText(`cd "${getTestWorkspaceFolder()}"`);
+        showTableDataTerminal.sendText(`cd "${getTestFolderPath()}"`);
         showTableDataTerminal.sendText(`Show-TableData '${recordName}' -LaunchConfig '${getLaunchConfiguration(getALTestRunnerConfig().launchConfigName)}'`);
     }
     else {
