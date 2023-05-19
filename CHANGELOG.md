@@ -1,5 +1,9 @@
 # Change Log
 
+# 0.9.1
+- Attempt to automatically discover the workspace which contains the tests (looking for terms in the "Test Workspace Folder Identifiers" settings)
+- Fix error seen when initialising debugger
+
 # 0.9.0
 - Fixed various compatibility issues with PowerShell 7
 
