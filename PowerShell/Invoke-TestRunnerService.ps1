@@ -14,7 +14,7 @@ function Invoke-TestRunnerService {
         $ServiceUrl = Get-ServiceUrl -Method 'RunTestsFromFilter'
         $CodeunitIDFilter = Get-FilterFromIDRanges
         $TestName = 'InitTestRunnerService'
-        $Body = "{`"codeunitIdFilter`": $CodeunitIDFilter, `"testName`": `"$TestName`"}"
+        $Body = "{`"codeunitIdFilter`": `"$CodeunitIDFilter`", `"testName`": `"$TestName`"}"
         Write-Host "Initialising test runner"
     }
     elseif ($FileName -ne '') {
