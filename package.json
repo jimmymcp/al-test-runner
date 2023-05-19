@@ -327,6 +327,15 @@
 						"scope": "resource",
 						"description": "Include debug events in the telemetry to help with troubleshooting",
 						"default": false
+					},
+					"al-test-runner.testWorkspaceFolderIdentifiers": {
+						"type": "array",
+						"scope": "resource",
+						"description": "Text to look for in workspace folder names to identify the folder which contains the test app",
+						"default": [
+							"tests",
+							"test"
+						]
 					}
 				}
 			}
