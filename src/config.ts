@@ -201,16 +201,19 @@ export function discoverTestWorkspaceFolder(workspaceFolders: readonly vscode.Wo
 		return undefined;
 	}
 
-	const testFolders = workspaceFolders.filter(folder => {
-		if (folder.name.startsWith('Test') || folder.name.endsWith('Test') || folder.name.endsWith('Tests')) {
-			return true;
+	const config = getCurrentWorkspaceConfig(false);
+	const identifiers: string[] = config.testWorkspaceFolderIdentifiers;
+	identifiers.forEach(identifier => {
+		const testFolders = workspaceFolders.filter(folder => {
+			if (folder.name.toLowerCase().endsWith(identifier.toLowerCase()) || folder.name.toLowerCase().startsWith(identifier.toLowerCase())) {
+				return true;
+			}
+		});
+
+		if (testFolders[0]) {
+			return testFolders[0].uri.fsPath;
 		}
 	});
 
-	if (!testFolders) {
-		return undefined;
-	}
-	else {
-		return testFolders[0].uri.fsPath;
-	}
+	return undefined;
 }
