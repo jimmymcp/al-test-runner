@@ -16,6 +16,7 @@ import { createTelemetryReporter, sendDebugEvent } from './telemetry';
 import { TestCoverageCodeLensProvider } from './testCoverageCodeLensProvider';
 import { CodeCoverageCodeLensProvider } from './codeCoverageCodeLensProvider';
 import { registerCommands } from './commands';
+import { createHEADFileWatcherForTestWorkspaceFolder } from './git';
 
 let terminal: vscode.Terminal;
 export let activeEditor = vscode.window.activeTextEditor;
@@ -111,6 +112,8 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.workspace.onDidChangeTextDocument(event => {
 		discoverTestsInDocument(event.document);
 	});
+
+	createHEADFileWatcherForTestWorkspaceFolder();
 
 	telemetryReporter = createTelemetryReporter();
 	context.subscriptions.push(telemetryReporter);
