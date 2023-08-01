@@ -417,9 +417,12 @@ export function getLaunchJson() {
 }
 
 export function getAppJsonKey(keyName: string) {
+	sendDebugEvent('getAppJsonKey-start', { keyName: keyName });
 	const appJsonPath = getTestFolderPath() + '\\app.json';
 	const data = readFileSync(appJsonPath, { encoding: 'utf-8' });
 	const appJson = JSON.parse(data);
+
+	sendDebugEvent('getAppJsonKey-end', { keyName: keyName, keyValue: appJson[keyName] });
 	return appJson[keyName];
 }
 
