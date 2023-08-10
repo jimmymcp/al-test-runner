@@ -7,7 +7,7 @@ import * as path from 'path';
 import * as types from './types';
 import { sendDebugEvent, sendTestDebugStartEvent, sendTestRunFinishedEvent, sendTestRunStartEvent } from './telemetry';
 import { buildTestCoverageFromTestItem } from './testCoverage';
-import { outputCodeCoverage, saveAllTestsCodeCoverage } from './CodeCoverage';
+import { outputCodeCoverage, saveAllTestsCodeCoverage } from './codeCoverage';
 import { readyToDebug } from './debug';
 
 export let numberOfTests: number;
@@ -150,6 +150,7 @@ export function readyToRunTests(): Promise<Boolean> {
 }
 
 export async function runTest(filename?: string, selectionStart?: number, extensionId?: string, extensionName?: string): Promise<ALTestAssembly[]> {
+    sendDebugEvent('runTest-start', { filename: filename ? filename : 'undefined', selectionStart: selectionStart ? selectionStart.toString() : '0', extensionId: extensionId ? extensionId : 'undefined', extensionName: extensionName ? extensionName : 'undefined'});
     return new Promise(async (resolve) => {
         await readyToRunTests().then(async ready => {
             if (ready) {
@@ -166,7 +167,7 @@ export async function runTest(filename?: string, selectionStart?: number, extens
                     extensionName = getAppJsonKey('name');
                 }
 
-                sendDebugEvent('runTest-ready');
+                sendDebugEvent('runTest-ready', { filename: filename, selectionStart: selectionStart.toString(), extensionId: extensionId!, extensionName: extensionName! });
 
                 const results: ALTestAssembly[] = await invokeTestRunner(`Invoke-ALTestRunner -Tests Test -ExtensionId "${extensionId}" -ExtensionName "${extensionName}" -FileName "${filename}" -SelectionStart ${selectionStart} -LaunchConfig '${getLaunchConfiguration(getALTestRunnerConfig().launchConfigName)}'`);
                 resolve(results);

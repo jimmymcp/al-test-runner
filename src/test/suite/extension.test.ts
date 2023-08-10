@@ -7,6 +7,9 @@ import * as os from 'os';
 import { documentIsTestCodeunit, getALObjectOfDocument, getDocumentIdAndName, getMethodRangesFromDocument } from '../../alFileHelper';
 import { createTestController, getDisabledTestsForRequest, getTestCodeunitsIncludedInRequest, getTestItemsIncludedInRequest, runSelectedTests } from '../../testController';
 import { getMaxLengthOfPropertyFromArray } from '../../output';
+import { join } from 'path';
+import { getGitFolderPathForFolder } from '../../git';
+import { getParentFolderPathForFolder } from '../../file';
 
 const tempDir: string = os.tmpdir() + '\\ALTR';
 
@@ -587,4 +590,54 @@ suite('Extension Test Suite', () => {
 		const array = ["one", "two", "three", "four"];
 		assert.strictEqual(getMaxLengthOfPropertyFromArray(array), 5);
 	})
+
+	test('getParentFolderPathForFolder returns path of parent folder', () => {
+		assert.strictEqual('C:\\Users\\myuser\\Documents', getParentFolderPathForFolder('C:\\Users\\myuser\\Documents\\childfolder'));
+	});
+
+	test('getParentFolderPathForFolder returns path of parent folder which has trailing slash', () => {
+		assert.strictEqual('C:\\Users\\myuser\\Documents', getParentFolderPathForFolder('C:\\Users\\myuser\\Documents\\childfolder\\'));
+	});
+
+	test('getGitFolderPathForFolder returns undefined when no .git folder in current folder or 2 parents', () => {
+		const path = join(os.tmpdir(), 'testGitFolder01');
+		if (!existsSync(path)) {
+			mkdirSync(path);
+		}
+
+		assert.strictEqual(getGitFolderPathForFolder(path), undefined);
+	});
+
+	test('getGitFolderPathForFolder returns path when there is a .git folder in current folder', () => {
+		const path = join(os.tmpdir(), 'testGitFolder02');
+		if (!existsSync(path)) {
+			mkdirSync(path);
+		}
+
+		const gitPath = join(path, '.git');
+		if (!existsSync(gitPath)) {
+			mkdirSync(gitPath);
+		}
+
+		assert.strictEqual(getGitFolderPathForFolder(path), join(path, '.git'));
+	});
+
+	test('getGitFolderPathForFolder returns parent path when there is a .git folder in parent folder', () => {
+		const path = join(os.tmpdir(), 'testGitFolder03');
+		if (!existsSync(path)) {
+			mkdirSync(path);
+		}
+
+		const gitPath = join(path, '.git');
+		if (!existsSync(gitPath)) {
+			mkdirSync(gitPath);
+		}
+
+		const childPath = join(path, 'childFolder');
+		if (!existsSync(childPath)) {
+			mkdirSync(childPath);
+		}
+
+		assert.strictEqual(getGitFolderPathForFolder(childPath), join(path, '.git'));
+	});
 });

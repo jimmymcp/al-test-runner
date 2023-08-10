@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { existsSync } from "fs";
+import { basename } from 'path';
 
 export function awaitFileExistence(path: string, timeout: number): Promise<Boolean> {
     return new Promise(resolve => {
@@ -29,4 +30,13 @@ export function awaitFileExistence(path: string, timeout: number): Promise<Boole
             resolve(true);
         }
     });
+}
+
+export function getParentFolderPathForFolder(path: string): string {
+    path = removeTrailingSlahesFromPath(path);
+    return removeTrailingSlahesFromPath(path.substring(0, path.length - basename(path).length));
+}
+
+function removeTrailingSlahesFromPath(path: string): string {
+    return path.replace(/\/*$/, '').replace(/\\*$/, ''); //remove trailing forward and back slashes from the path
 }
