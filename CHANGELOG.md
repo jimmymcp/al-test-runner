@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.9.2
+- Fix [issue 100](https://github.com/jimmymcp/al-test-runner/issues/100), debugging tests in codeunit which starts with a summary block
+- Tidying up the cases of some of the ts file names
+
 # 0.9.1
 - Attempt to automatically discover the workspace which contains the tests (looking for terms in the "Test Workspace Folder Identifiers" settings)
 - Fix error seen when initialising debugger
