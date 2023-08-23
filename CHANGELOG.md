@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.9.3
+- Fix [issue 102](https://github.com/jimmymcp/al-test-runner/issues/102), debug configuration not found when first workspace is .AL-GO
+
 ## 0.9.2
 - Fix [issue 100](https://github.com/jimmymcp/al-test-runner/issues/100), debugging tests in codeunit which starts with a summary block
 - Tidying up the cases of some of the ts file names
