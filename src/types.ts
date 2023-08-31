@@ -134,3 +134,9 @@ export enum OutputType {
 	Editor = 'Editor',
 	Channel = 'Output'
 }
+
+export enum launchConfigValidity {
+	Valid,
+	Invalid,
+	NeverValid
+}
