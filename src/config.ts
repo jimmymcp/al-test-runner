@@ -76,7 +76,7 @@ function createALTestRunnerDir() {
 	}
 }
 
-export function launchConfigIsValid(alTestRunnerConfig?: types.ALTestRunnerConfig): boolean {
+export function launchConfigIsValid(alTestRunnerConfig?: types.ALTestRunnerConfig): types.launchConfigValidity {
 	sendDebugEvent('launchConfigIsValid-start');
 
 	if (alTestRunnerConfig === undefined) {
@@ -84,11 +84,26 @@ export function launchConfigIsValid(alTestRunnerConfig?: types.ALTestRunnerConfi
 	}
 
 	if (alTestRunnerConfig.launchConfigName === '') {
-		return false;
+		return types.launchConfigValidity.Invalid;
 	}
 	else {
 		let debugConfigurations = getDebugConfigurationsFromLaunchJson('launch');
-		return debugConfigurations.filter(element => element.name === alTestRunnerConfig!.launchConfigName).length === 1;
+		const filteredDebugConfigurations = debugConfigurations.filter(element => element.name === alTestRunnerConfig!.launchConfigName);
+		switch (filteredDebugConfigurations.length) {
+			case 0:
+				return types.launchConfigValidity.Invalid;
+			case 1:
+				return types.launchConfigValidity.Valid;
+			default:
+				vscode.window.showErrorMessage(`There are ${filteredDebugConfigurations.length} launch configurations with the name "${alTestRunnerConfig!.launchConfigName}". Please make sure that each launch configuration has a unique name.`, {}, "Open config").then(
+					action => {
+						if (action == "Open config") {
+							vscode.commands.executeCommand("workbench.action.debug.configure")
+						}
+					}
+				);
+				return types.launchConfigValidity.NeverValid;
+		}
 	}
 }
 
