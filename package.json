@@ -113,6 +113,11 @@
 				"command": "altestrunner.listALFiles",
 				"title": "List AL Files",
 				"category": "AL Test Runner"
+			},
+			{
+				"command": "altestrunner.showPerformanceProfile",
+				"title": "Show Performance Profile",
+				"category": "AL Test Runner"
 			}
 		],
 		"keybindings": [
