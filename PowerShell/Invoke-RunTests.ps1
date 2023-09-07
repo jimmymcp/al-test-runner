@@ -30,7 +30,8 @@ function Invoke-RunTests {
         [Parameter(Mandatory = $false)]
         $Culture = 'en-US',
         [Parameter(Mandatory = $false)]
-        $LaunchConfig
+        $LaunchConfig,
+        [switch]$GetPerformanceProfile
     )
 
     $ResultId = [Guid]::NewGuid().Guid + ".xml"
@@ -120,6 +121,10 @@ function Invoke-RunTests {
                     Get-CodeCoverage -LaunchConfig $LaunchConfig
                 }
 
+                if ($GetPerformanceProfile.IsPresent) {
+                    Get-PerformanceProfile -LaunchConfig $LaunchConfig
+                }
+
                 Write-Host "Copy C:\BCContainerTests\$ResultId to $LastResultFile"
                 Copy-Item -FromSession $Session -Path "C:\BCContainerTests\$ResultId" -Destination $ResultFile
                 Copy-Item -Path $ResultFile -Destination $LastResultFile
@@ -128,6 +133,10 @@ function Invoke-RunTests {
                 if (Test-Path $ContainerResultFile) {
                     if ($GetCodeCoverage.IsPresent) {
                         Get-CodeCoverage -LaunchConfig $LaunchConfig
+                    }
+
+                    if ($GetPerformanceProfile.IsPresent) {
+                        Get-PerformanceProfile -LaunchConfig $LaunchConfig
                     }
                     
                     Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath $ResultFile

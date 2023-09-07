@@ -16,7 +16,8 @@ function Invoke-ALTestRunner {
         [Parameter(Mandatory = $false)]
         $DisabledTests,
         [Parameter(Mandatory = $false)]
-        $LaunchConfig
+        $LaunchConfig,
+        [switch]$GetPerformanceProfile
         )
 
     Import-ContainerHelper
@@ -56,6 +57,7 @@ function Invoke-ALTestRunner {
         ExtensionName = $ExtensionName
         GetCodeCoverage = $GetCodeCoverage
         LaunchConfig = $LaunchConfig
+        GetPerformanceProfile = $GetPerformanceProfile
     }
 
     $Tenant = Get-TenantFromLaunchJson -LaunchConfig $LaunchConfig

@@ -152,6 +152,10 @@ export async function invokeTestRunner(command: string): Promise<types.ALTestAss
 			command += ' -GetCodeCoverage';
 		}
 
+		if (config.enablePerformanceProfiler) {
+			command += ' -GetPerformanceProfile'
+		}
+
 		if (existsSync(getLastResultPath())) {
 			unlinkSync(getLastResultPath());
 		}
