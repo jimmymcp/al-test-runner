@@ -22,6 +22,8 @@ function Invoke-ALTestRunner {
 
     Import-ContainerHelper
 
+    Get-ServiceUrl -Method 'Get-PerformanceProfile' -LaunchConfig $LaunchConfig | Out-Null
+
     $ContainerName = Get-ContainerName -LaunchConfig $LaunchConfig
     if (!(Get-ContainerIsRunning $ContainerName)) {
         throw "Container $ContainerName is not running. Please start the container and retry. Please note that container names are case-sensitive."
