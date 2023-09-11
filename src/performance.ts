@@ -14,6 +14,7 @@ export function createPerformanceStatusBarItem(): vscode.StatusBarItem {
     performanceStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
     performanceStatusBarItem.command = 'altestrunner.showPerformanceProfile';
     performanceStatusBarItem.text = 'Performance ⏱️';
+    performanceStatusBarItem.tooltip = 'Show the performance profile that was downloaded from the previous test run.'
     updatePerformanceStatusBarItemVisibility();
     return performanceStatusBarItem;
 }
