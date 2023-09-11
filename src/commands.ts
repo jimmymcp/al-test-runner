@@ -8,21 +8,22 @@ import { toggleCodeCoverageDisplay } from './codeCoverage';
 import { showTableData } from './showTableData';
 import { runRelatedTests, showRelatedTests } from './testCoverage';
 import { listALFiles } from './alFileHelper';
+import { showPerformanceProfile } from './performance';
 
 export function registerCommands(context: vscode.ExtensionContext) {
-    context.subscriptions.push(vscode.commands.registerCommand('altestrunner.runAllTests', async (extensionId?: string, extensionName?: string) => {
-        runTestHandler(new vscode.TestRunRequest());
-    }));
+	context.subscriptions.push(vscode.commands.registerCommand('altestrunner.runAllTests', async (extensionId?: string, extensionName?: string) => {
+		runTestHandler(new vscode.TestRunRequest());
+	}));
 
-    context.subscriptions.push(vscode.commands.registerCommand('altestrunner.runTestsCodeunit', async (filename?: string, extensionId?: string, extensionName?: string) => {
-        const testItem = await getTestItemFromFileNameAndSelection(filename, 0);
-        if (testItem) {
-            const request = new vscode.TestRunRequest([testItem]);
-            runTestHandler(request);
-        }
-    }));
+	context.subscriptions.push(vscode.commands.registerCommand('altestrunner.runTestsCodeunit', async (filename?: string, extensionId?: string, extensionName?: string) => {
+		const testItem = await getTestItemFromFileNameAndSelection(filename, 0);
+		if (testItem) {
+			const request = new vscode.TestRunRequest([testItem]);
+			runTestHandler(request);
+		}
+	}));
 
-    context.subscriptions.push(vscode.commands.registerCommand('altestrunner.runTest', async (filename?: string, selectionStart?: number, extensionId?: string, extensionName?: string) => {
+	context.subscriptions.push(vscode.commands.registerCommand('altestrunner.runTest', async (filename?: string, selectionStart?: number, extensionId?: string, extensionName?: string) => {
 		const testItem = await getTestItemFromFileNameAndSelection(filename, selectionStart);
 		if (testItem) {
 			const request = new vscode.TestRunRequest([testItem]);
@@ -107,4 +108,8 @@ export function registerCommands(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('altestrunner.listALFiles', async () => {
 		await listALFiles();
 	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand('altestrunner.showPerformanceProfile', () => {
+		showPerformanceProfile();
+	}))
 }

@@ -13,6 +13,13 @@ function Install-TestRunnerService {
             Remove-Item $LocalPath
         }
 
+        $ContainerMajorVersion = [Int32]::Parse((Get-BcContainerNavVersion $ContainerName).Split('.')[0])
+
+        if ($ContainerMajorVersion -lt 22) {
+            Write-Host "Downloading pre-BC 22 test runner service to $LocalPath"
+            Invoke-WebRequest "https://github.com/jimmymcp/test-runner-service/raw/master/James%20Pearson_Test%20Runner%20Service_pre22.app" -OutFile $LocalPath
+        }
+
         Write-Host "Downloading test runner service to $LocalPath"
         Invoke-WebRequest "https://github.com/jimmymcp/test-runner-service/raw/master/James%20Pearson_Test%20Runner%20Service.app" -OutFile $LocalPath
 

@@ -113,6 +113,11 @@
 				"command": "altestrunner.listALFiles",
 				"title": "List AL Files",
 				"category": "AL Test Runner"
+			},
+			{
+				"command": "altestrunner.showPerformanceProfile",
+				"title": "Show Performance Profile",
+				"category": "AL Test Runner"
 			}
 		],
 		"keybindings": [
@@ -290,6 +295,12 @@
 						"scope": "resource",
 						"description": "Outputs code coverage statistics with test results and decorates covered lines with the Toggle Code Coverage command. See also the Code Coverage Path extension setting and key in the AL Test Runner config.json file.",
 						"default": false
+					},
+					"al-test-runner.enablePerformanceProfiler": {
+						"type": "boolean",
+						"scope": "resource",
+						"description": "Downloads performance profiler data for each test run.",
+						"default": true
 					},
 					"al-test-runner.testFolderName": {
 						"type": "string",
