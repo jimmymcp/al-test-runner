@@ -23,12 +23,12 @@ export function getALObjectOfDocument(document: vscode.TextDocument): ALObject |
 }
 
 export function documentIsTestCodeunit(document: vscode.TextDocument): boolean {
-	if (document.fileName.substr(document.fileName.lastIndexOf('.')) !== '.al') {
+	if (document.fileName.substring(document.fileName.lastIndexOf('.')) !== '.al') {
 		return false;
 	}
 
 	const text = document.getText(new vscode.Range(0, 0, 10, 0));
-	return (text.match('Subtype = Test;') !== null);
+	return (text.match('Sub(t|T)ype *= *(t|T)est;') !== null);
 }
 
 export function getDocumentIdAndName(document: vscode.TextDocument): string {

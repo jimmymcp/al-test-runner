@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { getTestMethodRangesFromDocument } from './alFileHelper';
+import { documentIsTestCodeunit, getTestMethodRangesFromDocument } from './alFileHelper';
 
 export class CodelensProvider implements vscode.CodeLensProvider {
     private codeLenses: vscode.CodeLens[] = [];
@@ -7,7 +7,7 @@ export class CodelensProvider implements vscode.CodeLensProvider {
     public provideCodeLenses(document: vscode.TextDocument, token: vscode.CancellationToken): vscode.CodeLens[] | Thenable<vscode.CodeLens[]> {
         this.codeLenses = [];
 
-        if (!(document.fileName.endsWith('.al'))) {
+        if (!(documentIsTestCodeunit(document))) {
             return this.codeLenses;
         }
 
