@@ -19,9 +19,10 @@ function Install-TestRunnerService {
             Write-Host "Downloading pre-BC 22 test runner service to $LocalPath"
             Invoke-WebRequest "https://github.com/jimmymcp/test-runner-service/raw/master/James%20Pearson_Test%20Runner%20Service_pre22.app" -OutFile $LocalPath
         }
-
-        Write-Host "Downloading test runner service to $LocalPath"
-        Invoke-WebRequest "https://github.com/jimmymcp/test-runner-service/raw/master/James%20Pearson_Test%20Runner%20Service.app" -OutFile $LocalPath
+        else {
+            Write-Host "Downloading test runner service to $LocalPath"
+            Invoke-WebRequest "https://github.com/jimmymcp/test-runner-service/raw/master/James%20Pearson_Test%20Runner%20Service.app" -OutFile $LocalPath
+        }
 
         Write-Host "Publishing into container $ContainerName"
         Publish-NavContainerApp $ContainerName -appFile $LocalPath -sync -install -skipVerification
