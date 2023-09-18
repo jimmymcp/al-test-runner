@@ -36,7 +36,16 @@ if (testFolderPath) {
 	appFileWatcher.onDidChange(e => {
 		onChangeAppFile(e);
 	});
+
+	vscode.workspace.onDidRenameFiles(e => {
+		e.files.forEach(file => {
+			if (vscode.workspace.getWorkspaceFolder(file.newUri)?.uri.fsPath === testFolderPath) {
+				discoverTests();
+			}
+		});
+	});
 }
+
 
 export const passingTestDecorationType = vscode.window.createTextEditorDecorationType({
 	backgroundColor: passingTestColor
