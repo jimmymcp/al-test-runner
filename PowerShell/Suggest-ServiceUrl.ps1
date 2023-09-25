@@ -10,7 +10,7 @@ function Suggest-ServiceUrl {
     $CompanyName = Get-ValueFromALTestRunnerConfig -KeyName 'companyName'
 
     if ([String]::IsNullOrEmpty($CompanyName)) {
-        Select-BCCompany -ContainerName $ContainerName
+        $CompanyName = Select-BCCompany -ContainerName $ContainerName
     }
 
     return "http://$($ContainerName):$ODataPort/$ServerInstance/ODataV4/TestRunner?company=$CompanyName&tenant=default"
