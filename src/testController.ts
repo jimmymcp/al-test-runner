@@ -126,10 +126,10 @@ function setResultsForTestItems(results: ALTestAssembly[], request: vscode.TestR
 }
 
 export function readyToRunTests(): Promise<Boolean> {
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         sendDebugEvent('readyToRunTests-start');
 
-        if (!(launchConfigIsValid())) {
+        if (launchConfigIsValid() == types.launchConfigValidity.Invalid) {
             sendDebugEvent('readyToRunTests-launchConfigNotValid');
             //clear the credentials and company name if the launch config is not valid
             setALTestRunnerConfig('userName', '');
@@ -139,12 +139,12 @@ export function readyToRunTests(): Promise<Boolean> {
             selectLaunchConfig();
         }
 
-        if (launchConfigIsValid()) {
+        if (launchConfigIsValid() == types.launchConfigValidity.Valid) {
             sendDebugEvent('readyToRunTests-launchConfigIsValid');
             resolve(true);
         }
         else {
-            reject();
+            resolve(false);
         }
     });
 }
@@ -172,6 +172,9 @@ export async function runTest(filename?: string, selectionStart?: number, extens
                 const results: ALTestAssembly[] = await invokeTestRunner(`Invoke-ALTestRunner -Tests Test -ExtensionId "${extensionId}" -ExtensionName "${extensionName}" -FileName "${filename}" -SelectionStart ${selectionStart} -LaunchConfig '${getLaunchConfiguration(getALTestRunnerConfig().launchConfigName)}'`);
                 resolve(results);
             }
+            else {
+                resolve([]);
+            }
         })
     });
 };
@@ -192,6 +195,9 @@ export async function runAllTests(extensionId?: string, extensionName?: string):
 
                 const results: ALTestAssembly[] = await invokeTestRunner(`Invoke-ALTestRunner -Tests All -ExtensionId "${extensionId}" -ExtensionName "${extensionName}" -LaunchConfig '${getLaunchConfiguration(getALTestRunnerConfig().launchConfigName)}'`);
                 resolve(results);
+            }
+            else {
+                resolve([]);
             }
         });
     });
@@ -216,6 +222,9 @@ export async function runSelectedTests(request: vscode.TestRunRequest, extension
 
                 const results: ALTestAssembly[] = await invokeTestRunner(`Invoke-ALTestRunner -Tests All -ExtensionId "${extensionId}" -ExtensionName "${extensionName}" -DisabledTests ('${disabledTestsJson}' | ConvertFrom-Json) -LaunchConfig '${getLaunchConfiguration(getALTestRunnerConfig().launchConfigName)}'`)
                 resolve(results);
+            }
+            else {
+                resolve([]);
             }
         });
     });

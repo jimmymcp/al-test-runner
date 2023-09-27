@@ -17,6 +17,7 @@ import { TestCoverageCodeLensProvider } from './testCoverageCodeLensProvider';
 import { CodeCoverageCodeLensProvider } from './codeCoverageCodeLensProvider';
 import { registerCommands } from './commands';
 import { createHEADFileWatcherForTestWorkspaceFolder } from './git';
+import { createPerformanceStatusBarItem } from './performance';
 
 let terminal: vscode.Terminal;
 export let activeEditor = vscode.window.activeTextEditor;
@@ -35,7 +36,16 @@ if (testFolderPath) {
 	appFileWatcher.onDidChange(e => {
 		onChangeAppFile(e);
 	});
+
+	vscode.workspace.onDidRenameFiles(e => {
+		e.files.forEach(file => {
+			if (vscode.workspace.getWorkspaceFolder(file.newUri)?.uri.fsPath === testFolderPath) {
+				discoverTests();
+			}
+		});
+	});
 }
+
 
 export const passingTestDecorationType = vscode.window.createTextEditorDecorationType({
 	backgroundColor: passingTestColor
@@ -77,6 +87,7 @@ export function activate(context: vscode.ExtensionContext) {
 	registerCommands(context);
 
 	context.subscriptions.push(createCodeCoverageStatusBarItem());
+	context.subscriptions.push(createPerformanceStatusBarItem());
 
 	vscode.window.onDidChangeActiveTextEditor(editor => {
 		activeEditor = editor;
@@ -150,6 +161,10 @@ export async function invokeTestRunner(command: string): Promise<types.ALTestAss
 
 		if (config.enableCodeCoverage) {
 			command += ' -GetCodeCoverage';
+		}
+
+		if (config.enablePerformanceProfiler) {
+			command += ' -GetPerformanceProfile';
 		}
 
 		if (existsSync(getLastResultPath())) {

@@ -180,7 +180,7 @@ suite('Extension Test Suite', () => {
 	test('documentIsTestCodeunit returns true for a test codeunit', async () => {
 		const text = `codeunit 50100 "Test Codeunit"
 		{
-			Subtype = Test;
+			SubType =  test;
 
 			[Test]
 			procedure ThisIsATestMethod()
