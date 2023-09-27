@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.10.0
+- Option to calculate and download performance trace when running tests
+  -  Show performance item in status bar
+  - Download and install pre-BC22 Test Runner Service when applicable
+- Fix issue suggesting testRunnerService url
+- Rediscover test methods when renaming test codeunit
+- Fix recognition of test codeunit files
+
 ## 0.9.3
 - Fix [issue 102](https://github.com/jimmymcp/al-test-runner/issues/102), debug configuration not found when first workspace is .AL-GO
 
