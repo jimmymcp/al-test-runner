@@ -126,7 +126,7 @@ function setResultsForTestItems(results: ALTestAssembly[], request: vscode.TestR
 }
 
 export function readyToRunTests(): Promise<Boolean> {
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
         sendDebugEvent('readyToRunTests-start');
 
         if (launchConfigIsValid() == types.launchConfigValidity.Invalid) {
@@ -136,7 +136,7 @@ export function readyToRunTests(): Promise<Boolean> {
             setALTestRunnerConfig('securePassword', '');
             setALTestRunnerConfig('companyName', '');
             setALTestRunnerConfig('testRunnerServiceUrl', '')
-            selectLaunchConfig();
+            await selectLaunchConfig();
         }
 
         if (launchConfigIsValid() == types.launchConfigValidity.Valid) {
