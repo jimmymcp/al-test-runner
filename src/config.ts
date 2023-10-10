@@ -130,12 +130,6 @@ export async function selectLaunchConfig() {
 	else if (debugConfigurations.length > 1) {
 		let configNames: Array<string> = debugConfigurations.map(element => element.name);
 		selectedConfig = await vscode.window.showQuickPick(configNames, { canPickMany: false, placeHolder: 'Please select a configuration to run tests against' });
-		if (selectedConfig === undefined) {
-			vscode.window.showErrorMessage('Please select a configuration before running tests');
-		}
-		else {
-			vscode.window.showInformationMessage('"' + selectedConfig + '" selected. Please run the command again to run the test(s).');
-		}
 	}
 
 	setALTestRunnerConfig('launchConfigName', selectedConfig);
