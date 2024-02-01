@@ -27,7 +27,7 @@ export function documentIsTestCodeunit(document: vscode.TextDocument): boolean {
 		return false;
 	}
 
-	const text = document.getText(new vscode.Range(0, 0, 10, 0));
+	const text = document.getText(new vscode.Range(0, 0, 50, 0));
 	return (text.match('Sub(t|T)ype *= *(t|T)est;') !== null);
 }
 
@@ -245,7 +245,14 @@ export function getTestMethodRangesFromDocument(document: vscode.TextDocument): 
 	let match;
 
 	while (match = regEx.exec(documentText)) {
-		let subDocumentText = documentText.substr(match.index, 300);
+		let subDocumentText: string = '';
+		if (match.index + 1000 > documentText.length) {
+			subDocumentText = documentText.substring(match.index);
+		}
+		else {
+			subDocumentText = documentText.substring(match.index, match.index + 1000);
+		}
+
 		let methodMatch = subDocumentText.match('(?<=procedure ).*\\(');
 		if (methodMatch !== undefined) {
 			const startPos = document.positionAt(match.index + methodMatch!.index!);
@@ -253,7 +260,7 @@ export function getTestMethodRangesFromDocument(document: vscode.TextDocument): 
 
 			if (!documentLineIsCommentedOut(document, documentText, match.index)) {
 				const testMethod: types.ALMethodRange = {
-					name: subDocumentText.substr(methodMatch!.index!, methodMatch![0].length - 1),
+					name: subDocumentText.substring(methodMatch!.index!, methodMatch!.index! + methodMatch![0].length - 1),
 					range: new vscode.Range(startPos, endPos)
 				};
 				testMethods.push(testMethod);
