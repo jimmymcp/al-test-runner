@@ -27,7 +27,7 @@ export function documentIsTestCodeunit(document: vscode.TextDocument): boolean {
 		return false;
 	}
 
-	const text = document.getText(new vscode.Range(0, 0, 10, 0));
+	const text = document.getText(new vscode.Range(0, 0, 50, 0));
 	return (text.match('Sub(t|T)ype *= *(t|T)est;') !== null);
 }
 
