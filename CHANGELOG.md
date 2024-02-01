@@ -1,5 +1,11 @@
 # Change Log
 
+## 0.10.1
+- Do not require restart of tests after selecting launch configuration to use, [issue 113](https://github.com/jimmymcp/al-test-runner/issues/113)
+- Fix issue where test codeunits not recognised when using namespaces, [issue 115](https://github.com/jimmymcp/al-test-runner/issues/115)
+- Fix issue with long method names in HandlerFunctions, [issue 116](https://github.com/jimmymcp/al-test-runner/issues/116)
+
+
 ## 0.10.0
 - Option to calculate and download performance trace when running tests
   -  Show performance item in status bar
