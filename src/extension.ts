@@ -435,7 +435,9 @@ export function getAppJsonKey(keyName: string) {
 	sendDebugEvent('getAppJsonKey-start', { keyName: keyName });
 	const appJsonPath = getTestFolderPath() + '\\app.json';
 	const data = readFileSync(appJsonPath, { encoding: 'utf-8' });
-	const appJson = JSON.parse(data);
+	const appJson = JSON.parse(data.charCodeAt(0) === 0xfeff
+		? data.slice(1) // Remove BOM
+		: data);
 
 	sendDebugEvent('getAppJsonKey-end', { keyName: keyName, keyValue: appJson[keyName] });
 	return appJson[keyName];
