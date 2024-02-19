@@ -1,5 +1,30 @@
 # Change Log
 
+## 0.10.1
+- Do not require restart of tests after selecting launch configuration to use, [issue 113](https://github.com/jimmymcp/al-test-runner/issues/113)
+- Fix issue where test codeunits not recognised when using namespaces, [issue 115](https://github.com/jimmymcp/al-test-runner/issues/115)
+- Fix issue with long method names in HandlerFunctions, [issue 116](https://github.com/jimmymcp/al-test-runner/issues/116)
+
+
+## 0.10.0
+- Option to calculate and download performance trace when running tests
+  -  Show performance item in status bar
+  - Download and install pre-BC22 Test Runner Service when applicable
+- Fix issue suggesting testRunnerService url
+- Rediscover test methods when renaming test codeunit
+- Fix recognition of test codeunit files
+
+## 0.9.3
+- Fix [issue 102](https://github.com/jimmymcp/al-test-runner/issues/102), debug configuration not found when first workspace is .AL-GO
+
+## 0.9.2
+- Fix [issue 100](https://github.com/jimmymcp/al-test-runner/issues/100), debugging tests in codeunit which starts with a summary block
+- Tidying up the cases of some of the ts file names
+
+# 0.9.1
+- Attempt to automatically discover the workspace which contains the tests (looking for terms in the "Test Workspace Folder Identifiers" settings)
+- Fix error seen when initialising debugger
+
 # 0.9.0
 - Fixed various compatibility issues with PowerShell 7
 
