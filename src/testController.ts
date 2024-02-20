@@ -7,7 +7,7 @@ import * as path from 'path';
 import * as types from './types';
 import { sendDebugEvent, sendTestDebugStartEvent, sendTestRunFinishedEvent, sendTestRunStartEvent } from './telemetry';
 import { buildTestCoverageFromTestItem } from './testCoverage';
-import { outputCodeCoverage, saveAllTestsCodeCoverage } from './CodeCoverage';
+import { outputCodeCoverage, saveAllTestsCodeCoverage } from './codeCoverage';
 import { readyToDebug } from './debug';
 
 export let numberOfTests: number;
@@ -30,6 +30,11 @@ export async function discoverTests() {
         const document = await vscode.workspace.openTextDocument(alFile.path);
         discoverTestsInDocument(document);
     });
+}
+
+export async function discoverTestsInFileName(fileName: string) {
+    const document = await vscode.workspace.openTextDocument(fileName);
+    discoverTestsInDocument(document);
 }
 
 export async function discoverTestsInDocument(document: vscode.TextDocument) {
