@@ -32,6 +32,12 @@
 				"${workspaceFolder}/out/test/**/*.js"
 			],
 			"preLaunchTask": "npm: watch"
+		},
+		{
+			"name": "PowerShell: Module Interactive Session",
+			"type": "PowerShell",
+			"request": "launch",
+			"script": "Import-Module \"${workspaceFolder}\\PowerShell\\ALTestRunner.psm1\""
 		}
 	]
 }
