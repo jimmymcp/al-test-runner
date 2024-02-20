@@ -2,12 +2,12 @@ import * as vscode from 'vscode';
 import { readFileSync, existsSync, unlinkSync } from 'fs';
 import * as xml2js from 'xml2js';
 import * as types from './types';
-import { CodelensProvider } from './CodelensProvider';
-import { updateCodeCoverageDecoration, createCodeCoverageStatusBarItem } from './CodeCoverage';
+import { CodelensProvider } from './codeLensProvider';
+import { updateCodeCoverageDecoration, createCodeCoverageStatusBarItem } from './codeCoverage';
 import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getTestFolderPath, getTestMethodRangesFromDocument } from './alFileHelper';
 import { getALTestRunnerPath, getCurrentWorkspaceConfig, getDebugConfigurationsFromLaunchJson, getLaunchJsonPath } from './config';
 import { getOutputWriter, OutputWriter } from './output';
-import { createTestController, deleteTestItemForFilename, discoverTests, discoverTestsInDocument } from './testController';
+import { createTestController, deleteTestItemForFilename, discoverTests, discoverTestsInDocument, discoverTestsInFileName } from './testController';
 import { onChangeAppFile, publishApp } from './publish';
 import { awaitFileExistence } from './file';
 import { join } from 'path';
@@ -35,14 +35,6 @@ if (testFolderPath) {
 	const appFileWatcher = vscode.workspace.createFileSystemWatcher(testAppsPath, false, false, true);
 	appFileWatcher.onDidChange(e => {
 		onChangeAppFile(e);
-	});
-
-	vscode.workspace.onDidRenameFiles(e => {
-		e.files.forEach(file => {
-			if (vscode.workspace.getWorkspaceFolder(file.newUri)?.uri.fsPath === testFolderPath) {
-				discoverTests();
-			}
-		});
 	});
 }
 
@@ -111,12 +103,14 @@ export function activate(context: vscode.ExtensionContext) {
 	vscode.workspace.onDidRenameFiles(event => {
 		event.files.forEach(rename => {
 			deleteTestItemForFilename(rename.oldUri.fsPath);
+			discoverTestsInFileName(rename.newUri.fsPath);
 		});
 	});
 
 	vscode.workspace.onDidCreateFiles(event => {
 		event.files.forEach(file => {
 			deleteTestItemForFilename(file.fsPath);
+			discoverTestsInFileName(file.fsPath);
 		});
 	});
 
