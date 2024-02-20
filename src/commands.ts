@@ -4,7 +4,7 @@ import { getALTestRunnerConfig, getALTestRunnerConfigPath, getALTestRunnerPath, 
 import { existsSync, readdirSync, unlinkSync } from 'fs';
 import { getALTestRunnerTerminal, getTerminalName, triggerUpdateDecorations } from './extension';
 import * as types from './types'
-import { toggleCodeCoverageDisplay } from './codeCoverage';
+import { toggleCodeCoverageDisplay } from './CodeCoverage';
 import { showTableData } from './showTableData';
 import { runRelatedTests, showRelatedTests } from './testCoverage';
 import { listALFiles } from './alFileHelper';

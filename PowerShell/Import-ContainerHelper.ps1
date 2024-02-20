@@ -1,9 +1,17 @@
 function Import-ContainerHelper {
-    if (Test-PowerShellModule 'bccontainerhelper') {
-        Import-PowerShellModule 'bccontainerhelper'
+
+    $customBcContainerHelperScriptPath = Get-ValueFromALTestRunnerConfig -KeyName 'customBcContainerHelperScriptPath'
+
+    if ($customBcContainerHelperScriptPath) {
+        Invoke-CommandOnDockerHost -Command { . $customBcContainerHelperScriptPath }
     }
     else {
-        Import-PowerShellModule 'navcontainerhelper'
+        if (Test-PowerShellModule 'bccontainerhelper') {
+            Import-PowerShellModule 'bccontainerhelper'
+        }
+        else {
+            Import-PowerShellModule 'navcontainerhelper'
+        }
     }
 }
 
