@@ -16,8 +16,11 @@ function Get-PerformanceProfile {
         Method      = 'Post'
         ContentType = 'application/json'
     }
-    
-    $Result = (Invoke-InvokeWebRequest $Params).Content | ConvertFrom-Json
+
+    $responseData = (Invoke-InvokeWebRequest $Params).Content
+    if ($responseData) {
+        $Result = $responseData | ConvertFrom-Json
+    }
     if ($null -ne $Result) {
         $PerformanceProfile = [System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($Result.value))
         Set-Content -Path $PerformanceProfilePath -Value $PerformanceProfile

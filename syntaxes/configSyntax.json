@@ -63,6 +63,10 @@
         "culture": {
             "type": "string",
             "description": "The culture to run tests with. Defaults to en-US."
+        },
+        "customBcContainerHelperScriptPath": {
+            "type": "string",
+            "description": "The path to a .ps1 file that loads the BcContainerHelper module. This can be useful when you do not want to install the module on your local computer."
         }
     }
 }

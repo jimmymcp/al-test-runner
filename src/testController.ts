@@ -32,6 +32,11 @@ export async function discoverTests() {
     });
 }
 
+export async function discoverTestsInFileName(fileName: string) {
+    const document = await vscode.workspace.openTextDocument(fileName);
+    discoverTestsInDocument(document);
+}
+
 export async function discoverTestsInDocument(document: vscode.TextDocument) {
     if (documentIsTestCodeunit(document)) {
         const alFiles = await getALFilesInWorkspace('', `**/${path.basename(document.uri.fsPath)}`);
