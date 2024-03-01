@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.10.2
+- Lots of contributions from [jwikman](https://github.com/jwikman) - thanks very much!
+  - Handling utf-8 + BOM encoding in app.json
+  - Tidying up package dependencies
+  - Launch config for PowerShell debugging
+- Rediscovering test when a test codeunit is renamed
+
 ## 0.10.1
 - Do not require restart of tests after selecting launch configuration to use, [issue 113](https://github.com/jimmymcp/al-test-runner/issues/113)
 - Fix issue where test codeunits not recognised when using namespaces, [issue 115](https://github.com/jimmymcp/al-test-runner/issues/115)
