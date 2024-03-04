@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { documentIsTestCodeunit, getALObjectOfDocument, getMethodRangesFromDocument } from './alFileHelper';
-import { filterCodeCoverageByLineNoRange, filterCodeCoverageByObject, getCodeCoveragePercentage, readCodeCoverage } from './CodeCoverage';
+import { filterCodeCoverageByLineNoRange, filterCodeCoverageByObject, getCodeCoveragePercentage, readCodeCoverage } from './codeCoverage';
 import { getCurrentWorkspaceConfig } from './config';
 import { CodeCoverageDisplay, CodeCoverageLine } from './types';
 
