@@ -213,20 +213,20 @@ export function getCodeCoveragePercentage(hitLines: number, totalLines: number):
 
 export function createCodeCoverageStatusBarItem(): vscode.StatusBarItem {
     codeCoverageStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right);
-    codeCoverageStatusBarItem.command = 'altestrunner.toggleCodeCoverage';
-    updateCodeCoverageStatusBarItemText();
+    codeCoverageStatusBarItem.command = {command: 'altestrunner.toggleCodeCoverage', title: 'Toggle Code Coverage'};
+    updateCodeCoverageStatusBarItemText(codeCoverageStatusBarItem);
     return codeCoverageStatusBarItem;
 }
 
-function updateCodeCoverageStatusBarItemText() {
-    codeCoverageStatusBarItem.text = `Code Coverage: ${codeCoverageDisplay}`;
+function updateCodeCoverageStatusBarItemText(statusBarItem: vscode.StatusBarItem) {
+    statusBarItem.text = `Code Coverage: ${codeCoverageDisplay}`;
     if (codeCoverageDisplay == CodeCoverageDisplay.Off) {
-        codeCoverageStatusBarItem.backgroundColor = undefined;
+        statusBarItem.backgroundColor = undefined;
     }
     else {
-        codeCoverageStatusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+        statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
     }
-    codeCoverageStatusBarItem.show();
+    statusBarItem.show();
 }
 
 export function toggleCodeCoverageDisplay(newCodeCoverageDisplay?: CodeCoverageDisplay) {
@@ -253,6 +253,6 @@ export function toggleCodeCoverageDisplay(newCodeCoverageDisplay?: CodeCoverageD
         }
     }
 
-    updateCodeCoverageStatusBarItemText();
+    updateCodeCoverageStatusBarItemText(codeCoverageStatusBarItem);
     updateCodeCoverageDecoration();
 }
