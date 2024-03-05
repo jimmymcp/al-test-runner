@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.10.3
+- Fixed code coverage status bar cannot be toggled [issue 127](https://github.com/jimmymcp/al-test-runner/issues/127)
+
 ## 0.10.2
 - Lots of contributions from [jwikman](https://github.com/jwikman) - thanks very much!
   - Handling utf-8 + BOM encoding in app.json
