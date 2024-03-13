@@ -14,7 +14,7 @@ jobs:
 
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@vv4.1.2
+      - uses: actions/checkout@v4.1.2
 
       - name: npm install, compile and test
         run: |
