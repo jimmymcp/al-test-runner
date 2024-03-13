@@ -7,7 +7,7 @@ import * as path from 'path';
 import * as types from './types';
 import { sendDebugEvent, sendTestDebugStartEvent, sendTestRunFinishedEvent, sendTestRunStartEvent } from './telemetry';
 import { buildTestCoverageFromTestItem } from './testCoverage';
-import { outputCodeCoverage, saveAllTestsCodeCoverage } from './codeCoverage';
+import { outputCodeCoverage, saveAllTestsCodeCoverage } from './coverage';
 import { readyToDebug } from './debug';
 
 export let numberOfTests: number;
