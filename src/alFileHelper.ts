@@ -27,7 +27,7 @@ export function documentIsTestCodeunit(document: vscode.TextDocument): boolean {
 		return false;
 	}
 
-	const text = document.getText(new vscode.Range(0, 0, 50, 0));
+	const text = document.getText();
 	return (text.match('Sub(t|T)ype *= *(t|T)est;') !== null);
 }
 
@@ -44,7 +44,7 @@ export function getDocumentIdAndName(document: vscode.TextDocument): string {
 }
 
 function getObjectDeclarationFromDocument(document: vscode.TextDocument): string | undefined {
-	const documentText = document.getText(new vscode.Range(0, 0, 10, 0));
+	const documentText = document.getText();
 	let matches = documentText.match(new RegExp(objectDeclarationRegEx, 'i'));
 	if (matches) {
 		return matches!.shift()!;
