@@ -15,14 +15,34 @@ function Get-CodeCoverage {
 
     Write-Host "Downloading code coverage to $CodeCoverageFile"
 
-    $Params = @{
-        Uri         = $ServiceUrl
-        Credential  = $Credential
-        Method      = 'Post'
-        ContentType = 'application/json'
+    if (Get-UrlIsForOData $ServiceUrl) {
+        $Params = @{
+            Uri         = $ServiceUrl
+            Credential  = $Credential
+            Method      = 'Post'
+            ContentType = 'application/json'
+        }
+        $Result = (Invoke-InvokeWebRequest $Params).Content | ConvertFrom-Json
+        $CodeCoverage = ConvertFrom-Csv $Result.value -Header ('ObjectType', 'ObjectID', 'LineType', 'LineNo', 'NoOfHits')
     }
-    $Result = (Invoke-InvokeWebRequest $Params).Content | ConvertFrom-Json
-    $CodeCoverage = ConvertFrom-Csv $Result.value -Header ('ObjectType', 'ObjectID', 'LineType', 'LineNo', 'NoOfHits')
+    else {
+        $Body = '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tes="urn:microsoft-dynamics-schemas/codeunit/TestRunner"><soapenv:Header/><soapenv:Body><tes:GetCodeCoverage/></soapenv:Body></soapenv:Envelope>'
+        $Headers = (@{SOAPAction = 'Read' })
+        $Params = @{
+            Uri         = $ServiceUrl
+            Method      = 'Post'
+            ContentType = 'application/xml'
+            Body        = $Body
+            Headers     = $Headers
+            Credential  = $Credential
+        }
+
+        $Result = (Invoke-InvokeWebRequest $Params).Content
+        [xml]$ResultXml = $Result
+        $Result = $ResultXml.Envelope.Body.GetCodeCoverage_Result.InnerText
+        $CodeCoverage = ConvertFrom-Csv $Result -Header ('ObjectType', 'ObjectID', 'LineType', 'LineNo', 'NoOfHits')
+    }
+
     Set-Content -Path $CodeCoverageFile -Value (ConvertTo-Json $CodeCoverage)
 }
 
