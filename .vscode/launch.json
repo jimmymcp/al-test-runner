@@ -38,6 +38,11 @@
 			"type": "PowerShell",
 			"request": "launch",
 			"script": "Import-Module \"${workspaceFolder}\\PowerShell\\ALTestRunner.psm1\""
+		},
+		{
+			"name": "PowerShell Attach to Host Process",
+			"type": "PowerShell",
+			"request": "attach"
 		}
 	]
 }
