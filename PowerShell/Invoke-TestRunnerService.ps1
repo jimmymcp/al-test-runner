@@ -14,28 +14,80 @@ function Invoke-TestRunnerService {
         $ServiceUrl = Get-ServiceUrl -Method 'RunTestsFromFilter'
         $CodeunitIDFilter = Get-FilterFromIDRanges
         $TestName = 'InitTestRunnerService'
-        $Body = "{`"codeunitIdFilter`": `"$CodeunitIDFilter`", `"testName`": `"$TestName`"}"
+        if (Get-UrlIsForOData $ServiceUrl) {
+            $Body = "{`"codeunitIdFilter`": `"$CodeunitIDFilter`", `"testName`": `"$TestName`"}"
+        }
+        else {
+            $Body = '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tes="urn:microsoft-dynamics-schemas/codeunit/TestRunner">
+            <soapenv:Header/>
+            <soapenv:Body>
+               <tes:RunTestsFromFilter>
+                  <tes:codeunitIdFilter>' + $CodeunitIDFilter + '</tes:codeunitIdFilter>
+                  <tes:testName>'+ $TestName + '</tes:testName>
+               </tes:RunTestsFromFilter>
+            </soapenv:Body>
+         </soapenv:Envelope>'
+        }
         Write-Host "Initialising test runner"
     }
     elseif ($FileName -ne '') {
         $ServiceUrl = Get-ServiceUrl -Method 'RunTest'
         $CodeunitId = Get-ObjectIdFromFile $FileName
         $TestName = Get-TestNameFromSelectionStart -Path $FileName -SelectionStart $SelectionStart
-        $Body = "{`"codeunitId`": $CodeunitId, `"testName`": `"$TestName`"}"
+        if (Get-UrlIsForOData $ServiceUrl) {
+            $Body = "{`"codeunitId`": $CodeunitId, `"testName`": `"$TestName`"}"
+        }
+        else {
+            $Body = '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tes="urn:microsoft-dynamics-schemas/codeunit/TestRunner">
+            <soapenv:Header/>
+            <soapenv:Body>
+               <tes:RunTest>
+                  <tes:codeunitId>'+ $CodeunitId + '</tes:codeunitId>
+                  <tes:testName>' + $TestName + '</tes:testName>
+               </tes:RunTest>
+            </soapenv:Body>
+         </soapenv:Envelope>'
+        }
     }
     else {
         $ServiceUrl = Get-ServiceUrl -Method 'RunTestsFromFilter'
         $CodeunitIDFilter = Get-FilterFromIDRanges
         $TestName = ''
-        $Body = "{`"codeunitIdFilter`": `"$CodeunitIDFilter`", `"testName`": `"$TestName`"}"
+        if (Get-UrlIsForOData $ServiceUrl) {
+            $Body = "{`"codeunitIdFilter`": `"$CodeunitIDFilter`", `"testName`": `"$TestName`"}"
+        }
+        else {
+            $Body = '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tes="urn:microsoft-dynamics-schemas/codeunit/TestRunner">
+            <soapenv:Header/>
+            <soapenv:Body>
+               <tes:RunTestsFromFilter>
+                  <tes:codeunitIdFilter>' + $CodeunitIDFilter + '</tes:codeunitIdFilter>
+                  <tes:testName>'+ $TestName + '</tes:testName>
+               </tes:RunTestsFromFilter>
+            </soapenv:Body>
+         </soapenv:Envelope>'
+        }
     }
 
-    $Params = @{
-        Uri         = $ServiceUrl
-        Credential  = $Credential
-        Method      = 'Post'
-        Body        = $Body
-        ContentType = 'application/json'
+    if (Get-UrlIsForOData $ServiceUrl) {
+        $Params = @{
+            Uri         = $ServiceUrl
+            Credential  = $Credential
+            Method      = 'Post'
+            Body        = $Body
+            ContentType = 'application/json'
+        }
+    }
+    else {
+        $Headers = (@{SOAPAction='Read'})
+        $Params = @{
+            Uri = $ServiceUrl
+            Method = 'Post'
+            ContentType = 'application/xml'
+            Body = $Body
+            Headers = $Headers
+            Credential  = $Credential
+        }
     }
     Invoke-InvokeWebRequest $Params | Out-Null
     if (!($Init.IsPresent)) {
