@@ -147,60 +147,6 @@ export function filterCodeCoverageByLineNoRange(codeCoverage: CodeCoverageLine[]
     });
 }
 
-export async function outputCodeCoverage() {
-    const codeCoverage: CodeCoverageLine[] = await readCodeCoverage();
-    let alObjects: ALObject[] = getALObjectsFromCodeCoverage(codeCoverage);
-    let coverageObjects: CodeCoverageObject[] = [];
-    let maxNoOfHitLinesLength: number = 0;
-    let maxNoOfLinesLength: number = 0;
-    let totalLinesHit: number = 0;
-    let totalLines: number = 0;
-    let totalCodeCoverage: number = 0;
-    let codeCoverageOutput: any[] = [];
-
-    for (let alObject of alObjects) {
-        const alFile = getALFileForALObject(alObject);
-
-        if (alFile && (!alFile.excludeFromCodeCoverage)) {
-            let objectCoverage: CodeCoverageLine[] = filterCodeCoverageByObject(codeCoverage, alFile.object, true);
-            let coverageObject: CodeCoverageObject = {
-                file: alFile,
-                noOfLines: objectCoverage.length,
-                noOfHitLines: filterCodeCoverageByObject(objectCoverage, alObject, false).length
-            };
-            coverageObject.coverage = getCodeCoveragePercentageForCoverageObject(coverageObject);
-            totalLines += coverageObject.noOfLines;
-            totalLinesHit += coverageObject.noOfHitLines;
-
-            coverageObjects.push(coverageObject);
-            if (coverageObject.noOfHitLines.toString().length > maxNoOfHitLinesLength) {
-                maxNoOfHitLinesLength = coverageObject.noOfHitLines.toString().length;
-            }
-            if (coverageObject.noOfLines.toString().length > maxNoOfLinesLength) {
-                maxNoOfLinesLength = coverageObject.noOfLines.toString().length;
-            }
-        }
-    };
-
-    if (totalLines !== 0) {
-        totalCodeCoverage = Math.round((totalLinesHit / totalLines) * 100);
-    }
-
-    const codeCoverageSummary = `Code Coverage ${totalCodeCoverage}% (${totalLinesHit}/${totalLines})`;
-
-    coverageObjects.forEach(element => {
-        codeCoverageOutput.push({
-            coverage: element.coverage!.toString() + '%',
-            hitLines: `${padString(element.noOfHitLines.toString(), maxNoOfHitLinesLength)} / ${padString(element.noOfLines.toString(), maxNoOfLinesLength)}`,
-            type: element.file.object.type,
-            name: element.file.object.name!,
-            path: element.file.path
-        });
-    });
-
-    writeTable(outputWriter, codeCoverageOutput, ['coverage', 'hitLines', 'type', 'name', 'path'], false, false, codeCoverageSummary);
-}
-
 function getCoverageObjectFromCodeCoverage(codeCoverage: CodeCoverageLine[], alFile: ALFile): CodeCoverageObject {
     let objectCoverage: CodeCoverageLine[] = filterCodeCoverageByObject(codeCoverage, alFile.object, true);
     let coverageObject: CodeCoverageObject = {

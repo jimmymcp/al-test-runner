@@ -6,9 +6,8 @@ import { ALTestAssembly, ALTestResult, ALMethod, DisabledTest, ALFile, launchCon
 import * as path from 'path';
 import { sendDebugEvent, sendTestDebugStartEvent, sendTestRunFinishedEvent, sendTestRunStartEvent } from './telemetry';
 import { buildTestCoverageFromTestItem } from './testCoverage';
-import { getALFilesInCoverage, getFileCoverage, getStatementCoverage, outputCodeCoverage, readCodeCoverage, saveAllTestsCodeCoverage, saveTestRunCoverage } from './coverage';
+import { getALFilesInCoverage, getFileCoverage, getStatementCoverage, readCodeCoverage, saveAllTestsCodeCoverage, saveTestRunCoverage } from './coverage';
 import { readyToDebug } from './debug';
-import { timeStamp } from 'console';
 
 export let numberOfTests: number;
 
@@ -541,10 +540,6 @@ async function outputTestResults(assemblies: ALTestAssembly[]): Promise<Boolean>
         setTimeout(() => {
             statusBarItem.dispose();
         }, 10000);
-
-		if (getCurrentWorkspaceConfig().enableCodeCoverage) {
-			await outputCodeCoverage();
-		}
 
 		outputWriter.show();
 		resolve(true);
