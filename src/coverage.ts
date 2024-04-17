@@ -5,8 +5,6 @@ import { ALFile, ALObject, CodeCoverageDisplay, CodeCoverageLine, CodeCoverageOb
 import { activeEditor, passingTestDecorationType, outputWriter } from './extension';
 import { join, basename, dirname } from 'path';
 import { getALTestRunnerConfig } from './config';
-import { padString, writeTable } from './output';
-import { resolve } from 'dns';
 
 let codeCoverageStatusBarItem: vscode.StatusBarItem;
 let codeCoverageDisplay: CodeCoverageDisplay = CodeCoverageDisplay.Off;

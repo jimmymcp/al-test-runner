@@ -14,9 +14,7 @@ export function getALObjectFromPath(path: string): ALObject {
 	const objectDeclaration = getObjectDeclarationFromText(text);
 	if (objectDeclaration) {
 		let alObject = getALObjectFromDeclaration(objectDeclaration);
-		if (alObject) {
-			return alObject
-		}
+		return alObject!;
 	}
 	return { id: 0, name: '', type: '' };
 }
