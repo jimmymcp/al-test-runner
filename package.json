@@ -18,7 +18,7 @@
 	],
 	"version": "10.11.0",
 	"engines": {
-		"vscode": ">=1.63.0"
+		"vscode": ">=1.88.0"
 	},
 	"categories": [
 		"Testing"
@@ -376,12 +376,12 @@
 		"@types/mocha": "^5.2.6",
 		"@types/node": "^10.17.60",
 		"@types/sinon": "^7.5.2",
-		"@types/vscode": "^1.59.0",
+		"@types/vscode": "^1.88.0",
 		"glob": "^7.1.7",
 		"mocha": "^10.2.0",
 		"sinon": "^7.5.0",
 		"tslint": "^5.20.1",
-		"typescript": "^3.9.10",
+		"typescript": "^4.6.3",
 		"@vscode/test-electron": "^2.3.9"
 	},
 	"dependencies": {
