@@ -16,7 +16,7 @@
 	"files": [
 		"PowerShell/"
 	],
-	"version": "0.10.3",
+	"version": "0.11.0",
 	"engines": {
 		"vscode": ">=1.88.0"
 	},
