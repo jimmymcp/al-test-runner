@@ -9,15 +9,20 @@ import { sendDebugEvent } from './telemetry';
 import { getOutputWriter, writeTable } from './output';
 import * as types from './types';
 
+export function getALObjectFromPath(path: string): ALObject {
+	const text = readFileSync(path, { encoding: 'utf-8' });
+	const objectDeclaration = getObjectDeclarationFromText(text);
+	if (objectDeclaration) {
+		let alObject = getALObjectFromDeclaration(objectDeclaration);
+		return alObject!;
+	}
+	return { id: 0, name: '', type: '' };
+}
+
 export function getALObjectOfDocument(document: vscode.TextDocument): ALObject | undefined {
 	const objectDeclaration = getObjectDeclarationFromDocument(document);
 	if (objectDeclaration) {
-		let ALObject: ALObject = {
-			type: objectDeclaration.substr(0, objectDeclaration.indexOf(' ')),
-			id: parseInt(objectDeclaration.substring(objectDeclaration.indexOf(' ') + 1)),
-			name: getDocumentName(document)
-		};
-		return ALObject;
+		return getALObjectFromDeclaration(objectDeclaration);
 	}
 	return undefined;
 }
@@ -27,32 +32,56 @@ export function documentIsTestCodeunit(document: vscode.TextDocument): boolean {
 		return false;
 	}
 
-	const text = document.getText(new vscode.Range(0, 0, 50, 0));
+	const text = document.getText();
 	return (text.match('Sub(t|T)ype *= *(t|T)est;') !== null);
 }
 
 export function getDocumentIdAndName(document: vscode.TextDocument): string {
 	const objectDeclaration = getObjectDeclarationFromDocument(document);
 	if (objectDeclaration) {
-		let matches = objectDeclaration.match('\\d+ .*');
-		if (matches) {
-			return matches.shift()!.replace(/"/g, '');
-		}
+		return getIdAndNameFromObjectDeclaration(objectDeclaration);
+	}
+
+	return '';
+}
+
+function getIdAndNameFromObjectDeclaration(declaration: string): string {
+	let matches = declaration.match('\\d+ .*');
+	if (matches) {
+		return matches.shift()!.replace(/"/g, '');
 	}
 
 	return '';
 }
 
 function getObjectDeclarationFromDocument(document: vscode.TextDocument): string | undefined {
-	const documentText = document.getText(new vscode.Range(0, 0, 10, 0));
-	let matches = documentText.match(new RegExp(objectDeclarationRegEx, 'i'));
+	const documentText = document.getText();
+	return getObjectDeclarationFromText(documentText);
+}
+
+function getObjectDeclarationFromText(text: string): string | undefined {
+	let matches = text.match(new RegExp(objectDeclarationRegEx, 'i'));
 	if (matches) {
 		return matches!.shift()!;
 	}
 }
 
+function getALObjectFromDeclaration(declaration: string): ALObject | undefined {
+	let ALObject: ALObject = {
+		type: declaration.substr(0, declaration.indexOf(' ')),
+		id: parseInt(declaration.substring(declaration.indexOf(' ') + 1)),
+		name: getObjectNameFromText(declaration)
+	};
+	return ALObject;
+}
+
 export function getDocumentName(document: vscode.TextDocument): string {
 	const idAndName = getDocumentIdAndName(document);
+	return idAndName.substr(idAndName.indexOf(' ') + 1);
+}
+
+function getObjectNameFromText(declaration: string): string {
+	const idAndName = getIdAndNameFromObjectDeclaration(declaration);
 	return idAndName.substr(idAndName.indexOf(' ') + 1);
 }
 
@@ -197,7 +226,7 @@ export function getTestFolderPath(): string | undefined {
 	if (workspaceFolder) {
 		return workspaceFolder;
 	}
-	
+
 	vscode.window.showErrorMessage(`Could not find a test workspace folder with name "${config.testFolderName}". Please check the Test Folder Name setting.`, 'Open Settings').then(button => {
 		if (button == 'Open Settings') {
 			vscode.commands.executeCommand('workbench.action.openSettings2');

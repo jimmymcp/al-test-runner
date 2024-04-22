@@ -159,7 +159,7 @@ function Invoke-RunTests {
             $AttemptNo++
             Write-Host "Error occurred ($_)" -ForegroundColor Magenta
             Write-Host "Testing company set in config file exists in the container" -ForegroundColor Cyan
-            $NewCompanyName = Test-CompanyExists
+            $NewCompanyName = Test-CompanyExists -LaunchConfig $LaunchConfig
 
             if (![string]::IsNullOrEmpty($NewCompanyName)) {
                 $Params.Remove('companyName')

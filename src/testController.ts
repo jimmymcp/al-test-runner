@@ -1,22 +1,34 @@
 import * as vscode from 'vscode';
-import { documentIsTestCodeunit, getALFilesInWorkspace, getALObjectOfDocument, getFilePathOfObject, getTestMethodRangesFromDocument } from './alFileHelper';
+import { documentIsTestCodeunit, getALFilesInWorkspace, getALObjectFromPath, getALObjectOfDocument, getFilePathOfObject, getTestMethodRangesFromDocument } from './alFileHelper';
 import { getALTestRunnerConfig, getCurrentWorkspaceConfig, getLaunchConfiguration, launchConfigIsValid, selectLaunchConfig, setALTestRunnerConfig } from './config';
 import { alTestController, attachDebugger, getAppJsonKey, initDebugTest, invokeDebugTest, invokeTestRunner, outputWriter } from './extension';
-import { ALTestAssembly, ALTestResult, ALMethod, DisabledTest } from './types';
+import { ALTestAssembly, ALTestResult, ALMethod, DisabledTest, ALFile, launchConfigValidity, CodeCoverageDisplay } from './types';
 import * as path from 'path';
-import * as types from './types';
 import { sendDebugEvent, sendTestDebugStartEvent, sendTestRunFinishedEvent, sendTestRunStartEvent } from './telemetry';
 import { buildTestCoverageFromTestItem } from './testCoverage';
-import { outputCodeCoverage, saveAllTestsCodeCoverage } from './codeCoverage';
+import { getALFilesInCoverage, getFileCoverage, getStatementCoverage, readCodeCoverage, saveAllTestsCodeCoverage, saveTestRunCoverage } from './coverage';
 import { readyToDebug } from './debug';
 
 export let numberOfTests: number;
 
 export function createTestController(controllerId: string = 'alTestController'): vscode.TestController {
     const alTestController = vscode.tests.createTestController(controllerId, 'AL Tests');
-    alTestController.createRunProfile('Run', vscode.TestRunProfileKind.Run, request => {
+    const profile = alTestController.createRunProfile('Run', vscode.TestRunProfileKind.Run, request => {
         runTestHandler(request);
     });
+
+    profile.loadDetailedCoverage = async (testRun: vscode.TestRun, fileCoverage: vscode.FileCoverage, token: vscode.CancellationToken) => {
+        return new Promise(async (resolve) => {
+            let alFile: ALFile = {
+                path: fileCoverage.uri.fsPath,
+                object: getALObjectFromPath(fileCoverage.uri.fsPath),
+                excludeFromCodeCoverage: false
+            }
+
+            resolve(getStatementCoverage(await readCodeCoverage(CodeCoverageDisplay.All, testRun), alFile));
+        });
+    };
+
     alTestController.createRunProfile('Debug', vscode.TestRunProfileKind.Debug, request => {
         debugTestHandler(request);
     });
@@ -65,7 +77,8 @@ export async function discoverTestsInDocument(document: vscode.TextDocument) {
 }
 
 export async function runTestHandler(request: vscode.TestRunRequest) {
-    const run = alTestController.createTestRun(request);
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const run = alTestController.createTestRun(request, timestamp);
     sendTestRunStartEvent(request);
 
     let results: ALTestAssembly[];
@@ -94,6 +107,14 @@ export async function runTestHandler(request: vscode.TestRunRequest) {
 
     setResultsForTestItems(results, request, run);
 
+    if (getCurrentWorkspaceConfig().enableCodeCoverage) {
+        await saveTestRunCoverage(run);
+        const codeCoverage = await readCodeCoverage(CodeCoverageDisplay.All, run);
+        getALFilesInCoverage(codeCoverage).forEach(alFile => {
+            run.addCoverage(getFileCoverage(codeCoverage, alFile));
+        });
+    }
+
     run.end();
     sendTestRunFinishedEvent(request);
     if (results.length > 0) {
@@ -108,7 +129,9 @@ function setResultsForTestItems(results: ALTestAssembly[], request: vscode.TestR
 
     let testItems: vscode.TestItem[] = [];
     if (request.include) {
-        testItems = request.include;
+        request.include.forEach(testItem => {
+            testItems.push(testItem);
+        })
     }
     else {
         alTestController.items.forEach(testCodeunit => {
@@ -134,7 +157,7 @@ export function readyToRunTests(): Promise<Boolean> {
     return new Promise(async (resolve) => {
         sendDebugEvent('readyToRunTests-start');
 
-        if (launchConfigIsValid() == types.launchConfigValidity.Invalid) {
+        if (launchConfigIsValid() == launchConfigValidity.Invalid) {
             sendDebugEvent('readyToRunTests-launchConfigNotValid');
             //clear the credentials and company name if the launch config is not valid
             setALTestRunnerConfig('userName', '');
@@ -144,7 +167,7 @@ export function readyToRunTests(): Promise<Boolean> {
             await selectLaunchConfig();
         }
 
-        if (launchConfigIsValid() == types.launchConfigValidity.Valid) {
+        if (launchConfigIsValid() == launchConfigValidity.Valid) {
             sendDebugEvent('readyToRunTests-launchConfigIsValid');
             resolve(true);
         }
@@ -447,7 +470,7 @@ export function getTestItemForMethod(method: ALMethod): vscode.TestItem | undefi
     }
 }
 
-async function outputTestResults(assemblies: types.ALTestAssembly[]): Promise<Boolean> {
+async function outputTestResults(assemblies: ALTestAssembly[]): Promise<Boolean> {
 	return new Promise(async (resolve) => {
 		let noOfTests: number = 0;
 		let noOfFailures: number = 0;
@@ -517,10 +540,6 @@ async function outputTestResults(assemblies: types.ALTestAssembly[]): Promise<Bo
         setTimeout(() => {
             statusBarItem.dispose();
         }, 10000);
-
-		if (getCurrentWorkspaceConfig().enableCodeCoverage) {
-			await outputCodeCoverage();
-		}
 
 		outputWriter.show();
 		resolve(true);
