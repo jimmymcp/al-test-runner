@@ -294,7 +294,7 @@
 						"type": "boolean",
 						"scope": "resource",
 						"description": "Outputs code coverage statistics with test results and decorates covered lines with the Toggle Code Coverage command. See also the Code Coverage Path extension setting and key in the AL Test Runner config.json file.",
-						"default": false
+						"default": true
 					},
 					"al-test-runner.enablePerformanceProfiler": {
 						"type": "boolean",

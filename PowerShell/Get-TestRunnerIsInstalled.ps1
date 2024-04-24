@@ -3,6 +3,9 @@ function Get-TestRunnerIsInstalled {
         [string]$ContainerName
     )
 
+    # this takes ages, just return false and attempt to install the service app whenever the service url is not populated
+    return $false
+
     Invoke-CommandOnDockerHost {
         Param($ContainerName)
         if ($null -eq (Get-BcContainerAppInfo $ContainerName | Where-Object Name -eq 'Test Runner Service')) {
