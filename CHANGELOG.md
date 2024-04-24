@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.11.1
+- Don't test if the Test Runner Service app is installed (Get-BCContainerAppInfo is slow), just attempt to install the app if the service URL is not populated in config.json
+- enableCodeCoverage by default
+
 ## 0.11.0
 - Extend range for object declarations (better support for namespaces). [Issue 135](https://github.com/jimmymcp/al-test-runner/issues/135)
 - Support for using SOAP endpoint for interacting with test runner service (workaround for issue downloading code coverage / performance profile in BC24 containers using REST) [Issue 134](https://github.com/jimmymcp/al-test-runner/issues/134)
