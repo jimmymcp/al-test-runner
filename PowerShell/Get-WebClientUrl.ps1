@@ -12,7 +12,7 @@ function Get-WebClientUrl {
     $Url += Get-ValueFromLaunchJson -KeyName 'serverInstance' -LaunchConfig $LaunchConfig
     $Params = Get-ServiceUrl
     $Params = $Params.Substring($Params.IndexOf('?'))
-    return $Url + $Params
+    return "$Url/$Params&company=$(Get-ValueFromALTestRunnerConfig -KeyName companyName)"
 }
 
 Export-ModuleMember -Function Get-WebClientUrl
