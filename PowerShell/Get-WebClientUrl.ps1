@@ -5,7 +5,7 @@ function Get-WebClientUrl {
     )
 
     $Url = Get-ServerFromLaunchJson -IncludeProtocol -LaunchConfig $LaunchConfig
-    if ($Url.Substring($Url.Length) -ne '/') {
+    if ($Url.Substring($Url.Length - 1) -ne '/') {
         $Url += '/'
     }
 
