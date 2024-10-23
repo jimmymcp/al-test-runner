@@ -118,21 +118,25 @@ export function getLaunchJsonPath() {
 	return getTestFolderPath() + '\\.vscode\\launch.json';
 }
 
-export async function selectLaunchConfig() {
-	sendDebugEvent('selectLaunchConfig-start');
+export async function selectLaunchConfig(): Promise<string | undefined> {
+	return new Promise(async resolve => {
 
-	let debugConfigurations = getDebugConfigurationsFromLaunchJson('launch');
-	let selectedConfig;
+		sendDebugEvent('selectLaunchConfig-start');
 
-	if (debugConfigurations.length === 1) {
-		selectedConfig = debugConfigurations.shift()!.name;
-	}
-	else if (debugConfigurations.length > 1) {
-		let configNames: Array<string> = debugConfigurations.map(element => element.name);
-		selectedConfig = await vscode.window.showQuickPick(configNames, { canPickMany: false, placeHolder: 'Please select a configuration to run tests against' });
-	}
+		let debugConfigurations = getDebugConfigurationsFromLaunchJson('launch');
+		let selectedConfig;
 
-	setALTestRunnerConfig('launchConfigName', selectedConfig);
+		if (debugConfigurations.length === 1) {
+			selectedConfig = debugConfigurations.shift()!.name;
+		}
+		else if (debugConfigurations.length > 1) {
+			let configNames: Array<string> = debugConfigurations.map(element => element.name);
+			selectedConfig = await vscode.window.showQuickPick(configNames, { canPickMany: false, placeHolder: 'Please select a configuration to run tests against' });
+		}
+
+		setALTestRunnerConfig('launchConfigName', selectedConfig);
+		resolve(selectedConfig);
+	});
 }
 
 export function getCurrentWorkspaceConfig(forTestFolder: boolean = true) {
@@ -147,6 +151,23 @@ export function getCurrentWorkspaceConfig(forTestFolder: boolean = true) {
 	else {
 		return vscode.workspace.getConfiguration('al-test-runner');
 	}
+}
+
+//get the launch config currently selected as the config for test runner
+//if not specified then select one
+export async function getALTestRunnerLaunchConfig(): Promise<any> {
+	return new Promise<any>(async resolve => {
+
+		let launchConfig = getALTestRunnerConfig().launchConfigName;
+		if (!launchConfig) {
+			let selectedConfig = await selectLaunchConfig();
+			if (selectedConfig) {
+				launchConfig = selectedConfig;
+			}
+		}
+		
+		resolve(JSON.parse(getLaunchConfiguration(launchConfig)));
+	})
 }
 
 export function getLaunchConfiguration(configName: string): string {

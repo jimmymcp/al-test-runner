@@ -356,7 +356,7 @@ export function getTerminalName() {
 	return 'al-test-runner';
 }
 
-export function getALTestRunnerTerminal(terminalName: string): vscode.Terminal {
+export function getALTestRunnerTerminal(terminalName: string = getTerminalName()): vscode.Terminal {
 	sendDebugEvent('getALTestRunnerTerminal-start', { terminalName: terminalName });
 	let terminals = vscode.window.terminals.filter(element => element.name === terminalName);
 	let terminal;

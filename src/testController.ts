@@ -8,6 +8,7 @@ import { sendDebugEvent, sendTestDebugStartEvent, sendTestRunFinishedEvent, send
 import { buildTestCoverageFromTestItem } from './testCoverage';
 import { getALFilesInCoverage, getFileCoverage, getStatementCoverage, readCodeCoverage, saveAllTestsCodeCoverage, saveTestRunCoverage } from './coverage';
 import { readyToDebug } from './debug';
+import { discoverPageScripts, runPageScript, testItemIsPageScript } from './pageScripting';
 
 export let numberOfTests: number;
 
@@ -42,6 +43,15 @@ export async function discoverTests() {
         const document = await vscode.workspace.openTextDocument(alFile.path);
         discoverTestsInDocument(document);
     });
+
+    const pageScripts = await discoverPageScripts(alTestController);
+    if (pageScripts) {
+        const pageScriptsItem = alTestController.createTestItem('Page Scripts', 'Page Scripts');
+        pageScripts.forEach(pageScript => {
+            pageScriptsItem.children.add(pageScript);
+        });
+        alTestController.items.add(pageScriptsItem)
+    }
 }
 
 export async function discoverTestsInFileName(fileName: string) {
@@ -91,6 +101,11 @@ export async function runTestHandler(request: vscode.TestRunRequest) {
     }
     else {
         const testItem = request.include![0];
+
+        if (testItemIsPageScript(testItem)) {
+            runPageScript(testItem);
+        }
+
         let lineNumber: number = 0;
         let filename: string;
         if (testItem.parent) {
@@ -178,7 +193,7 @@ export function readyToRunTests(): Promise<Boolean> {
 }
 
 export async function runTest(filename?: string, selectionStart?: number, extensionId?: string, extensionName?: string): Promise<ALTestAssembly[]> {
-    sendDebugEvent('runTest-start', { filename: filename ? filename : 'undefined', selectionStart: selectionStart ? selectionStart.toString() : '0', extensionId: extensionId ? extensionId : 'undefined', extensionName: extensionName ? extensionName : 'undefined'});
+    sendDebugEvent('runTest-start', { filename: filename ? filename : 'undefined', selectionStart: selectionStart ? selectionStart.toString() : '0', extensionId: extensionId ? extensionId : 'undefined', extensionName: extensionName ? extensionName : 'undefined' });
     return new Promise(async (resolve) => {
         await readyToRunTests().then(async ready => {
             if (ready) {
