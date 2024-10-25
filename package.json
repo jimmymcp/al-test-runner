@@ -16,7 +16,7 @@
 	"files": [
 		"PowerShell/"
 	],
-	"version": "10.13.1",
+	"version": "10.13.2",
 	"engines": {
 		"vscode": ">=1.88.0"
 	},
@@ -400,6 +400,7 @@
 		"@types/xml2js": "^0.4.9",
 		"@vscode/extension-telemetry": "0.5.0",
 		"child-shell": "^5.0.0",
+		"node-powershell": "^5.0.1",
 		"sanitize-filename": "^1.6.3",
 		"xml2js": "^0.5.0"
 	},
