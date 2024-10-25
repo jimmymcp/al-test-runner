@@ -1,13 +1,14 @@
 import * as vscode from 'vscode';
 import { documentIsTestCodeunit, getALFilesInWorkspace, getALObjectFromPath, getALObjectOfDocument, getFilePathOfObject, getTestMethodRangesFromDocument } from './alFileHelper';
 import { getALTestRunnerConfig, getCurrentWorkspaceConfig, getLaunchConfiguration, launchConfigIsValid, selectLaunchConfig, setALTestRunnerConfig } from './config';
-import { alTestController, attachDebugger, getAppJsonKey, initDebugTest, invokeDebugTest, invokeTestRunner, outputWriter } from './extension';
+import { alTestController, attachDebugger, getAppJsonKey, invokeDebugTest, invokeTestRunner, outputWriter } from './extension';
 import { ALTestAssembly, ALTestResult, ALMethod, DisabledTest, ALFile, launchConfigValidity, CodeCoverageDisplay } from './types';
 import * as path from 'path';
 import { sendDebugEvent, sendTestDebugStartEvent, sendTestRunFinishedEvent, sendTestRunStartEvent } from './telemetry';
 import { buildTestCoverageFromTestItem } from './testCoverage';
 import { getALFilesInCoverage, getFileCoverage, getStatementCoverage, readCodeCoverage, saveAllTestsCodeCoverage, saveTestRunCoverage } from './coverage';
 import { readyToDebug } from './debug';
+import { discoverPageScripts, runPageScript, testItemIsPageScript } from './pageScripting';
 
 export let numberOfTests: number;
 
@@ -32,6 +33,9 @@ export function createTestController(controllerId: string = 'alTestController'):
     alTestController.createRunProfile('Debug', vscode.TestRunProfileKind.Debug, request => {
         debugTestHandler(request);
     });
+
+    alTestController.refreshHandler = async () => { discoverTests() };
+
     return alTestController;
 }
 
@@ -42,6 +46,15 @@ export async function discoverTests() {
         const document = await vscode.workspace.openTextDocument(alFile.path);
         discoverTestsInDocument(document);
     });
+
+    const pageScripts = await discoverPageScripts(alTestController);
+    const pageScriptsItem = alTestController.createTestItem('Page Scripts', 'Page Scripts');
+
+    pageScripts.forEach(pageScript => {
+        pageScriptsItem.children.add(pageScript);
+    });
+
+    alTestController.items.add(pageScriptsItem)
 }
 
 export async function discoverTestsInFileName(fileName: string) {
@@ -91,18 +104,24 @@ export async function runTestHandler(request: vscode.TestRunRequest) {
     }
     else {
         const testItem = request.include![0];
-        let lineNumber: number = 0;
-        let filename: string;
-        if (testItem.parent) {
-            lineNumber = testItem.range!.start.line;
-            filename = testItem.parent!.uri!.fsPath;
+
+        if (testItemIsPageScript(testItem)) {
+            results = await runPageScript(testItem);
         }
         else {
-            filename = testItem.uri!.fsPath;
-        }
+            let lineNumber: number = 0;
+            let filename: string;
+            if (testItem.parent) {
+                lineNumber = testItem.range!.start.line;
+                filename = testItem.parent!.uri!.fsPath;
+            }
+            else {
+                filename = testItem.uri!.fsPath;
+            }
 
-        results = await runTest(filename, lineNumber);
-        buildTestCoverageFromTestItem(testItem);
+            results = await runTest(filename, lineNumber);
+            buildTestCoverageFromTestItem(testItem);
+        }
     }
 
     setResultsForTestItems(results, request, run);
@@ -178,7 +197,7 @@ export function readyToRunTests(): Promise<Boolean> {
 }
 
 export async function runTest(filename?: string, selectionStart?: number, extensionId?: string, extensionName?: string): Promise<ALTestAssembly[]> {
-    sendDebugEvent('runTest-start', { filename: filename ? filename : 'undefined', selectionStart: selectionStart ? selectionStart.toString() : '0', extensionId: extensionId ? extensionId : 'undefined', extensionName: extensionName ? extensionName : 'undefined'});
+    sendDebugEvent('runTest-start', { filename: filename ? filename : 'undefined', selectionStart: selectionStart ? selectionStart.toString() : '0', extensionId: extensionId ? extensionId : 'undefined', extensionName: extensionName ? extensionName : 'undefined' });
     return new Promise(async (resolve) => {
         await readyToRunTests().then(async ready => {
             if (ready) {
@@ -289,11 +308,9 @@ export async function debugTest(filename: string, selectionStart: number) {
     }
 
     const ready = await readyToDebug();
-	if (!ready) {
-		vscode.window.showErrorMessage('AL Test Runner is not ready to debug. Please check that the Test Runner Service app is installed and the testRunnerServiceUrl in config.json is correct.');
+    if (!ready) {
+        vscode.window.showErrorMessage('AL Test Runner is not ready to debug. Please check that the Test Runner Service app is installed and the testRunnerServiceUrl in config.json is correct.');
     }
-
-    initDebugTest(filename);
 
     await attachDebugger();
     invokeDebugTest(filename, selectionStart);
@@ -471,63 +488,63 @@ export function getTestItemForMethod(method: ALMethod): vscode.TestItem | undefi
 }
 
 async function outputTestResults(assemblies: ALTestAssembly[]): Promise<Boolean> {
-	return new Promise(async (resolve) => {
-		let noOfTests: number = 0;
-		let noOfFailures: number = 0;
-		let noOfSkips: number = 0;
-		let totalTime: number = 0;
+    return new Promise(async (resolve) => {
+        let noOfTests: number = 0;
+        let noOfFailures: number = 0;
+        let noOfSkips: number = 0;
+        let totalTime: number = 0;
 
-		if (assemblies.length > 0) {
-			outputWriter.clear();
-		}
+        if (assemblies.length > 0) {
+            outputWriter.clear();
+        }
 
-		for (let assembly of assemblies) {
-			noOfTests += parseInt(assembly.$.total);
-			const assemblyTime = parseFloat(assembly.$.time);
-			totalTime += assemblyTime;
-			const failed = parseInt(assembly.$.failed);
-			noOfFailures += failed;
-			const skipped = parseInt(assembly.$.skipped);
-			noOfSkips += skipped;
+        for (let assembly of assemblies) {
+            noOfTests += parseInt(assembly.$.total);
+            const assemblyTime = parseFloat(assembly.$.time);
+            totalTime += assemblyTime;
+            const failed = parseInt(assembly.$.failed);
+            noOfFailures += failed;
+            const skipped = parseInt(assembly.$.skipped);
+            noOfSkips += skipped;
 
-			if (failed > 0) {
-				outputWriter.write('❌ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
-			}
-			else {
-				outputWriter.write('✅ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
-			}
-			for (let test of assembly.collection[0].test) {
-				const testTime = parseFloat(test.$.time);
-				let filePath = '';
-				const codeunitName = assembly.$.name.substring(assembly.$.name.indexOf(' ') + 1);
-				switch (test.$.result) {
-					case 'Pass':
-						outputWriter.write('\t✅ ' + test.$.method + '\t' + testTime.toFixed(2) + 's');
-						break;
-					case 'Skip':
-						filePath = await getFilePathOfObject({ type: 'codeunit', id: 0, name: codeunitName }, test.$.method);
-						outputWriter.write('\t❓ ' + test.$.method + '\t' + testTime.toFixed(2) + 's ' + filePath);
-						break;
-					case 'Fail':
-						filePath = await getFilePathOfObject({ type: 'codeunit', id: 0, name: codeunitName }, test.$.method);
-						outputWriter.write('\t❌ ' + test.$.method + '\t' + testTime.toFixed(2) + "s " + filePath);
-						outputWriter.write('\t\t' + test.failure[0].message);
-						break;
-					default:
-						break;
-				}
-			}
-		}
+            if (failed > 0) {
+                outputWriter.write('❌ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
+            }
+            else {
+                outputWriter.write('✅ ' + assembly.$.name + '\t' + assemblyTime.toFixed(2) + 's');
+            }
+            for (let test of assembly.collection[0].test) {
+                const testTime = parseFloat(test.$.time);
+                let filePath = '';
+                const codeunitName = assembly.$.name.substring(assembly.$.name.indexOf(' ') + 1);
+                switch (test.$.result) {
+                    case 'Pass':
+                        outputWriter.write('\t✅ ' + test.$.method + '\t' + testTime.toFixed(2) + 's');
+                        break;
+                    case 'Skip':
+                        filePath = assembly.$.name == 'Page Scripts' ? '' : await getFilePathOfObject({ type: 'codeunit', id: 0, name: codeunitName }, test.$.method);
+                        outputWriter.write('\t❓ ' + test.$.method + '\t' + testTime.toFixed(2) + 's ' + filePath);
+                        break;
+                    case 'Fail':
+                        filePath = assembly.$.name == 'Page Scripts' ? '' : await getFilePathOfObject({ type: 'codeunit', id: 0, name: codeunitName }, test.$.method);
+                        outputWriter.write('\t❌ ' + test.$.method + '\t' + testTime.toFixed(2) + "s " + filePath);
+                        outputWriter.write('\t\t' + test.failure[0].message);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
 
         let statusBarItem = vscode.window.createStatusBarItem('altestrunner.summary', vscode.StatusBarAlignment.Right);
         let summaryText, backgroundColor: string;
 
-		if ((noOfFailures + noOfSkips) === 0) {
+        if ((noOfFailures + noOfSkips) === 0) {
             summaryText = `✅ ${noOfTests} test(s) ran in ${totalTime.toFixed(2)}s at ${assemblies[0].$!["run-time"]}`;
             backgroundColor = 'statusBarItem.prominentBackground';
-		}
-		else {
-			summaryText = `❌ ${noOfTests} test(s) ran in ${totalTime.toFixed(2)}s - ${noOfFailures + noOfSkips} test(s) failed/skipped at ${assemblies[0].$!["run-time"]}`;
+        }
+        else {
+            summaryText = `❌ ${noOfTests} test(s) ran in ${totalTime.toFixed(2)}s - ${noOfFailures + noOfSkips} test(s) failed/skipped at ${assemblies[0].$!["run-time"]}`;
             backgroundColor = 'statusBarItem.errorBackground';
         }
 
@@ -541,7 +558,7 @@ async function outputTestResults(assemblies: ALTestAssembly[]): Promise<Boolean>
             statusBarItem.dispose();
         }, 10000);
 
-		outputWriter.show();
-		resolve(true);
-	});
+        outputWriter.show();
+        resolve(true);
+    });
 }
