@@ -7,7 +7,7 @@ import { updateCodeCoverageDecoration, createCodeCoverageStatusBarItem } from '.
 import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getTestFolderPath, getTestMethodRangesFromDocument } from './alFileHelper';
 import { getALTestRunnerPath, getCurrentWorkspaceConfig, getDebugConfigurationsFromLaunchJson, getLaunchJsonPath } from './config';
 import { getOutputWriter, OutputWriter } from './output';
-import { createTestController, deleteTestItemForFilename, discoverTests, discoverTestsInDocument, discoverTestsInFileName } from './testController';
+import { createTestController, discoverTests, discoverTestsInDocument } from './testController';
 import { onChangeAppFile, publishApp } from './publish';
 import { awaitFileExistence } from './file';
 import { join } from 'path';
@@ -101,17 +101,11 @@ export function activate(context: vscode.ExtensionContext) {
 	}, null, context.subscriptions);
 
 	vscode.workspace.onDidRenameFiles(event => {
-		event.files.forEach(rename => {
-			deleteTestItemForFilename(rename.oldUri.fsPath);
-			discoverTestsInFileName(rename.newUri.fsPath);
-		});
+		discoverTests();
 	});
 
 	vscode.workspace.onDidCreateFiles(event => {
-		event.files.forEach(file => {
-			deleteTestItemForFilename(file.fsPath);
-			discoverTestsInFileName(file.fsPath);
-		});
+		discoverTests();
 	});
 
 	vscode.workspace.onDidChangeTextDocument(event => {
@@ -193,14 +187,6 @@ async function readTestResults(uri: vscode.Uri): Promise<types.ALTestAssembly[]>
 
 		resolve(assemblies);
 	});
-}
-
-export function initDebugTest(filename: string) {
-	terminal = getALTestRunnerTerminal(getTerminalName());
-	terminal.sendText(' ');
-	terminal.show(true);
-	terminal.sendText('cd "' + getTestFolderPath() + '"');
-	terminal.sendText('Invoke-TestRunnerService -FileName "' + filename + '" -Init');
 }
 
 export function invokeDebugTest(filename: string, selectionStart: number) {
@@ -295,7 +281,7 @@ function updateDecorations() {
 
 						if (config.highlightFailingLine) {
 							const failingLineRange = getRangeOfFailingLineFromCallstack(test.failure[0]["stack-trace"][0], test.$.method, activeEditor!.document);
-							if (failingLineRange !== undefined) {
+							if (failingLineRange) {
 								const decoration: vscode.DecorationOptions = { range: failingLineRange, hoverMessage: hoverMessage };
 								failingLines.push(decoration);
 							}
@@ -364,7 +350,7 @@ export function getTerminalName() {
 	return 'al-test-runner';
 }
 
-export function getALTestRunnerTerminal(terminalName: string): vscode.Terminal {
+export function getALTestRunnerTerminal(terminalName: string = getTerminalName()): vscode.Terminal {
 	sendDebugEvent('getALTestRunnerTerminal-start', { terminalName: terminalName });
 	let terminals = vscode.window.terminals.filter(element => element.name === terminalName);
 	let terminal;
