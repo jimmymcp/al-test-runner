@@ -270,6 +270,6 @@ export async function getContainerPasswordFromALTestRunnerConfig(): Promise<stri
 
         const command = `[System.Runtime.InteropServices.Marshal]::PtrToStringAuto([System.Runtime.InteropServices.Marshal]::SecureStringToBSTR((ConvertTo-SecureString -String '${securePassword}')))`;
         const result = await invokePowerShellCommand(command);
-        resolve(result.raw);
+        resolve(result);
     });
 }
