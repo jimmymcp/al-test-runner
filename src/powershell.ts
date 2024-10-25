@@ -1,10 +1,10 @@
-import { InvocationResult, PowerShell } from 'node-powershell';
+import * as pwsh from 'node-powershell';
 import { getTestFolderPath } from './alFileHelper';
 
-export async function invokePowerShellCommand(command: string, cwd: string = getTestFolderPath() ?? ''): Promise<InvocationResult> {
+export async function invokePowerShellCommand(command: string, cwd: string = getTestFolderPath() ?? ''): Promise<pwsh.InvocationResult> {
     return new Promise(async resolve => {
 
-        const ps = new PowerShell({
+        const ps = new pwsh.PowerShell({
             pwsh: true,
             spawnOptions: {
                 cwd: cwd
