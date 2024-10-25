@@ -281,7 +281,7 @@ function updateDecorations() {
 
 						if (config.highlightFailingLine) {
 							const failingLineRange = getRangeOfFailingLineFromCallstack(test.failure[0]["stack-trace"][0], test.$.method, activeEditor!.document);
-							if (failingLineRange !== undefined) {
+							if (failingLineRange) {
 								const decoration: vscode.DecorationOptions = { range: failingLineRange, hoverMessage: hoverMessage };
 								failingLines.push(decoration);
 							}
