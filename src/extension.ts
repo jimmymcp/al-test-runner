@@ -7,7 +7,7 @@ import { updateCodeCoverageDecoration, createCodeCoverageStatusBarItem } from '.
 import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getTestFolderPath, getTestMethodRangesFromDocument } from './alFileHelper';
 import { getALTestRunnerPath, getCurrentWorkspaceConfig, getDebugConfigurationsFromLaunchJson, getLaunchJsonPath } from './config';
 import { getOutputWriter, OutputWriter } from './output';
-import { createTestController, deleteTestItemForFilename, discoverTests, discoverTestsInDocument, discoverTestsInFileName } from './testController';
+import { createTestController, discoverTests, discoverTestsInDocument } from './testController';
 import { onChangeAppFile, publishApp } from './publish';
 import { awaitFileExistence } from './file';
 import { join } from 'path';
@@ -101,17 +101,11 @@ export function activate(context: vscode.ExtensionContext) {
 	}, null, context.subscriptions);
 
 	vscode.workspace.onDidRenameFiles(event => {
-		event.files.forEach(rename => {
-			deleteTestItemForFilename(rename.oldUri.fsPath);
-			discoverTestsInFileName(rename.newUri.fsPath);
-		});
+		discoverTests();
 	});
 
 	vscode.workspace.onDidCreateFiles(event => {
-		event.files.forEach(file => {
-			deleteTestItemForFilename(file.fsPath);
-			discoverTestsInFileName(file.fsPath);
-		});
+		discoverTests();
 	});
 
 	vscode.workspace.onDidChangeTextDocument(event => {

@@ -118,6 +118,11 @@
 				"command": "altestrunner.showPerformanceProfile",
 				"title": "Show Performance Profile",
 				"category": "AL Test Runner"
+			},
+			{
+				"command": "altestrunner.viewPageScriptingReport",
+				"title": "View Page Scripting Report",
+				"category": "AL Test Runner"
 			}
 		],
 		"keybindings": [
@@ -347,6 +352,12 @@
 							"tests",
 							"test"
 						]
+					},
+					"al-test-runner.runPageScriptsHeaded": {
+						"type": "boolean",
+						"scope": "resource",
+						"description": "Run page scripts in the browser when running tests",
+						"default": true
 					}
 				}
 			}
@@ -372,23 +383,26 @@
 		"test": "node ./out/test/runTest.js"
 	},
 	"devDependencies": {
+		"@types/debug": "^4.1.12",
 		"@types/glob": "^7.1.4",
 		"@types/mocha": "^5.2.6",
 		"@types/node": "^10.17.60",
 		"@types/sinon": "^7.5.2",
 		"@types/vscode": "^1.88.0",
+		"@vscode/test-electron": "^2.3.9",
 		"glob": "^7.1.7",
 		"mocha": "^10.2.0",
+		"node-powershell": "^5.0.1",
 		"sinon": "^7.5.0",
 		"tslint": "^5.20.1",
-		"typescript": "^4.6.3",
-		"@vscode/test-electron": "^2.3.9"
+		"typescript": "^4.6.3"
 	},
 	"dependencies": {
 		"@types/xml2js": "^0.4.9",
+		"@vscode/extension-telemetry": "0.5.0",
+		"child-shell": "^5.0.0",
 		"sanitize-filename": "^1.6.3",
-		"xml2js": "^0.5.0",
-		"@vscode/extension-telemetry": "0.5.0"
+		"xml2js": "^0.5.0"
 	},
 	"__metadata": {
 		"id": "f819914f-db9b-4d2d-89ff-90b11b3f9109",
