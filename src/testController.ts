@@ -154,7 +154,9 @@ function setResultsForTestItems(results: ALTestAssembly[], request: vscode.TestR
     }
     else {
         alTestController.items.forEach(testCodeunit => {
-            testItems.push(testCodeunit);
+            if (!testItemIsPageScript(testCodeunit)) {
+                testItems.push(testCodeunit);
+            }
         });
     }
 

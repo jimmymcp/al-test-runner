@@ -36,6 +36,13 @@
 					"command": "altestrunner.showTableData",
 					"group": "AL Test Runner"
 				}
+			],
+			"testing/item/context": [
+				{
+					"command": "altestrunner.viewPageScriptingReport",
+					"group": "AL Test Runner",
+					"when": "testId == 'Page Scripts'"
+				}
 			]
 		},
 		"commands": [
