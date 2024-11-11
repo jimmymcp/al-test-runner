@@ -6,9 +6,13 @@ import { getALTestRunnerConfig, getALTestRunnerLaunchConfig, getALTestRunnerPath
 import { ALTestAssembly, ALTestCollection, ALTestResult } from './types';
 import { join } from 'path';
 import * as xml2js from 'xml2js';
+import { getALTestRunnerTerminal } from './extension';
 
 export async function viewPageScriptingReport() {
-    execCommand('npx playwright show-report', { cwd: getALTestRunnerPath() });
+    let terminal = getALTestRunnerTerminal();
+    terminal.show(true);
+    terminal.sendText(`cd "${getALTestRunnerPath()}"`);
+    terminal.sendText('npx playwright show-report');
 }
 
 export async function discoverPageScripts(testController: vscode.TestController): Promise<vscode.TestItem[]> {
