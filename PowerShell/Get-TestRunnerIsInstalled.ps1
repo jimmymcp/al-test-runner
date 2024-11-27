@@ -1,19 +1,43 @@
 function Get-TestRunnerIsInstalled {
     param (
-        [string]$ContainerName
+        [string]$ServiceUrl
     )
 
-    # this takes ages, just return false and attempt to install the service app whenever the service url is not populated
-    return $false
+    ## attempt to get the id of the custmomer table from the test runner service to test it is installed
+    if ($ServiceUrl -eq '') {
+        return $false
+    }
 
-    Invoke-CommandOnDockerHost {
-        Param($ContainerName)
-        if ($null -eq (Get-BcContainerAppInfo $ContainerName | Where-Object Name -eq 'Test Runner Service')) {
-            return $false
-        } else {
+    if (Get-UrlIsForOData $ServiceUrl) {
+        try {
+            $Params = @{
+                Uri        = $ServiceUrl.Replace('/TestRunner', '/$metadata')
+                Method     = 'Get'
+                Credential = (Get-ALTestRunnerCredential)
+            }
+            Invoke-InvokeWebRequest $Params
             return $true
         }
-    }  -Parameters $ContainerName
+        catch {
+            Write-Host $_ -ForegroundColor DarkRed
+            return $false
+        }
+    }
+    else {
+        try {
+            $Params = @{
+                Uri        = $ServiceUrl
+                Method     = 'Get'
+                Credential = (Get-ALTestRunnerCredential)
+            }
+            Invoke-InvokeWebRequest $Params | Out-Null
+            return $true
+        }
+        catch {
+            Write-Host $_ -ForegroundColor DarkRed
+            return $false
+        }
+    }
 }
 
 Export-ModuleMember -Function Get-TestRunnerIsInstalled
