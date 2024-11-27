@@ -365,6 +365,12 @@
 						"scope": "resource",
 						"description": "Run page scripts in the browser when running tests",
 						"default": true
+					},
+					"al-test-runner.runTestsViaUrl": {
+						"type": "boolean",
+						"scope": "resource",
+						"description": "Connect to from the machine hosting VS Code to Business Central via its public URL to run tests",
+						"default": false
 					}
 				}
 			}

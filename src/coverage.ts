@@ -94,8 +94,8 @@ export async function saveTestRunCoverage(testRun: vscode.TestRun): Promise<void
         if (path) {
             let testRunCoveragePath = getCoveragePathForTestRun(testRun);
             copyFileSync(path, testRunCoveragePath);
-            resolve();
         }
+        resolve();
     });
 }
 
