@@ -371,6 +371,11 @@
 						"scope": "resource",
 						"description": "Connect to from the machine hosting VS Code to Business Central via its public URL to run tests",
 						"default": false
+					},
+					"al-test-runner.bcCompilerFolder": {
+						"type": "string",
+						"scope": "resource",
+						"description": "Path to a BC compiler folder created with New-BCCompilerFolder. Used for running tests via a URL."
 					}
 				}
 			}

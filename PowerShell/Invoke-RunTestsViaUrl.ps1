@@ -31,7 +31,9 @@ function Invoke-RunTestsViaUrl {
         $Culture = 'en-US',
         [Parameter(Mandatory = $false)]
         $LaunchConfig,
-        [switch]$GetPerformanceProfile
+        [switch]$GetPerformanceProfile,
+        [Parameter(Mandatory = $true)]
+        $BCCompilerFolder
     )
 
     $ResultId = [Guid]::NewGuid().Guid + ".xml"
@@ -85,11 +87,10 @@ function Invoke-RunTestsViaUrl {
 
     Write-Host $Message -ForegroundColor Green
 
-    $compilerFolder = 'C:\Users\JamesPearson\Downloads\Compiler' #TODO think about how to sort this out
     $bcContainerHelperPath = Join-Path (Split-Path (Get-Module bccontainerhelper).Path -Parent) 'AppHandling'
     $PsTestToolFolder = Join-Path ([System.IO.Path]::GetTempPath()) "$([Guid]::NewGuid().ToString())"
     New-Item $PsTestToolFolder -ItemType Directory | Out-Null
-    $testDlls = Join-Path $compilerFolder "dlls/Test Assemblies/*.dll"
+    $testDlls = Join-Path $BCCompilerFolder "dlls/Test Assemblies/*.dll"
     Copy-Item $testDlls -Destination $PsTestToolFolder -Force
     Copy-Item -Path (Join-Path $bcContainerHelperPath "PsTestFunctions.ps1") -Destination $PsTestToolFolder -Force
     Copy-Item -Path (Join-Path $bcContainerHelperPath "ClientContext.ps1") -Destination $PsTestToolFolder -Force

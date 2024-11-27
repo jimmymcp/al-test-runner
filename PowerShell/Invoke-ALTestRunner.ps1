@@ -18,13 +18,20 @@ function Invoke-ALTestRunner {
         [Parameter(Mandatory = $false)]
         $LaunchConfig,
         [switch]$GetPerformanceProfile,
-        [switch]$RunViaUrl
+        [switch]$RunViaUrl,
+        [Parameter(Mandatory = $false)]
+        [string]$BCCompilerFolder
     )
 
     Import-ContainerHelper
 
     $ContainerName = Get-ContainerName -LaunchConfig $LaunchConfig
-    if (!($RunViaUrl.IsPresent)) {
+    if ($RunViaUrl.IsPresent) {
+        if ([String]::IsNullOrEmpty($BCCompilerFolder) -or -not (Test-Path $BCCompilerFolder)) {
+            $BCCompilerFolder = Get-BCCompilerFolder
+        }
+    }
+    else {
         Get-ServiceUrl -Method 'Get-PerformanceProfile' -LaunchConfig $LaunchConfig | Out-Null
         if (!(Get-ContainerIsRunning $ContainerName)) {
             throw "Container $ContainerName is not running. Please start the container and retry. Please note that container names are case-sensitive."
@@ -116,6 +123,7 @@ function Invoke-ALTestRunner {
     }
     
     if ($RunViaUrl.IsPresent) {
+        $Params.Add('BCCompilerFolder', $BCCompilerFolder)
         Invoke-RunTestsViaUrl @Params
     }
     else {
