@@ -218,7 +218,10 @@ export async function runTest(filename?: string, selectionStart?: number, extens
 
                 sendDebugEvent('runTest-ready', { filename: filename, selectionStart: selectionStart.toString(), extensionId: extensionId!, extensionName: extensionName! });
 
-                const results: ALTestAssembly[] = await invokeTestRunner(`Invoke-ALTestRunner -Tests Test -ExtensionId "${extensionId}" -ExtensionName "${extensionName}" -FileName "${filename}" -SelectionStart ${selectionStart} -LaunchConfig '${getLaunchConfiguration(getALTestRunnerConfig().launchConfigName)}'`);
+                let command = `Invoke-ALTestRunner -Tests Test -ExtensionId "${extensionId}" -ExtensionName "${extensionName}" -FileName "${filename}" -SelectionStart ${selectionStart} -LaunchConfig '${getLaunchConfiguration(getALTestRunnerConfig().launchConfigName)}'`;
+                command = addOptionalRunTestParameters(command);
+
+                const results: ALTestAssembly[] = await invokeTestRunner(command);
                 resolve(results);
             }
             else {
@@ -242,7 +245,10 @@ export async function runAllTests(extensionId?: string, extensionName?: string):
 
                 sendDebugEvent('runAllTests-ready');
 
-                const results: ALTestAssembly[] = await invokeTestRunner(`Invoke-ALTestRunner -Tests All -ExtensionId "${extensionId}" -ExtensionName "${extensionName}" -LaunchConfig '${getLaunchConfiguration(getALTestRunnerConfig().launchConfigName)}'`);
+                let command = `Invoke-ALTestRunner -Tests All -ExtensionId "${extensionId}" -ExtensionName "${extensionName}" -LaunchConfig '${getLaunchConfiguration(getALTestRunnerConfig().launchConfigName)}'`;
+                command = addOptionalRunTestParameters(command);
+
+                const results: ALTestAssembly[] = await invokeTestRunner(command);
                 resolve(results);
             }
             else {
@@ -269,7 +275,10 @@ export async function runSelectedTests(request: vscode.TestRunRequest, extension
                 const disabledTests = getDisabledTestsForRequest(request);
                 const disabledTestsJson = JSON.stringify(disabledTests);
 
-                const results: ALTestAssembly[] = await invokeTestRunner(`Invoke-ALTestRunner -Tests All -ExtensionId "${extensionId}" -ExtensionName "${extensionName}" -DisabledTests ('${disabledTestsJson}' | ConvertFrom-Json) -LaunchConfig '${getLaunchConfiguration(getALTestRunnerConfig().launchConfigName)}'`)
+                let command = `Invoke-ALTestRunner -Tests All -ExtensionId "${extensionId}" -ExtensionName "${extensionName}" -DisabledTests ('${disabledTestsJson}' | ConvertFrom-Json) -LaunchConfig '${getLaunchConfiguration(getALTestRunnerConfig().launchConfigName)}'`;
+                command = addOptionalRunTestParameters(command);
+
+                const results: ALTestAssembly[] = await invokeTestRunner(command)
                 resolve(results);
             }
             else {
@@ -277,6 +286,18 @@ export async function runSelectedTests(request: vscode.TestRunRequest, extension
             }
         });
     });
+}
+
+function addOptionalRunTestParameters(command: string): string {
+    if (getCurrentWorkspaceConfig().runTestsViaUrl) {
+        command += ' -RunViaURL';
+    }
+
+    if (getCurrentWorkspaceConfig().bcCompilerFolder) {
+        command += ` -BCCompilerFolder "${getCurrentWorkspaceConfig().bcCompilerFolder}"`;
+    }
+
+    return command;
 }
 
 export async function debugTestHandler(request: vscode.TestRunRequest) {

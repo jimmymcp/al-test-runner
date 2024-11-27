@@ -1,15 +1,15 @@
 function Invoke-ALTestRunner {
     Param(
-        [Parameter(Mandatory=$false)]
-        [ValidateSet('All','Codeunit','Test')]
+        [Parameter(Mandatory = $false)]
+        [ValidateSet('All', 'Codeunit', 'Test')]
         [string]$Tests = 'All',
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [string]$FileName = '',
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [int]$SelectionStart = 0,
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [string]$ExtensionId,
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [string]$ExtensionName,
         [Parameter(Mandatory = $false)]
         [switch]$GetCodeCoverage,
@@ -17,48 +17,64 @@ function Invoke-ALTestRunner {
         $DisabledTests,
         [Parameter(Mandatory = $false)]
         $LaunchConfig,
-        [switch]$GetPerformanceProfile
-        )
+        [switch]$GetPerformanceProfile,
+        [switch]$RunViaUrl,
+        [Parameter(Mandatory = $false)]
+        [string]$BCCompilerFolder
+    )
 
     Import-ContainerHelper
 
-    Get-ServiceUrl -Method 'Get-PerformanceProfile' -LaunchConfig $LaunchConfig | Out-Null
-
     $ContainerName = Get-ContainerName -LaunchConfig $LaunchConfig
-    if (!(Get-ContainerIsRunning $ContainerName)) {
-        throw "Container $ContainerName is not running. Please start the container and retry. Please note that container names are case-sensitive."
+    if ($RunViaUrl.IsPresent) {
+        if ([String]::IsNullOrEmpty($BCCompilerFolder) -or -not (Test-Path $BCCompilerFolder)) {
+            $BCCompilerFolder = Get-BCCompilerFolder
+        }
+    }
+    else {
+        Get-ServiceUrl -Method 'Get-PerformanceProfile' -LaunchConfig $LaunchConfig | Out-Null
+        if (!(Get-ContainerIsRunning $ContainerName)) {
+            throw "Container $ContainerName is not running. Please start the container and retry. Please note that container names are case-sensitive."
+        }
     }
 
     $CompanyName = Get-ValueFromALTestRunnerConfig -KeyName 'companyName'
     if ($CompanyName -eq '') {
-        $CompanyName = Select-BCCompany $ContainerName
+        if ($RunViaUrl) {
+            throw "Please enter the company name in the AL Test Runner configuration file."
+        }
+        else { 
+            $CompanyName = Select-BCCompany $ContainerName
+        }
     }
     
     $TestSuiteName = (Get-ValueFromALTestRunnerConfig -KeyName 'testSuiteName')
     
-    if (($null -eq $TestSuiteName) -or ($TestSuiteName -eq '')) {
-        [string]$NavVersionString = Invoke-CommandOnDockerHost {Param($ContainerName) Get-BCContainerNavVersion -containerOrImageName $ContainerName} -Parameters $ContainerName
-        if ($NavVersionString.IndexOf('-') -gt 0) {
-            $NavVersionString = $NavVersionString.Substring(0,$NavVersionString.IndexOf('-'))
-        }
+    if (!($RunViaUrl.IsPresent)) {
+        if (($null -eq $TestSuiteName) -or ($TestSuiteName -eq '')) {
+            [string]$NavVersionString = Invoke-CommandOnDockerHost { Param($ContainerName) Get-BCContainerNavVersion -containerOrImageName $ContainerName } -Parameters $ContainerName
+            if ($NavVersionString.IndexOf('-') -gt 0) {
+                $NavVersionString = $NavVersionString.Substring(0, $NavVersionString.IndexOf('-'))
+            }
         
-        [version]$NavVersion = [version]::new()
-        if ([version]::TryParse($NavVersionString, [ref]$NavVersion)) {
-            if ($NavVersion -lt [version]::new('15.0.0.0')) {
-                $TestSuiteName = Select-BCTestSuite
-                Set-ALTestRunnerConfigValue -KeyName 'testSuiteName' -KeyValue $TestSuiteName
+            [version]$NavVersion = [version]::new()
+            if ([version]::TryParse($NavVersionString, [ref]$NavVersion)) {
+                if ($NavVersion -lt [version]::new('15.0.0.0')) {
+                    $TestSuiteName = Select-BCTestSuite
+                    Set-ALTestRunnerConfigValue -KeyName 'testSuiteName' -KeyValue $TestSuiteName
+                }
             }
         }
     }
 
     $Params = @{
-        ContainerName = $ContainerName
-        CompanyName = $CompanyName
-        ExtensionId = $ExtensionId
-        TestSuiteName = $TestSuiteName
-        ExtensionName = $ExtensionName
-        GetCodeCoverage = $GetCodeCoverage
-        LaunchConfig = $LaunchConfig
+        ContainerName         = $ContainerName
+        CompanyName           = $CompanyName
+        ExtensionId           = $ExtensionId
+        TestSuiteName         = $TestSuiteName
+        ExtensionName         = $ExtensionName
+        GetCodeCoverage       = $GetCodeCoverage
+        LaunchConfig          = $LaunchConfig
         GetPerformanceProfile = $GetPerformanceProfile
     }
 
@@ -91,7 +107,7 @@ function Invoke-ALTestRunner {
         $Params.Add('Credential', $Credential)
     }
     
-    if ($NavVersion -lt [version]::new('15.0.0.0')) {
+    if ($null -ne $NavVersion -and $NavVersion -lt [version]::new('15.0.0.0')) {
         $Params.Add('TestRunnerCodeunitId', 0)
     }
     elseif ((Get-ValueFromALTestRunnerConfig -KeyName 'testRunnerCodeunitId') -gt 0) {
@@ -106,7 +122,13 @@ function Invoke-ALTestRunner {
         $Params.Add('Culture', (Get-ValueFromALTestRunnerConfig -KeyName 'culture'))
     }
     
-    Invoke-RunTests @Params
+    if ($RunViaUrl.IsPresent) {
+        $Params.Add('BCCompilerFolder', $BCCompilerFolder)
+        Invoke-RunTestsViaUrl @Params
+    }
+    else {
+        Invoke-RunTests @Params
+    }
 }
 
 Export-ModuleMember -Function Invoke-ALTestRunner
