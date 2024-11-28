@@ -40,12 +40,7 @@ function Invoke-ALTestRunner {
 
     $CompanyName = Get-ValueFromALTestRunnerConfig -KeyName 'companyName'
     if ($CompanyName -eq '') {
-        if ($RunViaUrl) {
-            throw "Please enter the company name in the AL Test Runner configuration file."
-        }
-        else { 
-            $CompanyName = Select-BCCompany $ContainerName
-        }
+        $CompanyName = Select-BCCompany $ContainerName -RunViaUrl:$RunViaUrl
     }
     
     $TestSuiteName = (Get-ValueFromALTestRunnerConfig -KeyName 'testSuiteName')
