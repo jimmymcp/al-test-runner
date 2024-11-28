@@ -1,22 +1,30 @@
 function Select-BCCompany {
     param (
-        [Parameter(Mandatory=$false)]
-        $ContainerName = (Get-ContainerName)
+        [Parameter(Mandatory = $false)]
+        $ContainerName = (Get-ContainerName),
+        [switch]$RunViaUrl
     )
     
-    $Companies = Invoke-CommandOnDockerHost {Param($ContainerName) Get-CompanyInBCContainer -containerName $ContainerName} -Parameters $ContainerName
-
-    if (($null -eq $Companies.Count) -or ($Companies.Count -eq 1)) {
-        $CompanyName = $Companies.CompanyName
+    if ($RunViaUrl.IsPresent) {
+        Write-Host ''
+        Write-Host "Please enter the company name to run tests in" -ForegroundColor Yellow
+        $CompanyName = Read-Host -Prompt "Company Name"
     }
     else {
-        $Options = @()
-        foreach ($Company in $Companies) {
-            $Options += $Company.CompanyName
+        $Companies = Invoke-CommandOnDockerHost { Param($ContainerName) Get-CompanyInBCContainer -containerName $ContainerName } -Parameters $ContainerName
+
+        if (($null -eq $Companies.Count) -or ($Companies.Count -eq 1)) {
+            $CompanyName = $Companies.CompanyName
         }
-        $CompanyName = Get-SelectionFromUser -Options $Options -Prompt "Please select a company to run tests in:"
-        if ($CompanyName -eq '') {
-            throw
+        else {
+            $Options = @()
+            foreach ($Company in $Companies) {
+                $Options += $Company.CompanyName
+            }
+            $CompanyName = Get-SelectionFromUser -Options $Options -Prompt "Please select a company to run tests in:"
+            if ($CompanyName -eq '') {
+                throw
+            }
         }
     }
 
