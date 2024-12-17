@@ -11,7 +11,12 @@ function Get-ValueFromLaunchJson {
     )
 
     if (![String]::IsNullOrEmpty($LaunchConfig)) {
-        return ($LaunchConfig | ConvertFrom-Json).$KeyName
+        if ($null -ne $LaunchConfig.$KeyName) {
+            return $LaunchConfig.$KeyName
+        }
+        elseif ($null -ne ($LaunchConfig | ConvertFrom-Json).$KeyName){
+            return ($LaunchConfig | ConvertFrom-Json).$KeyName
+        } 
     }
 
     if ([String]::IsNullOrEmpty($LaunchJsonPath)) {
