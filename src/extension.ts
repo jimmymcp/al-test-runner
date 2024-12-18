@@ -122,7 +122,7 @@ export function activate(context: vscode.ExtensionContext) {
 	discoverTests();
 }
 
-export async function invokeTestRunner(command: string): Promise<types.ALTestAssembly[]> {
+export async function invokeTestRunner(command: string, options: types.invokeTestRunnerOptions): Promise<types.ALTestAssembly[]> {
 	return new Promise(async (resolve) => {
 		sendDebugEvent('invokeTestRunner-start');
 		const config = getCurrentWorkspaceConfig();
@@ -147,7 +147,7 @@ export async function invokeTestRunner(command: string): Promise<types.ALTestAss
 			return;
 		}
 
-		if (config.enableCodeCoverage) {
+		if (options.enableCodeCoverage) {
 			command += ' -GetCodeCoverage';
 		}
 
