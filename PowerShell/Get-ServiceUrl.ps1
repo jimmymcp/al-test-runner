@@ -8,14 +8,12 @@ function Get-ServiceUrl {
 
     [string]$ServiceUrl = (Get-ValueFromALTestRunnerConfig -KeyName 'testRunnerServiceUrl')
 
-    if ([String]::IsNullOrEmpty($ServiceUrl)) {
+    if ([String]::IsNullOrEmpty($ServiceUrl) -and $null -ne $LaunchConfig) {
         $ServiceUrl = Suggest-ServiceUrl -LaunchConfig $LaunchConfig -UseSOAP
         Set-ALTestRunnerConfigValue -KeyName 'testRunnerServiceUrl' -KeyValue $ServiceUrl
 
-        #if the service url is blank then test runner service may not be installed either no check that now
-        if (!(Get-TestRunnerIsInstalled -ContainerName (Get-ContainerName -LaunchConfig $LaunchConfig))) {
-            Install-TestRunnerService -LaunchConfig $LaunchConfig
-        }
+        #if the service url is blank then test runner service may not be installed either so check that now
+        Install-TestRunnerService -LaunchConfig $LaunchConfig
     }
 
     if (Get-UrlIsForOData $ServiceUrl) {
@@ -26,7 +24,8 @@ function Get-ServiceUrl {
         }
 
         return $ServiceUrl.Insert($ServiceUrl.IndexOf('?'), "_$Method")
-    } else {
+    }
+    else {
         # if the service url is for SOAP then just return the url
         return $ServiceUrl
     }

@@ -9,6 +9,7 @@ import { showTableData } from './showTableData';
 import { runRelatedTests, showRelatedTests } from './testCoverage';
 import { listALFiles } from './alFileHelper';
 import { showPerformanceProfile } from './performance';
+import { viewPageScriptingReport } from './pageScripting';
 
 export function registerCommands(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('altestrunner.runAllTests', async (extensionId?: string, extensionName?: string) => {
@@ -66,8 +67,9 @@ export function registerCommands(context: vscode.ExtensionContext) {
 		setALTestRunnerConfig('userName', '');
 		setALTestRunnerConfig('securePassword', '');
 		let terminal = getALTestRunnerTerminal(getTerminalName());
+		terminal.show(false);
 		terminal.sendText(' ');
-		terminal.sendText('Get-ALTestRunnerCredential');
+		terminal.sendText('Set-ALTestRunnerCredential -Credential (Get-Credential)');
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('altestrunner.setVMCredential', () => {
@@ -103,6 +105,10 @@ export function registerCommands(context: vscode.ExtensionContext) {
 
 	vscode.commands.registerCommand('altestrunner.runRelatedTests', method => {
 		runRelatedTests(method);
+	})
+
+	vscode.commands.registerCommand('altestrunner.viewPageScriptingReport', () => {
+		viewPageScriptingReport();
 	})
 
 	context.subscriptions.push(vscode.commands.registerCommand('altestrunner.listALFiles', async () => {

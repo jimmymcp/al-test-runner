@@ -140,3 +140,13 @@ export enum launchConfigValidity {
 	Invalid,
 	NeverValid
 }
+
+export enum enableCodeCoverage {
+	No = 'No',
+	'When running all tests' = 'When running all tests',
+	Always = 'Always'
+}
+
+export type invokeTestRunnerOptions = {
+	enableCodeCoverage: boolean
+}
