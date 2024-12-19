@@ -1,5 +1,13 @@
 # Change Log
 
+## 0.12.0
+- Initial support for running page scripts
+  - Load page scripts into test explorer, support for running page scripts
+  - New command, "View Page Scripting Report", to show playwright report from page script test run
+- Include company name in URL to launch when using "Show Table Data"
+- "Run Tests via URL" option to connect from PowerShell to client service using the URL - support for Alpaca containers and other development scenarios
+- "Enable Code Coverage" option switched to enum to allow for downloading code coverage "When running all tests" (new default option). Improves dev experience when quickly running individual tests or test codeunits
+
 ## 0.11.1
 - Don't test if the Test Runner Service app is installed (Get-BCContainerAppInfo is slow), just attempt to install the app if the service URL is not populated in config.json
 - enableCodeCoverage by default
