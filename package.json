@@ -303,10 +303,14 @@
 						"description": "A regex pattern which defines file paths to exclude from the code coverage summary e.g. use it to exclude test objects"
 					},
 					"al-test-runner.enableCodeCoverage": {
-						"type": "boolean",
+						"enum": [
+							"No",
+							"When running all tests",
+							"Always"
+						],
 						"scope": "resource",
 						"description": "Outputs code coverage statistics with test results and decorates covered lines with the Toggle Code Coverage command. See also the Code Coverage Path extension setting and key in the AL Test Runner config.json file.",
-						"default": true
+						"default": "When running all tests"
 					},
 					"al-test-runner.enablePerformanceProfiler": {
 						"type": "boolean",

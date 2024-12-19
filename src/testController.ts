@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { documentIsTestCodeunit, getALFilesInWorkspace, getALObjectFromPath, getALObjectOfDocument, getFilePathOfObject, getTestMethodRangesFromDocument } from './alFileHelper';
 import { getALTestRunnerConfig, getCurrentWorkspaceConfig, getLaunchConfiguration, launchConfigIsValid, selectLaunchConfig, setALTestRunnerConfig } from './config';
 import { alTestController, attachDebugger, getAppJsonKey, invokeDebugTest, invokeTestRunner, outputWriter } from './extension';
-import { ALTestAssembly, ALTestResult, ALMethod, DisabledTest, ALFile, launchConfigValidity, CodeCoverageDisplay } from './types';
+import { ALTestAssembly, ALTestResult, ALMethod, DisabledTest, ALFile, launchConfigValidity, CodeCoverageDisplay, enableCodeCoverage } from './types';
 import * as path from 'path';
 import { sendDebugEvent, sendTestDebugStartEvent, sendTestRunFinishedEvent, sendTestRunStartEvent } from './telemetry';
 import { buildTestCoverageFromTestItem } from './testCoverage';
@@ -221,7 +221,9 @@ export async function runTest(filename?: string, selectionStart?: number, extens
                 let command = `Invoke-ALTestRunner -Tests Test -ExtensionId "${extensionId}" -ExtensionName "${extensionName}" -FileName "${filename}" -SelectionStart ${selectionStart} -LaunchConfig '${getLaunchConfiguration(getALTestRunnerConfig().launchConfigName)}'`;
                 command = addOptionalRunTestParameters(command);
 
-                const results: ALTestAssembly[] = await invokeTestRunner(command);
+                const codeCoverageEnabled = getCurrentWorkspaceConfig().enableCodeCoverage == enableCodeCoverage.Always.toString();
+
+                const results: ALTestAssembly[] = await invokeTestRunner(command, { enableCodeCoverage: codeCoverageEnabled });
                 resolve(results);
             }
             else {
@@ -248,7 +250,10 @@ export async function runAllTests(extensionId?: string, extensionName?: string):
                 let command = `Invoke-ALTestRunner -Tests All -ExtensionId "${extensionId}" -ExtensionName "${extensionName}" -LaunchConfig '${getLaunchConfiguration(getALTestRunnerConfig().launchConfigName)}'`;
                 command = addOptionalRunTestParameters(command);
 
-                const results: ALTestAssembly[] = await invokeTestRunner(command);
+                const codeCoverage: enableCodeCoverage = getCurrentWorkspaceConfig().enableCodeCoverage;
+                const codeCoverageEnabled = codeCoverage == enableCodeCoverage.Always || codeCoverage == enableCodeCoverage['When running all tests'];
+
+                const results: ALTestAssembly[] = await invokeTestRunner(command, {enableCodeCoverage: codeCoverageEnabled});
                 resolve(results);
             }
             else {
@@ -278,7 +283,9 @@ export async function runSelectedTests(request: vscode.TestRunRequest, extension
                 let command = `Invoke-ALTestRunner -Tests All -ExtensionId "${extensionId}" -ExtensionName "${extensionName}" -DisabledTests ('${disabledTestsJson}' | ConvertFrom-Json) -LaunchConfig '${getLaunchConfiguration(getALTestRunnerConfig().launchConfigName)}'`;
                 command = addOptionalRunTestParameters(command);
 
-                const results: ALTestAssembly[] = await invokeTestRunner(command)
+                const codeCoverageEnabled = getCurrentWorkspaceConfig().enableCodeCoverage == enableCodeCoverage.Always.toString();
+
+                const results: ALTestAssembly[] = await invokeTestRunner(command, { enableCodeCoverage: codeCoverageEnabled });
                 resolve(results);
             }
             else {
