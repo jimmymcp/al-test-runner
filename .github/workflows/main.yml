@@ -24,7 +24,7 @@ jobs:
 
       - name: package with vsce
         run: |
-          npm install -g vsce
+          npm install -g @vscode/vsce
           vsce package
 
       - name: run pester tests

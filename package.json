@@ -13,9 +13,6 @@
 		"url": "https://github.com/jimmymcp/al-test-runner"
 	},
 	"icon": "semicolon128.jpg",
-	"files": [
-		"PowerShell/"
-	],
 	"version": "10.14.3",
 	"engines": {
 		"vscode": ">=1.88.0"
