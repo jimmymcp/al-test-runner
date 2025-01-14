@@ -1,10 +1,11 @@
 import * as vscode from 'vscode';
 import { getALObjectOfDocument, getALFileForALObject, getTestFolderPath } from './alFileHelper';
 import { copyFileSync, existsSync, readFileSync } from 'fs';
-import { ALFile, ALObject, CodeCoverageDisplay, CodeCoverageLine, CodeCoverageObject } from './types';
+import { ALFile, ALObject, CodeCoverageDisplay, CodeCoverageLine, CodeCoverageObject, enableCodeCoverage } from './types';
 import { activeEditor, passingTestDecorationType, outputWriter } from './extension';
 import { join, basename, dirname } from 'path';
-import { getALTestRunnerConfig } from './config';
+import { getALTestRunnerConfig, getCurrentWorkspaceConfig } from './config';
+import { testItemIsPageScript } from './pageScripting';
 
 let codeCoverageStatusBarItem: vscode.StatusBarItem;
 let codeCoverageDisplay: CodeCoverageDisplay = CodeCoverageDisplay.Off;
@@ -235,6 +236,10 @@ export function toggleCodeCoverageDisplay(newCodeCoverageDisplay?: CodeCoverageD
 }
 
 export function getALFilesInCoverage(codeCoverage: CodeCoverageLine[]): ALFile[] {
+    if (!(codeCoverage)) {
+        return [];
+    }
+
     let alFiles: ALFile[] = [];
     let alObjects: ALObject[] = getALObjectsFromCodeCoverage(codeCoverage);
     alObjects.forEach(alObject => {
@@ -261,4 +266,20 @@ export function getStatementCoverage(codeCoverage: CodeCoverageLine[], alFile: A
     }
 
     return statementCoverage;
+}
+
+export function getCoverageEnabledForTestRunRequest(request: vscode.TestRunRequest): boolean {
+    const codeCoverage: enableCodeCoverage = getCurrentWorkspaceConfig().enableCodeCoverage;
+    if (request.include === undefined) { //all tests
+        return codeCoverage == enableCodeCoverage.Always || codeCoverage == enableCodeCoverage['When running all tests'];
+    }
+    else {
+        const testItem = request.include[0]!;
+        if (testItemIsPageScript(testItem)) {
+            return false;
+        }
+        else { //selection of one or more tests
+            return codeCoverage == enableCodeCoverage.Always.toString();
+        }
+    }
 }
