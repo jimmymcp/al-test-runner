@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.12.1
+
+- Fix for issue with attempting to save code coverage to the test run when it hadn't been enabled
+- Update build to use @vscode/vsce
+
 ## 0.12.0
 - Initial support for running page scripts
   - Load page scripts into test explorer, support for running page scripts
