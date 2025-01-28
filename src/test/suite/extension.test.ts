@@ -434,7 +434,7 @@ suite('Extension Test Suite', () => {
         assert.strictEqual(result.length, 2);
         assert.strictEqual(result[0].id, 'C5');
         assert.strictEqual(result[1].id, 'C6');
-    })
+    });
 
     test('getTestItemsIncludedInRequest does not duplicate child items of included parents when children also included', () => {
         const request = new vscode.TestRunRequest(getIncludedTests(testController, ['P1.C3', 'P1']));
@@ -591,7 +591,7 @@ suite('Extension Test Suite', () => {
     test('getMaxLengthOfPropertyFromArray called without property returns max length of elements in array', () => {
         const array = ["one", "two", "three", "four"];
         assert.strictEqual(getMaxLengthOfPropertyFromArray(array), 5);
-    })
+    });
 
     test('getParentFolderPathForFolder returns path of parent folder', () => {
         assert.strictEqual('C:\\Users\\myuser\\Documents', getParentFolderPathForFolder('C:\\Users\\myuser\\Documents\\childfolder'));
