@@ -10,7 +10,7 @@ export async function exportTestItemsToCsv(testItem: vscode.TestItem) {
 export async function getDevOpsTestStepsForTestItems(testItem: vscode.TestItem): Promise<DevOpsTestStep[]> {
     return new Promise(async resolve => {
         if (testItem == undefined) {
-            resolve([])
+            resolve([]);
             return;
         }
         
