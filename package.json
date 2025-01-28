@@ -39,6 +39,10 @@
 					"command": "altestrunner.viewPageScriptingReport",
 					"group": "AL Test Runner",
 					"when": "testId == 'Page Scripts'"
+				},
+				{
+					"command": "altestrunner.exportTestItemsToCsv",
+					"group": "AL Test Runner"
 				}
 			]
 		},
@@ -126,6 +130,11 @@
 			{
 				"command": "altestrunner.viewPageScriptingReport",
 				"title": "View Page Scripting Report",
+				"category": "AL Test Runner"
+			},
+			{
+				"command": "altestrunner.exportTestItemsToCsv",
+				"title": "Export Tests to CSV",
 				"category": "AL Test Runner"
 			}
 		],
