@@ -13,7 +13,7 @@
 		"url": "https://github.com/jimmymcp/al-test-runner"
 	},
 	"icon": "semicolon128.jpg",
-	"version": "10.14.4",
+	"version": "10.14.5",
 	"engines": {
 		"vscode": ">=1.88.0"
 	},
