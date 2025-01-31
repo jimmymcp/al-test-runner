@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.12.2
+- Option to export test steps (GIVEN, WHEN, THEN) to CSV in a format that can be imported to an Azure DevOps test plan. [Issue 160](https://github.com/jimmymcp/al-test-runner/issues/160). See [https://jimmymcp.github.io/al-test-runner-docs/articles/export-test-to-csv.html](https://jimmymcp.github.io/al-test-runner-docs/articles/export-test-to-csv.html)
+
 ## 0.12.1
 
 - Fix for issue with attempting to save code coverage to the test run when it hadn't been enabled
