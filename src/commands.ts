@@ -10,6 +10,7 @@ import { runRelatedTests, showRelatedTests } from './testCoverage';
 import { listALFiles } from './alFileHelper';
 import { showPerformanceProfile } from './performance';
 import { viewPageScriptingReport } from './pageScripting';
+import { exportTestItemsToCsv } from './devOpsTestSteps';
 
 export function registerCommands(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('altestrunner.runAllTests', async (extensionId?: string, extensionName?: string) => {
@@ -117,5 +118,9 @@ export function registerCommands(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(vscode.commands.registerCommand('altestrunner.showPerformanceProfile', () => {
 		showPerformanceProfile();
-	}))
+	}));
+
+	context.subscriptions.push(vscode.commands.registerCommand('altestrunner.exportTestItemsToCsv', async (testItem: vscode.TestItem) => {
+		exportTestItemsToCsv(testItem);
+	}));
 }

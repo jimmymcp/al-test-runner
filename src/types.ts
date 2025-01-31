@@ -150,3 +150,12 @@ export enum enableCodeCoverage {
 export type invokeTestRunnerOptions = {
 	enableCodeCoverage: boolean
 }
+
+export type DevOpsTestStep = {
+	ID: string
+	'Work Item Type': string;
+	Title: string;
+	'Test Step': string;
+	'Step Action': string;
+	'Step Expected': string;
+}
