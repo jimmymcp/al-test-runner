@@ -111,7 +111,10 @@ function Invoke-RunTestsViaUrl {
         $clientServicesCredentialType = $LaunchConfig.authentication
     }
 
-    $serverInstance = $LaunchConfig.serverInstance.TrimEnd('dev')
+    # if port 443 is specified then we can assume that the container is behind a traefik proxy and can trim 'dev' from the end of the server instance name
+    if ($LaunchConfig.port -eq 443) {
+        $serverInstance = $LaunchConfig.serverInstance.TrimEnd('dev')
+    }
     $serviceUrl = "$(($LaunchConfig.server).TrimEnd('/'))/$serverInstance/cs?tenant=$Tenant&company=$CompanyName"
 
     Write-Host "Connecting to $serviceUrl"
