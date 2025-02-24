@@ -8,19 +8,35 @@ function Suggest-ServiceUrl {
 
     $ContainerName = Get-ContainerName -LaunchConfig $LaunchConfig
     $ServerInstance = Get-ValueFromLaunchJson -KeyName 'serverInstance' -LaunchConfig $LaunchConfig
-    $ODataPort = 7048
+    $LaunchPort = Get-ValueFromLaunchJson -KeyName 'port' -LaunchConfig $LaunchConfig
+    $Protocol = "http://"
     $CompanyName = Get-ValueFromALTestRunnerConfig -KeyName 'companyName'
-    $SOAPPort = 7047
+
+    # if the launch port is specified as 443 then we can assume that the container is being a traefik proxy and append soap or rest as approriate
+    if ($LaunchPort -eq 443) {
+        $Protocol = "https://"
+        $ServerInstance = $ServerInstance.TrimEnd('dev')
+        if ($UseSOAP.IsPresent) {
+            $ServerInstance += 'soap'
+        }
+        else {
+            $ServerInstance += 'rest'
+        }
+    }
+    else {
+        $ODataPort = ":7048"
+        $SOAPPort = ":7047"
+    }
 
     if ([String]::IsNullOrEmpty($CompanyName)) {
         $CompanyName = Select-BCCompany -ContainerName $ContainerName
     }
 
     if ($UseSOAP.IsPresent) {
-        return "http://$($ContainerName):$SOAPPort/$ServerInstance/WS/$CompanyName/Codeunit/TestRunner?tenant=default"
+        return "$Protocol$ContainerName$SOAPPort/$ServerInstance/WS/$CompanyName/Codeunit/TestRunner?tenant=default"
     }
     else {
-        return "http://$($ContainerName):$ODataPort/$ServerInstance/ODataV4/TestRunner?company=$CompanyName&tenant=default"
+        return "$Protocol$ContainerName$ODataPort/$ServerInstance/ODataV4/TestRunner?company=$CompanyName&tenant=default"
     }
 }
 

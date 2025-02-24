@@ -23,7 +23,7 @@ Describe Merge-ALTestRunnerTestResults {
             Set-Content -Path $ResultsFile -Value (Get-SingleAssemblyTestResults)
             Merge-ALTestRunnerTestResults -ResultsFile $ResultsFile -ToPath (Join-Path $TestDrive 'Results')
             Test-Path (Join-Path (Join-Path $TestDrive 'Results') '9093548 Licensing Test CDLTMN.xml') | should -be $true
-        }        
+        }
     }
 
     Context 'Results file with multiple assemblies (results from multiple test codeunits' {
