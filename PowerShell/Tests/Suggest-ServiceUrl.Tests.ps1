@@ -16,12 +16,12 @@ Describe Suggest-ServiceUrl {
     }
 
     It 'Should suggest url for local container specifying port 443 in launch config using SOAP' {
-        $LaunchConfig = '{"server": "http://containername", "serverInstance": "BC", "port": 433}'
+        $LaunchConfig = '{"server": "http://containername", "serverInstance": "BC", "port": 443}'
         Suggest-ServiceUrl -LaunchConfig $LaunchConfig -UseSOAP | Should -Be 'https://containername/BCsoap/WS/My Company/Codeunit/TestRunner?tenant=default'
     }
 
     It 'Should suggest url for local container specifying port 443 in launch config using REST' {
-        $LaunchConfig = '{"server": "http://containername", "serverInstance": "BC", "port": 433}'
+        $LaunchConfig = '{"server": "http://containername", "serverInstance": "BC", "port": 443}'
         Suggest-ServiceUrl -LaunchConfig $LaunchConfig | Should -Be 'https://containername/BCrest/ODataV4/TestRunner?company=My Company&tenant=default'
     }
 }
