@@ -3,6 +3,12 @@ function Install-TestRunnerService {
         [Parameter(Mandatory = $false)]
         $LaunchConfig
     )
+
+    # do not attempt to install Test Runner Service in an alpaca container
+    if ((Get-ValueFromLaunchJson -KeyName 'server' -LaunchConfig $LaunchConfig).ToLower().contains('alpaca')) {
+        return
+    }
+
     Invoke-CommandOnDockerHost {
         Param(
             $ContainerName
