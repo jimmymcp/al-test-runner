@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.12.4
+- Fix calculation of URL to run tests against
+
 ## 0.12.3
 - Improve testRunnerServiceUrl suggestion for Alpaca containers (and other containers which are served other port 443 behind a Traefik proxy)
 
