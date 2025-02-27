@@ -115,6 +115,10 @@ function Invoke-RunTestsViaUrl {
     if ($LaunchConfig.port -eq 443) {
         $serverInstance = $LaunchConfig.serverInstance.TrimEnd('dev')
     }
+    else {
+        $serverInstance = $LaunchConfig.serverInstance
+    }
+
     $serviceUrl = "$(($LaunchConfig.server).TrimEnd('/'))/$serverInstance/cs?tenant=$Tenant&company=$CompanyName"
 
     Write-Host "Connecting to $serviceUrl"
