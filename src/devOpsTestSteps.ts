@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { DevOpsTestStep } from './types';
+import { getCurrentWorkspaceConfig } from './config';
 
 export async function exportTestItemsToCsv(testItem: vscode.TestItem) {
     const testSteps = await getDevOpsTestStepsForTestItems(testItem);
@@ -75,8 +76,22 @@ function capitaliseFirstCharacter(text: string): string {
     return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
-function pasalCaseToSentenceCase(pascalCase: string): string {
-    return pascalCase.replace(/([A-Z])/g, ' $1').trim();
+export function pasalCaseToSentenceCase(pascalCase: string, acronymsToKeep?: string[]): string {
+    let sentenceCase = pascalCase.replace(/([A-Z])/g, ' $1').trim();
+
+    if (!acronymsToKeep) {
+        acronymsToKeep = getCurrentWorkspaceConfig().testNameAcronyms;
+    }
+
+    if (acronymsToKeep) {
+        acronymsToKeep.forEach(acronym => {
+            if (pascalCase.includes(acronym)) {
+                let splitAcronym = acronym.replace(/([A-Z])/g, ' $1').trim();
+                sentenceCase = sentenceCase.replace(splitAcronym, acronym);
+            }
+        });
+    }
+    return sentenceCase;
 }
 
 export async function getCommentLinesForTestItem(testItem: vscode.TestItem): Promise<string[]> {
