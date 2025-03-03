@@ -740,7 +740,8 @@ suite('Extension Test Suite', () => {
     });
 
     test('pasalCaseToSentenceCase does not preserve acronyms when none specified', () => {
-        assert.strictEqual(pasalCaseToSentenceCase('calculateVATForDocument'), 'calculate V A T For Document');
+        //have to pass a value otherwise the default value from package.json will apply
+        assert.strictEqual(pasalCaseToSentenceCase('calculateVATForDocument', ['none']), 'calculate V A T For Document');
     });
 
     test('pascalSentenceToSentenceCase preserves single acronym', () => {
