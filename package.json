@@ -386,6 +386,19 @@
 						"type": "string",
 						"scope": "resource",
 						"description": "Path to a BC compiler folder created with New-BCCompilerFolder. Used for running tests via a URL."
+					},
+					"al-test-runner.testNameAcronyms": {
+						"type": "array",
+						"scope": "resource",
+						"description": "Defines acronyms that should not be separated by spaces when exporting test names to CSV",
+						"default": [
+							"VAT",
+							"LCY",
+							"FCY",
+							"OK",
+							"ID",
+							"NFP"
+						]
 					}
 				}
 			}
