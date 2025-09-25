@@ -54,6 +54,10 @@ export function sendFailedToPublishError(detail?: string): string {
     return sendError('E02-PowerShellPublishingFailed', message);
 }
 
+export function sendInvalidConfigJsonError(configPath: string): string {
+    return sendError('E03-InvalidConfigJson', `The AL Test Runner configuration file at "${configPath}" contains invalid JSON. Please check the file for syntax errors or use the "AL Test Runner: Open Config File" command to recreate it.`);
+}
+
 export function sendDebugEvent(name: string, properties?: TelemetryEventProperties) {
     const debugEventProperty = { 'isDebugEvent': 'true' };
     const combinedProperties = {...properties, ...debugEventProperty}

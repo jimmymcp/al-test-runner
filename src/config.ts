@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
 import * as vscode from 'vscode';
-import { sendDebugEvent } from './telemetry';
+import { sendDebugEvent, sendInvalidConfigJsonError } from './telemetry';
 import * as types from './types';
 import { getTestFolderPath } from './alFileHelper';
 import { activeEditor } from './extension';
@@ -28,8 +28,18 @@ export function getALTestRunnerConfig() {
         data = readFileSync(alTestRunnerConfigPath, { encoding: 'utf-8' });
     }
 
-    let alTestRunnerConfig = JSON.parse(data);
-    return alTestRunnerConfig as types.ALTestRunnerConfig;
+    try {
+        let alTestRunnerConfig = JSON.parse(data);
+        return alTestRunnerConfig as types.ALTestRunnerConfig;
+    } catch (error) {
+        sendDebugEvent('getALTestRunnerConfig-invalidJson');
+        sendInvalidConfigJsonError(alTestRunnerConfigPath);
+        // Recreate the config file with valid JSON
+        createALTestRunnerConfig();
+        data = readFileSync(alTestRunnerConfigPath, { encoding: 'utf-8' });
+        let alTestRunnerConfig = JSON.parse(data);
+        return alTestRunnerConfig as types.ALTestRunnerConfig;
+    }
 }
 
 export function setALTestRunnerConfig(keyName: string, keyValue: string | undefined) {
