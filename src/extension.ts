@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import { readFileSync, existsSync, unlinkSync } from 'fs';
 import * as xml2js from 'xml2js';
 import * as types from './types';
-import { CodelensProvider } from './codeLensProvider';
+import { CodelensProvider } from './CodelensProvider';
 import { updateCodeCoverageDecoration, createCodeCoverageStatusBarItem } from './coverage';
 import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getTestFolderPath, getTestMethodRangesFromDocument } from './alFileHelper';
 import { getALTestRunnerPath, getCurrentWorkspaceConfig, getDebugConfigurationsFromLaunchJson, getLaunchJsonPath } from './config';
