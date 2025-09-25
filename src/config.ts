@@ -28,7 +28,21 @@ export function getALTestRunnerConfig() {
         data = readFileSync(alTestRunnerConfigPath, { encoding: 'utf-8' });
     }
 
-    let alTestRunnerConfig = JSON.parse(data);
+    let alTestRunnerConfig;
+    try {
+        alTestRunnerConfig = JSON.parse(data);
+    } catch (jsonError) {
+        vscode.window.showErrorMessage(
+            'AL Test Runner: The config file contains invalid JSON. Please fix the file at ' + alTestRunnerConfigPath + ' before running tests.',
+            'Open Config File'
+        ).then(selection => {
+            if (selection === 'Open Config File') {
+                vscode.commands.executeCommand('al-test-runner.openConfigFile');
+            }
+        });
+        sendDebugEvent('getALTestRunnerConfig-invalidJSON', { error: (jsonError && jsonError.toString) ? jsonError.toString() : String(jsonError) });
+        throw new Error('Invalid AL Test Runner config JSON');
+    }
     return alTestRunnerConfig as types.ALTestRunnerConfig;
 }
 
