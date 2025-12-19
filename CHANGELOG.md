@@ -1,5 +1,8 @@
 # Change Log
 
+## 10.16.1
+- Additional error handling
+
 ## 10.16.0
 - Enhanced error handling for test execution failures
 - Real-time test progress updates in Test Results panel
