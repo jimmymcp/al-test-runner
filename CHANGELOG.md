@@ -1,5 +1,8 @@
 # Change Log
 
+## 10.16.2
+- Remove default value for code coverage path (blank is more appropriate as a default value)
+
 ## 10.16.1
 - Additional error handling
 
