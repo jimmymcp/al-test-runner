@@ -1,5 +1,8 @@
 # Change Log
 
+## 10.16.3
+- Fixes for path handling on Mac [issue 183](https://github.com/jimmymcp/al-test-runner/issues/183)
+
 ## 10.16.2
 - Remove default value for code coverage path (blank is more appropriate as a default value)
 
