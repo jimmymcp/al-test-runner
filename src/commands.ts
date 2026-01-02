@@ -11,6 +11,7 @@ import { listALFiles } from './alFileHelper';
 import { showPerformanceProfile } from './performance';
 import { viewPageScriptingReport } from './pageScripting';
 import { exportTestItemsToCsv } from './devOpsTestSteps';
+import { join } from 'path';
 
 export function registerCommands(context: vscode.ExtensionContext) {
 	context.subscriptions.push(vscode.commands.registerCommand('altestrunner.runAllTests', async (extensionId?: string, extensionName?: string) => {
@@ -50,9 +51,9 @@ export function registerCommands(context: vscode.ExtensionContext) {
 	}));
 
 	context.subscriptions.push(vscode.commands.registerCommand('altestrunner.clearTestResults', async () => {
-		const resultsPath = getALTestRunnerPath() + '\\Results';
+		const resultsPath = join(getALTestRunnerPath(), 'Results');
 		if (existsSync(resultsPath)) {
-			readdirSync(resultsPath).forEach(e => unlinkSync(resultsPath + '\\' + e));
+			readdirSync(resultsPath).forEach(e => unlinkSync(join(resultsPath, e)));
 		}
 		triggerUpdateDecorations();
 		vscode.window.showInformationMessage('AL Test Runner results cleared');

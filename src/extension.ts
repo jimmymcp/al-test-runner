@@ -3,7 +3,7 @@ import { readFileSync, existsSync, unlinkSync } from 'fs';
 import * as xml2js from 'xml2js';
 import * as types from './types';
 import { safeParseJson } from './jsonHelper';
-import { CodelensProvider } from './codeLensProvider';
+import { CodelensProvider } from './CodelensProvider';
 import { updateCodeCoverageDecoration, createCodeCoverageStatusBarItem } from './coverage';
 import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getTestMethodRangesFromDocument } from './alFileHelper';
 import { getALTestRunnerPath, getCurrentWorkspaceConfig, getDebugConfigurationsFromLaunchJson, getLaunchJsonPath, getTestFolderFromConfig, getWorkspaceFolder } from './config';
@@ -344,7 +344,7 @@ function updateDecorations() {
 
 	let testMethodRanges: types.ALMethodRange[] = getTestMethodRangesFromDocument(activeEditor!.document);
 
-	let resultFileName = getALTestRunnerPath() + '\\Results\\' + sanitize(getDocumentIdAndName(activeEditor!.document)) + '.xml';
+	let resultFileName = join(getALTestRunnerPath(), 'Results', sanitize(getDocumentIdAndName(activeEditor!.document)) + '.xml');
 	if (!(existsSync(resultFileName))) {
 		setDecorations(passingTests, failingTests, getUntestedTestDecorations(testMethodRanges));
 		return;
@@ -475,7 +475,7 @@ export function getALTestRunnerTerminal(terminalName: string = getTerminalName()
 		terminal = vscode.window.createTerminal(terminalName);
 	}
 
-	let PSPath = getExtension()!.extensionPath + '\\PowerShell\\ALTestRunner.psm1';
+	let PSPath = join(getExtension()!.extensionPath, 'PowerShell', 'ALTestRunner.psm1');
 	terminal.sendText('if ($null -eq (Get-Module ALTestRunner)) {Import-Module "' + PSPath + '" -DisableNameChecking}');
 	return terminal;
 }
@@ -530,7 +530,7 @@ export function getLaunchJson() {
 
 export function getAppJsonKey(keyName: string) {
 	sendDebugEvent('getAppJsonKey-start', { keyName: keyName });
-	const appJsonPath = getTestFolderPath() + '\\app.json';
+	const appJsonPath = join(getTestFolderPath()!, 'app.json');
 	const data = readFileSync(appJsonPath, { encoding: 'utf-8' });
 	const appJson = safeParseJson(data, appJsonPath);
 	if (!appJson) {
@@ -543,7 +543,7 @@ export function getAppJsonKey(keyName: string) {
 }
 
 function getLastResultPath(): string {
-	return getALTestRunnerPath() + '\\last.xml';
+	return join(getALTestRunnerPath(), 'last.xml');
 }
 
 // this method is called when your extension is deactivated

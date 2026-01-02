@@ -1,4 +1,5 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { join } from 'path';
 import * as vscode from 'vscode';
 import { sendDebugEvent } from './telemetry';
 import * as types from './types';
@@ -8,12 +9,12 @@ import { safeParseJson } from './jsonHelper';
 
 export function getALTestRunnerPath(): string {
     const testFolderPath = getTestFolderFromConfig(getCurrentWorkspaceConfig(false)) || getWorkspaceFolder();
-    const alTestRunnerPath = testFolderPath + '\\.altestrunner';
+    const alTestRunnerPath = join(testFolderPath, '.altestrunner');
     return alTestRunnerPath;
 }
 
 export function getALTestRunnerConfigPath(): string {
-    return getALTestRunnerPath() + '\\config.json';
+    return join(getALTestRunnerPath(), 'config.json');
 }
 
 export function getALTestRunnerConfig() {
@@ -64,7 +65,7 @@ function createALTestRunnerConfig() {
         dockerHost: "",
         newPSSessionOptions: "",
         testRunnerServiceUrl: "",
-        codeCoveragePath: ".//.altestrunner//codecoverage.json",
+        codeCoveragePath: join(".", ".altestrunner", "codecoverage.json"),
         culture: "en-US"
     };
 
@@ -128,7 +129,7 @@ export function getDebugConfigurationsFromLaunchJson(type: string) {
 
 export function getLaunchJsonPath() {
     const testFolderPath = getTestFolderFromConfig(getCurrentWorkspaceConfig(false)) || getWorkspaceFolder();
-    return testFolderPath + '\\.vscode\\launch.json';
+    return join(testFolderPath, '.vscode', 'launch.json');
 }
 
 export async function selectLaunchConfig(): Promise<string | undefined> {
