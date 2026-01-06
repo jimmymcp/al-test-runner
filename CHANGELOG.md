@@ -1,5 +1,8 @@
 # Change Log
 
+## 10.16.4
+- Use node-powershell when publishing app via PowerShell
+
 ## 10.16.3
 - Fixes for path handling on Mac [issue 183](https://github.com/jimmymcp/al-test-runner/issues/183)
 
