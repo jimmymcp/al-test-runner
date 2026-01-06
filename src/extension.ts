@@ -9,7 +9,7 @@ import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, ge
 import { getALTestRunnerPath, getCurrentWorkspaceConfig, getDebugConfigurationsFromLaunchJson, getLaunchJsonPath, getTestFolderFromConfig, getWorkspaceFolder } from './config';
 import { getOutputWriter, OutputWriter } from './output';
 import { createTestController, discoverTests, discoverTestsInDocument } from './testController';
-import { onChangeAppFile, publishApp } from './publish';
+import { publishApp } from './publish';
 import { awaitFileExistence } from './file';
 import { join } from 'path';
 import TelemetryReporter from '@vscode/extension-telemetry';
@@ -61,8 +61,8 @@ const failingLineDecorationType = vscode.window.createTextEditorDecorationType({
 });
 
 export const outputChannel = vscode.window.createOutputChannel(getTerminalName());
-let updateDecorationsTimeout: NodeJS.Timer | undefined = undefined;
-let discoverTestsTimeout: NodeJS.Timer | undefined = undefined;
+let updateDecorationsTimeout: ReturnType<typeof setTimeout> | undefined = undefined;
+let discoverTestsTimeout: ReturnType<typeof setTimeout> | undefined = undefined;
 
 export let alTestController: vscode.TestController;
 export let telemetryReporter: TelemetryReporter;

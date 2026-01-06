@@ -1,15 +1,14 @@
-import { existsSync, readFileSync, unlinkSync } from 'fs';
 import { join } from 'path';
 import * as vscode from 'vscode';
-import { activeEditorIsOpenToTestAppJson, openEditorToTestFileIfNotAlready } from './alFileHelper';
+import { activeEditorIsOpenToTestAppJson, getTestFolderPath, openEditorToTestFileIfNotAlready } from './alFileHelper';
 import { getALTestRunnerConfig, getALTestRunnerPath, getCurrentWorkspaceConfig, getLaunchConfiguration } from './config';
 import { failedToPublishMessage } from './constants';
 import { getALTestRunnerTerminal } from './extension';
-import { awaitFileExistence } from './file';
 import { sendALCommandPublishError, sendDebugEvent, sendFailedToPublishError } from './telemetry';
 import { PublishResult, PublishType } from "./types";
-
-let shouldPublishApp: Boolean = false;
+import { invokePwshCommand } from './powershell';
+import * as glob from 'glob';
+import * as fs from 'fs';
 
 export function publishApp(publishType: PublishType): Promise<PublishResult> {
     return new Promise(async resolve => {
@@ -27,29 +26,41 @@ export function publishApp(publishType: PublishType): Promise<PublishResult> {
         if (getCurrentWorkspaceConfig().enablePublishingFromPowerShell) {
             sendDebugEvent('publishApp-publishFromPowerShell');
 
-            shouldPublishApp = true;
-            if (existsSync(getPublishCompletionPath())) {
-                unlinkSync(getPublishCompletionPath());
-            }
-
             const result = await vscode.commands.executeCommand('al.package') as { success: boolean; error?: string } | undefined;
             if (result && result.success === false) {
                 success = false;
                 message = result.error || failedToPublishMessage;
                 sendALCommandPublishError(message);
-            } else {
-                const resultExists = await awaitFileExistence(getPublishCompletionPath(), getCurrentWorkspaceConfig().publishTimeout);
-                if (resultExists) {
-                    const content = readFileSync(getPublishCompletionPath(), { encoding: 'utf-8' });
-                    success = content.trim() === '1';
-                    if (!success) {
-                        message = content;
-                        sendFailedToPublishError(content);
-                    }
-                }
-                else {
+            }
+            else {
+                //find the most recently created .app file in the test folder
+                const testFolderPath = getTestFolderPath();
+                if (!testFolderPath) {
                     success = false;
-                    sendFailedToPublishError();
+                    message = 'Could not find test folder path';
+                    sendFailedToPublishError(message);
+                } else {
+                    const appFiles = glob
+                        .sync(join(testFolderPath, '*.app'))
+                        .filter((file: string) => !file.endsWith('.dep.app'));
+
+                    if (appFiles.length === 0) {
+                        success = false;
+                        message = 'No .app files found in test folder';
+                        sendFailedToPublishError(message);
+                    } else {
+                        const sortedAppFiles = appFiles
+                            .map((file: string) => ({ file, mtime: fs.statSync(file).mtime }))
+                            .sort((a: any, b: any) => b.mtime - a.mtime);
+
+                        const mostRecentAppFile = sortedAppFiles[0].file;
+
+                        await vscode.window.withProgress({ location: vscode.ProgressLocation.Notification, title: 'Publishing App with PowerShell...' }, async (progress) => {
+                            const publishResult = await publishAppFile(vscode.Uri.file(mostRecentAppFile));
+                            success = publishResult.success;
+                            message = publishResult.message;
+                        });
+                    }
                 }
             }
         }
@@ -86,46 +97,19 @@ export function publishApp(publishType: PublishType): Promise<PublishResult> {
 
 export async function publishAppFile(uri: vscode.Uri): Promise<PublishResult> {
     return new Promise(async resolve => {
-        shouldPublishApp = false;
-        const terminal = getALTestRunnerTerminal(getTerminalName());
-        terminal.show(true);
-        terminal.sendText(' ');
-        terminal.sendText(`Publish-App -AppFile "${uri.fsPath}" -CompletionPath "${getPublishCompletionPath()}" -LaunchConfig '${getLaunchConfiguration(getALTestRunnerConfig().launchConfigName)}'`);
-
-        const resultExists = await awaitFileExistence(getPublishCompletionPath(), getCurrentWorkspaceConfig().publishTimeout);
-        if (resultExists) {
-            const content = readFileSync(getPublishCompletionPath(), { encoding: 'utf-8' })
-            const success = content.trim() === '1';
-            let message = '';
-            if (!success) {
-                message = content.trim();
-            }
-            resolve({ success: success, message: message });
+        const publishCommand = `Publish-App -AppFile "${uri.fsPath}" -LaunchConfig '${getLaunchConfiguration(getALTestRunnerConfig().launchConfigName)}'`;
+        const result = await invokePwshCommand(publishCommand);
+        if (result.exitCode !== 0) {
+            sendALCommandPublishError(result.stderr);
+            resolve({ success: false, message: result.stderr });
+            return;
         }
-        else {
-            resolve({ success: false, message: failedToPublishMessage });
-        }
+        resolve({ success: true, message: '' });
     });
-}
-
-export async function onChangeAppFile(uri: vscode.Uri) {
-    if ((!shouldPublishApp) && (!getCurrentWorkspaceConfig().automaticPublishing)) {
-        return;
-    }
-
-    if ((uri.fsPath.indexOf('dep.app') > 0) || (uri.fsPath.indexOf('.alpackages') > 0)) {
-        return;
-    }
-
-    await publishAppFile(uri);
 }
 
 function getTerminalName(): string {
     return 'al-test-runner';
-}
-
-function getPublishCompletionPath(): string {
-    return join(getALTestRunnerPath(), "publish.txt");
 }
 
 export function displayPublishTerminal() {
