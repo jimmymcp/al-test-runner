@@ -54,6 +54,17 @@ export function sendFailedToPublishError(detail?: string): string {
     return sendError('E02-PowerShellPublishingFailed', message);
 }
 
+export function sendALCommandPublishError(detail?: string): string {
+    let message: string = '';
+    if (detail) {
+        message = detail;
+    }
+    else {
+        message = failedToPublishMessage;
+    }
+    return sendError('E03-ALCommandPublishingFailed', message);
+}
+
 export function sendDebugEvent(name: string, properties?: TelemetryEventProperties) {
     const debugEventProperty = { 'isDebugEvent': 'true' };
     const combinedProperties = {...properties, ...debugEventProperty}
@@ -73,6 +84,10 @@ function sendTestRunEvent(eventName: string, request: vscode.TestRunRequest) {
     let testCount: number;
     let codeCoverageEnabled, publishBeforeTest, enablePublishingFromPowerShell: string;
     const config = getCurrentWorkspaceConfig();
+
+    if (getCurrentWorkspaceConfig(true, 'telemetry').telemetryLevel === 'off') {
+        return;
+    }
 
     codeCoverageEnabled = config.enableCodeCoverage;
     publishBeforeTest = config.publishBeforeTest;

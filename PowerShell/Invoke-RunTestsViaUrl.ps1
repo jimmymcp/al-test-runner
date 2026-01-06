@@ -33,130 +33,159 @@ function Invoke-RunTestsViaUrl {
         $LaunchConfig,
         [switch]$GetPerformanceProfile,
         [Parameter(Mandatory = $true)]
-        $BCCompilerFolder
+        [string]$ResultsPath
     )
 
     $ResultId = [Guid]::NewGuid().Guid + ".xml"
-    $ResultFile = Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) $ResultId
-    $LastResultFile = Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) 'last.xml'
-    
-    $Message = "Running tests on $ContainerName, company $CompanyName"
+    $ResultFile = Join-Path $ResultsPath $ResultId
+    $LastResultFile = Join-Path $ResultsPath 'last.xml'
 
-    $Params = @{
-        containerName       = $ContainerName
-        companyName         = $CompanyName 
-        XUnitResultFileName = $ContainerResultFile
-        culture             = $Culture
+    try {
+        $Message = "Running tests on $ContainerName, company $CompanyName"
+
+        $Params = @{
+            containerName = $ContainerName
+            companyName   = $CompanyName
+            culture       = $Culture
+        }
+
+        if ($Tenant) {
+            $Params.Add('tenant', $Tenant)
+            $Message += ", tenant $Tenant"
+        }
+
+        if ($TestCodeunit -ne '') {
+            $Params.Add('testCodeunit', $TestCodeunit)
+            $Message += ", codeunit $TestCodeunit"
+        }
+
+        if ($TestFunction -ne '') {
+            $Params.Add('testFunction', $TestFunction)
+            $Message += ", function $TestFunction"
+        }
+
+        if ($TestSuiteName -ne '') {
+            $Params.Add('testSuite', $TestSuiteName)
+            $Message += ", suite $TestSuiteName"
+        }
+        else {
+            $TestSuiteName = 'DEFAULT'
+            $Params.Add('extensionId', $ExtensionId)
+            $Message += ", extension {0}" -f $ExtensionName
+        }
+
+        if ($TestRunnerCodeunitId -ne 0) {
+            $Params.Add('testRunnerCodeunitId', $TestRunnerCodeunitId)
+            $Message += ", test runner $TestRunnerCodeunitId"
+        }
+
+        if ($null -ne $DisabledTests) {
+            $Params.Add('disabledTests', $DisabledTests)
+        }
+
+        $Message += ", culture $Culture"
+
+        Write-Host $Message -ForegroundColor Green
+
+        $PsTestFunctionsPath = Join-Path (Get-TestClientPath) "PsTestFunctions.ps1"
+        $ClientContextPath = Join-Path (Get-TestClientPath) "ClientContext.ps1"
+        $newtonSoftDllPath = Get-NewtonsoftJsonPath
+        $clientDllPath = Join-Path (Get-TestClientPath) "Microsoft.Dynamics.Framework.UI.Client.dll"
+
+        . $PsTestFunctionsPath -newtonSoftDllPath $newtonSoftDllPath -clientDllPath $clientDllPath -clientContextScriptPath $ClientContextPath
+
+        $LaunchConfig = $LaunchConfig | ConvertFrom-Json
+
+        if ($LaunchConfig.authentication -eq 'UserPassword') {
+            $clientServicesCredentialType = "NavUserPassword"
+        }
+        else {
+            $clientServicesCredentialType = $LaunchConfig.authentication
+        }
+
+        # if port 443 is specified then we can assume that the container is behind a traefik proxy and can trim 'dev' from the end of the server instance name
+        if ($LaunchConfig.port -eq 443) {
+            $serverInstance = $LaunchConfig.serverInstance.TrimEnd('dev')
+        }
+        else {
+            $serverInstance = $LaunchConfig.serverInstance
+        }
+
+        $serviceUrl = "$(($LaunchConfig.server).TrimEnd('/'))/$serverInstance/cs?tenant=$Tenant&company=$CompanyName"
+
+        Write-Host "Connecting to $serviceUrl"
+        $clientContext = $null
+
+        $clientContext = New-ClientContext -serviceUrl $serviceUrl -auth $clientServicesCredentialType -credential $credential -interactionTimeout ([timespan]::FromHours(24)) -culture '' -timezone ''
+
+        Run-Tests @Param -clientContext $clientContext `
+            -TestSuite $TestSuiteName `
+            -TestCodeunit $TestCodeunit `
+            -TestFunction $TestFunction `
+            -TestGroup '*' `
+            -ExtensionId $ExtensionId `
+            -TestRunnerCodeunitId $TestRunnerCodeunitId `
+            -DisabledTests $DisabledTests `
+            -XUnitResultFileName $ResultFile `
+            -AppendToXUnitResultFile:$false `
+            -AzureDevOps 'no' `
+            -GitHubActions 'no' `
+            -detailed:$true `
+            -debugMode:$false `
+            -testPage 130455 `
+            -connectFromHost:$true `
+            -CodeCoverageTrackingType 'Disabled' `
+            -ProduceCodeCoverageMap 'Disabled' | Out-Null
+
+        if ($GetCodeCoverage.IsPresent) {
+            Get-CodeCoverage -LaunchConfig $LaunchConfig
+        }
+
+        if ($GetPerformanceProfile.IsPresent) {
+            Get-PerformanceProfile -LaunchConfig $LaunchConfig
+        }
+
+        if (Test-Path $ResultFile) {
+            Merge-ALTestRunnerTestResults -ResultsFile $ResultFile -ToPath (Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) 'Results')
+            Copy-Item $ResultFile -Destination $LastResultFile -Force
+            Remove-Item $ResultFile -Force
+        }
     }
-    
-    if ($Tenant) {
-        $Params.Add('tenant', $Tenant)
-        $Message += ", tenant $Tenant"
-    }
+    catch {
+        # Ensure we always create a results file, even on error
+        # This prevents the extension from hanging indefinitely
+        Write-Host "Error during test execution: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "Stack trace: $($_.ScriptStackTrace)" -ForegroundColor Red
 
-    if ($TestCodeunit -ne '') {
-        $Params.Add('testCodeunit', $TestCodeunit)
-        $Message += ", codeunit $TestCodeunit"
-    }
-    
-    if ($TestFunction -ne '') {
-        $Params.Add('testFunction', $TestFunction)
-        $Message += ", function $TestFunction"
-    }
-    
-    if ($TestSuiteName -ne '') {
-        $Params.Add('testSuite', $TestSuiteName)
-        $Message += ", suite $TestSuiteName"
-    }
-    else {
-        $TestSuiteName = 'DEFAULT'
-        $Params.Add('extensionId', $ExtensionId)
-        $Message += ", extension {0}" -f $ExtensionName
-    }
+        # Escape XML special characters (ampersand must be first to avoid double-escaping)
+        $ErrorMessage = $_.Exception.Message -replace '&', '&amp;' -replace '<', '&lt;' -replace '>', '&gt;' -replace '"', '&quot;'
+        $ErrorStackTrace = $_.ScriptStackTrace -replace '&', '&amp;' -replace '<', '&lt;' -replace '>', '&gt;' -replace '"', '&quot;'
 
-    if ($TestRunnerCodeunitId -ne 0) {
-        $Params.Add('testRunnerCodeunitId', $TestRunnerCodeunitId)
-        $Message += ", test runner $TestRunnerCodeunitId"
-    }
+        $errorXml = @"
+<?xml version="1.0" encoding="utf-8"?>
+<assemblies>
+  <assembly name="AL Test Runner Error" total="0" passed="0" failed="1" skipped="0" time="0" errors="1" run-date="$(Get-Date -Format 'yyyy-MM-dd')" run-time="$(Get-Date -Format 'HH:mm:ss')">
+    <collection>
+      <test name="PowerShell Execution Error" type="Error" method="ExecutionError" time="0" result="Fail">
+        <failure exception-type="PowerShellExecutionError">
+          <message><![CDATA[$ErrorMessage]]></message>
+          <stack-trace><![CDATA[$ErrorStackTrace]]></stack-trace>
+        </failure>
+      </test>
+    </collection>
+  </assembly>
+</assemblies>
+"@
 
-    if ($null -ne $DisabledTests) {
-        $Params.Add('disabledTests', $DisabledTests)
-    }
+        # Ensure the results directory exists
+        if (!(Test-Path $ResultsPath)) {
+            New-Item -Path $ResultsPath -ItemType Directory -Force | Out-Null
+        }
 
-    $Message += ", culture $Culture"
+        # Write error result to both result file and last.xml
+        $errorXml | Out-File -FilePath $LastResultFile -Encoding UTF8 -Force
 
-    Write-Host $Message -ForegroundColor Green
-
-    $bcContainerHelperPath = Join-Path (Split-Path (Get-Module bccontainerhelper).Path -Parent) 'AppHandling'
-    $PsTestToolFolder = Join-Path ([System.IO.Path]::GetTempPath()) "$([Guid]::NewGuid().ToString())"
-    New-Item $PsTestToolFolder -ItemType Directory | Out-Null
-    $testDlls = Join-Path $BCCompilerFolder "dlls/Test Assemblies/*.dll"
-    Copy-Item $testDlls -Destination $PsTestToolFolder -Force
-    Copy-Item -Path (Join-Path $bcContainerHelperPath "PsTestFunctions.ps1") -Destination $PsTestToolFolder -Force
-    Copy-Item -Path (Join-Path $bcContainerHelperPath "ClientContext.ps1") -Destination $PsTestToolFolder -Force
-
-    $PsTestFunctionsPath = Join-Path $PsTestToolFolder "PsTestFunctions.ps1"
-    $ClientContextPath = Join-Path $PsTestToolFolder "ClientContext.ps1"
-    $newtonSoftDllPath = Join-Path $PsTestToolFolder "Newtonsoft.Json.dll"
-    $clientDllPath = Join-Path $PsTestToolFolder "Microsoft.Dynamics.Framework.UI.Client.dll"
-
-    . $PsTestFunctionsPath -newtonSoftDllPath $newtonSoftDllPath -clientDllPath $clientDllPath -clientContextScriptPath $ClientContextPath
-
-    $LaunchConfig = $LaunchConfig | ConvertFrom-Json
-
-    if ($LaunchConfig.authentication -eq 'UserPassword') {
-        $clientServicesCredentialType = "NavUserPassword"
-    }
-    else {
-        $clientServicesCredentialType = $LaunchConfig.authentication
-    }
-
-    # if port 443 is specified then we can assume that the container is behind a traefik proxy and can trim 'dev' from the end of the server instance name
-    if ($LaunchConfig.port -eq 443) {
-        $serverInstance = $LaunchConfig.serverInstance.TrimEnd('dev')
-    }
-    else {
-        $serverInstance = $LaunchConfig.serverInstance
-    }
-
-    $serviceUrl = "$(($LaunchConfig.server).TrimEnd('/'))/$serverInstance/cs?tenant=$Tenant&company=$CompanyName"
-
-    Write-Host "Connecting to $serviceUrl"
-    $clientContext = $null
-
-    $clientContext = New-ClientContext -serviceUrl $serviceUrl -auth $clientServicesCredentialType -credential $credential -interactionTimeout ([timespan]::FromHours(24)) -culture '' -timezone ''
-
-    $result = Run-Tests @Param -clientContext $clientContext `
-        -TestSuite $TestSuiteName `
-        -TestCodeunit $TestCodeunit `
-        -TestFunction $TestFunction `
-        -TestGroup '*' `
-        -ExtensionId $ExtensionId `
-        -TestRunnerCodeunitId $TestRunnerCodeunitId `
-        -DisabledTests $DisabledTests `
-        -XUnitResultFileName $ResultFile `
-        -AppendToXUnitResultFile:$false `
-        -AzureDevOps 'no' `
-        -GitHubActions 'no' `
-        -detailed:$true `
-        -debugMode:$false `
-        -testPage 130455 `
-        -connectFromHost:$true `
-        -CodeCoverageTrackingType 'Disabled' `
-        -ProduceCodeCoverageMap 'Disabled'
-
-    if ($GetCodeCoverage.IsPresent) {
-        Get-CodeCoverage -LaunchConfig $LaunchConfig
-    }
-        
-    if ($GetPerformanceProfile.IsPresent) {
-        Get-PerformanceProfile -LaunchConfig $LaunchConfig
-    }
-
-    if (Test-Path $ResultFile) {
-        Merge-ALTestRunnerTestResults -ResultsFile $ResultFile -ToPath (Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) 'Results')
-        Copy-Item $ResultFile -Destination $LastResultFile -Force
-        Remove-Item $ResultFile -Force
+        # Do not re-throw - error is already recorded in XML for processing
     }
 }
 

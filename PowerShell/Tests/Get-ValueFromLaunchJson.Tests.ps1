@@ -59,5 +59,9 @@ Describe Get-LaunchJson {
         It "returns the KeyName that is requested from the config" {
             Get-ValueFromLaunchJson -LaunchConfig '{"name": "testconfig", "server": "serverone"}' -KeyName 'server' | should -be 'serverone'
         }
+
+        It "returns the default value that is passed when the requested value is not present" {
+            Get-ValueFromLaunchJson -LaunchConfig '{"name": "testconfig", "server": "serverone"}' -KeyName 'port' -DefaultValue 8080 | should -be 8080
+        }
     }
 }

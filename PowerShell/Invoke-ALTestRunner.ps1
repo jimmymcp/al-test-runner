@@ -19,19 +19,14 @@ function Invoke-ALTestRunner {
         $LaunchConfig,
         [switch]$GetPerformanceProfile,
         [switch]$RunViaUrl,
-        [Parameter(Mandatory = $false)]
-        [string]$BCCompilerFolder
+        [Parameter(Mandatory = $true)]
+        [string]$ResultsPath
     )
 
     Import-ContainerHelper
 
     $ContainerName = Get-ContainerName -LaunchConfig $LaunchConfig
-    if ($RunViaUrl.IsPresent) {
-        if ([String]::IsNullOrEmpty($BCCompilerFolder) -or -not (Test-Path $BCCompilerFolder)) {
-            $BCCompilerFolder = Get-BCCompilerFolder
-        }
-    }
-    else {
+    if (!($RunViaUrl.IsPresent)) {
         Get-ServiceUrl -Method 'Get-PerformanceProfile' -LaunchConfig $LaunchConfig | Out-Null
         if (!(Get-ContainerIsRunning $ContainerName)) {
             throw "Container $ContainerName is not running. Please start the container and retry. Please note that container names are case-sensitive."
@@ -71,7 +66,10 @@ function Invoke-ALTestRunner {
         GetCodeCoverage       = $GetCodeCoverage
         LaunchConfig          = $LaunchConfig
         GetPerformanceProfile = $GetPerformanceProfile
+        ResultsPath           = $ResultsPath
     }
+
+    Write-Verbose "Saving results to $ResultsPath"
 
     $Tenant = Get-TenantFromLaunchJson -LaunchConfig $LaunchConfig
     if ($Tenant) {
@@ -116,9 +114,8 @@ function Invoke-ALTestRunner {
     if ($null -ne (Get-ValueFromALTestRunnerConfig -KeyName 'culture')) {
         $Params.Add('Culture', (Get-ValueFromALTestRunnerConfig -KeyName 'culture'))
     }
-    
+
     if ($RunViaUrl.IsPresent) {
-        $Params.Add('BCCompilerFolder', $BCCompilerFolder)
         Invoke-RunTestsViaUrl @Params
     }
     else {

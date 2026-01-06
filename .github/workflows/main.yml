@@ -5,7 +5,7 @@ name: CI
 on:
   push:
   pull_request:
-    branches: [ master ]
+    branches: [ "master", "develop" ]
   workflow_dispatch:
 
 jobs:
@@ -43,6 +43,6 @@ jobs:
           path: ./*.vsix
 
       - name: Publish to marketplace
-        if: github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/pre-release'
         run: |
           vsce publish -p ${{ secrets.VSCE_PAT }}

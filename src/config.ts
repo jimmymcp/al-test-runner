@@ -1,18 +1,20 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs';
+import { join } from 'path';
 import * as vscode from 'vscode';
 import { sendDebugEvent } from './telemetry';
 import * as types from './types';
-import { getTestFolderPath } from './alFileHelper';
 import { activeEditor } from './extension';
 import { invokePowerShellCommand } from './powershell';
+import { safeParseJson } from './jsonHelper';
 
 export function getALTestRunnerPath(): string {
-    const alTestRunnerPath = getTestFolderPath() + '\\.altestrunner';
+    const testFolderPath = getTestFolderFromConfig(getCurrentWorkspaceConfig(false)) || getWorkspaceFolder();
+    const alTestRunnerPath = join(testFolderPath, '.altestrunner');
     return alTestRunnerPath;
 }
 
 export function getALTestRunnerConfigPath(): string {
-    return getALTestRunnerPath() + '\\config.json';
+    return join(getALTestRunnerPath(), 'config.json');
 }
 
 export function getALTestRunnerConfig() {
@@ -28,7 +30,11 @@ export function getALTestRunnerConfig() {
         data = readFileSync(alTestRunnerConfigPath, { encoding: 'utf-8' });
     }
 
-    let alTestRunnerConfig = JSON.parse(data);
+    let alTestRunnerConfig = safeParseJson(data, alTestRunnerConfigPath);
+    if (!alTestRunnerConfig) {
+        vscode.window.showErrorMessage(`Failed to parse AL Test Runner config file. Please check ${alTestRunnerConfigPath} for syntax errors and try again.`);
+        throw new Error(`Invalid JSON in AL Test Runner config file: ${alTestRunnerConfigPath}`);
+    }
     return alTestRunnerConfig as types.ALTestRunnerConfig;
 }
 
@@ -59,7 +65,7 @@ function createALTestRunnerConfig() {
         dockerHost: "",
         newPSSessionOptions: "",
         testRunnerServiceUrl: "",
-        codeCoveragePath: ".//.altestrunner//codecoverage.json",
+        codeCoveragePath: join(".", ".altestrunner", "codecoverage.json"),
         culture: "en-US"
     };
 
@@ -110,13 +116,20 @@ export function launchConfigIsValid(alTestRunnerConfig?: types.ALTestRunnerConfi
 
 export function getDebugConfigurationsFromLaunchJson(type: string) {
     const testWorkspaceFolder = vscode.workspace.getWorkspaceFolder(vscode.Uri.file(getALTestRunnerConfigPath()));
-    const configuration = vscode.workspace.getConfiguration('launch', testWorkspaceFolder);
-    const debugConfigurations = configuration.configurations as Array<vscode.DebugConfiguration>;
+    var configuration = vscode.workspace.getConfiguration('launch', testWorkspaceFolder);
+    var debugConfigurations = configuration.configurations as Array<vscode.DebugConfiguration>;
+
+    if (debugConfigurations.length === 0) {
+        configuration = vscode.workspace.getConfiguration('launch');
+        debugConfigurations = configuration.configurations as Array<vscode.DebugConfiguration>;
+    }
+
     return debugConfigurations.filter(element => { return element.request === type; }).slice();
 }
 
 export function getLaunchJsonPath() {
-    return getTestFolderPath() + '\\.vscode\\launch.json';
+    const testFolderPath = getTestFolderFromConfig(getCurrentWorkspaceConfig(false)) || getWorkspaceFolder();
+    return join(testFolderPath, '.vscode', 'launch.json');
 }
 
 export async function selectLaunchConfig(): Promise<string | undefined> {
@@ -140,17 +153,17 @@ export async function selectLaunchConfig(): Promise<string | undefined> {
     });
 }
 
-export function getCurrentWorkspaceConfig(forTestFolder: boolean = true) {
+export function getCurrentWorkspaceConfig(forTestFolder: boolean = true, section: string = 'al-test-runner') {
     let testFolderPath: string | undefined;
     if (forTestFolder) {
-        testFolderPath = getTestFolderPath();
+        testFolderPath = getTestFolderFromConfig(vscode.workspace.getConfiguration(section)) || getWorkspaceFolder();
     }
 
     if (testFolderPath) {
-        return vscode.workspace.getConfiguration('al-test-runner', vscode.Uri.file(testFolderPath));
+        return vscode.workspace.getConfiguration(section, vscode.Uri.file(testFolderPath));
     }
     else {
-        return vscode.workspace.getConfiguration('al-test-runner');
+        return vscode.workspace.getConfiguration(section);
     }
 }
 
@@ -167,7 +180,14 @@ export async function getALTestRunnerLaunchConfig(): Promise<any> {
             }
         }
 
-        resolve(JSON.parse(getLaunchConfiguration(launchConfig)));
+        const configString = getLaunchConfiguration(launchConfig);
+        const parsedConfig = safeParseJson(configString, 'launch.json configuration');
+        if (!parsedConfig) {
+            vscode.window.showErrorMessage('Failed to parse launch configuration. Please check your launch.json file for syntax errors.');
+            resolve({});
+            return;
+        }
+        resolve(parsedConfig);
     })
 }
 

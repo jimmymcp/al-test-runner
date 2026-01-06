@@ -8,12 +8,20 @@ function Get-CodeCoverage {
 
     $CodeCoverageFile = Get-ValueFromALTestRunnerConfig -KeyName 'codeCoveragePath'
     if ([string]::IsNullOrEmpty($CodeCoverageFile)) {
-        Write-Host "Please set a value for codeCoveragePath in the AL Test Runner config.json file." -ForegroundColor DarkRed
-        Write-Host "See https://jpearson.blog/2021/02/07/measuring-code-coverage-in-business-central-with-al-test-runner/ for more information." -ForegroundColor DarkRed
+        Write-Host "AL Test Runner WARNING: Code coverage is enabled but codeCoveragePath is not set in AL Test Runner config.json file. See https://jpearson.blog/2021/02/07/measuring-code-coverage-in-business-central-with-al-test-runner/ for more information." -ForegroundColor DarkRed
         return
     }
 
-    Write-Host "Downloading code coverage to $CodeCoverageFile"
+    # Ensure the directory exists
+    $CodeCoverageDir = Split-Path -Path $CodeCoverageFile -Parent
+    if (-not (Test-Path $CodeCoverageDir)) {
+        New-Item -Path $CodeCoverageDir -ItemType Directory -Force | Out-Null
+    }
+
+    # Resolve to absolute path for output
+    $ResolvedPath = $ExecutionContext.SessionState.Path.GetUnresolvedProviderPathFromPSPath($CodeCoverageFile)
+
+    Write-Host "Downloading code coverage to $ResolvedPath"
 
     if (Get-UrlIsForOData $ServiceUrl) {
         $Params = @{

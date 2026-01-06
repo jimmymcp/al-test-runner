@@ -7,7 +7,9 @@ function Get-ValueFromLaunchJson {
         [Parameter(Mandatory=$true)]
         $KeyName,
         [Parameter(Mandatory=$false)]
-        $LaunchConfig
+        $LaunchConfig,
+        [Parameter(Mandatory=$false)]
+        $DefaultValue
     )
 
     if (![String]::IsNullOrEmpty($LaunchConfig)) {
@@ -17,6 +19,10 @@ function Get-ValueFromLaunchJson {
         elseif ($null -ne ($LaunchConfig | ConvertFrom-Json).$KeyName){
             return ($LaunchConfig | ConvertFrom-Json).$KeyName
         } 
+    }
+
+    if ($null -ne $DefaultValue) {
+        return $DefaultValue
     }
 
     if ([String]::IsNullOrEmpty($LaunchJsonPath)) {

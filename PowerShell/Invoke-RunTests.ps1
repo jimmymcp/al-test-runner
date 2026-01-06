@@ -23,7 +23,7 @@ function Invoke-RunTests {
         [string]$ExtensionName,
         [Parameter(Mandatory = $false)]
         [switch]$GetCodeCoverage,
-        [Parameter(Mandatory=$false)]
+        [Parameter(Mandatory = $false)]
         [int]$TestRunnerCodeunitId = 130450,
         [Parameter(Mandatory = $false)]
         $DisabledTests,
@@ -31,93 +31,105 @@ function Invoke-RunTests {
         $Culture = 'en-US',
         [Parameter(Mandatory = $false)]
         $LaunchConfig,
-        [switch]$GetPerformanceProfile
+        [switch]$GetPerformanceProfile,
+        [Parameter(Mandatory = $true)]
+        [string]$ResultsPath
     )
 
     $ResultId = [Guid]::NewGuid().Guid + ".xml"
-    $ResultFile = Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) $ResultId
-    $LastResultFile = Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) 'last.xml'
+    $ResultFile = Join-Path $ResultsPath $ResultId
+    $LastResultFile = Join-Path $ResultsPath 'last.xml'
     $ContainerResultFile = Join-Path (Get-ContainerResultPath -LaunchConfig $LaunchConfig) $ResultId
-    
-    $Message = "Running tests on $ContainerName, company $CompanyName"
 
-    $Params = @{
-        containerName       = $ContainerName
-        companyName         = $CompanyName 
-        XUnitResultFileName = $ContainerResultFile
-        culture             = $Culture
-    }
-    
-    if ($null -ne $Credential) {
-        $Params.Add('credential', $Credential)
-    }
-    
-    if ($Tenant) {
-        $Params.Add('tenant', $Tenant)
-        $Message += ", tenant $Tenant"
-    }
+    try {
+        $Message = "Running tests on $ContainerName, company $CompanyName"
 
-    if ($TestCodeunit -ne '') {
-        $Params.Add('testCodeunit', $TestCodeunit)
-        $Message += ", codeunit $TestCodeunit"
-    }
-    
-    if ($TestFunction -ne '') {
-        $Params.Add('testFunction', $TestFunction)
-        $Message += ", function $TestFunction"
-    }
-    
-    if ($TestSuiteName -ne '') {
-        $Params.Add('testSuite', $TestSuiteName)
-        $Message += ", suite $TestSuiteName"
-    }
-    else {
-        $Params.Add('extensionId', $ExtensionId)
-        $Message += ", extension {0}" -f $ExtensionName
-    }
+        $Params = @{
+            containerName       = $ContainerName
+            companyName         = $CompanyName
+            XUnitResultFileName = $ContainerResultFile
+            culture             = $Culture
+        }
 
-    if ($TestRunnerCodeunitId -ne 0) {
-        $Params.Add('testRunnerCodeunitId', $TestRunnerCodeunitId)
-        $Message += ", test runner $TestRunnerCodeunitId"
-    }
+        if ($null -ne $Credential) {
+            $Params.Add('credential', $Credential)
+        }
 
-    if ($null -ne $DisabledTests) {
-        $Params.Add('disabledTests', $DisabledTests)
-    }
+        if ($Tenant) {
+            $Params.Add('tenant', $Tenant)
+            $Message += ", tenant $Tenant"
+        }
 
-    $Message += ", culture $Culture"
+        if ($TestCodeunit -ne '') {
+            $Params.Add('testCodeunit', $TestCodeunit)
+            $Message += ", codeunit $TestCodeunit"
+        }
 
-    [int]$AttemptNo = 1
-    [bool]$BreakTestLoop = $false
-    
-    while (!$BreakTestLoop) {
-        try {
-            Write-Host $Message -ForegroundColor Green
-            $refreshToken = Get-ValueFromALTestRunnerConfig -KeyName 'refreshToken'
-            if ($null -ne $refreshToken) {
-                $authContext = New-BcAuthContext -refreshToken $refreshToken
-                $Params.Add('bcAuthContext', $authContext)
+        if ($TestFunction -ne '') {
+            $Params.Add('testFunction', $TestFunction)
+            $Message += ", function $TestFunction"
+        }
+
+        if ($TestSuiteName -ne '') {
+            $Params.Add('testSuite', $TestSuiteName)
+            $Message += ", suite $TestSuiteName"
+        }
+        else {
+            $Params.Add('extensionId', $ExtensionId)
+            $Message += ", extension {0}" -f $ExtensionName
+        }
+
+        if ($TestRunnerCodeunitId -ne 0) {
+            $Params.Add('testRunnerCodeunitId', $TestRunnerCodeunitId)
+            $Message += ", test runner $TestRunnerCodeunitId"
+        }
+
+        if ($null -ne $DisabledTests) {
+            $Params.Add('disabledTests', $DisabledTests)
+        }
+
+        $Message += ", culture $Culture"
+
+        Write-Host $Message -ForegroundColor Green
+        $refreshToken = Get-ValueFromALTestRunnerConfig -KeyName 'refreshToken'
+        if ($null -ne $refreshToken) {
+            $authContext = New-BcAuthContext -refreshToken $refreshToken
+            $Params.Add('bcAuthContext', $authContext)
+        }
+        Invoke-CommandOnDockerHost { Param($Params) Run-TestsInBCContainer @Params -detailed -Verbose } -Parameters $Params
+
+        if (Get-DockerHostIsRemote) {
+            $Session = Get-DockerHostSession
+            Invoke-CommandOnDockerHost {
+                Param($ContainerResultFile, $ResultId)
+                if (Test-Path $ContainerResultFile) {
+                    if (-not (Test-Path 'C:\BCContainerTests\')) {
+                        New-Item -Path 'C:\' -Name BCContainerTests -ItemType Directory -Force | Out-Null
+                    }
+
+                    Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath (Join-Path 'C:\BCContainerTests' $ResultId)
+
+                }
+                else {
+                    throw 'Tests have not been run'
+                }
+            } -Parameters ($ContainerResultFile, $ResultId)
+
+            if ($GetCodeCoverage.IsPresent) {
+                Get-CodeCoverage -LaunchConfig $LaunchConfig
             }
-            Invoke-CommandOnDockerHost { Param($Params) Run-TestsInBCContainer @Params -detailed -Verbose } -Parameters $Params
-            
-            if (Get-DockerHostIsRemote) {
-                $Session = Get-DockerHostSession
-                Invoke-CommandOnDockerHost {
-                    Param($ContainerResultFile, $ResultId)
-                    if (Test-Path $ContainerResultFile) {
-                        if (-not (Test-Path 'C:\BCContainerTests\')) {
-                            New-Item -Path 'C:\' -Name BCContainerTests -ItemType Directory -Force | Out-Null
-                        }
 
-                        Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath (Join-Path 'C:\BCContainerTests' $ResultId)
+            if ($GetPerformanceProfile.IsPresent) {
+                Get-PerformanceProfile -LaunchConfig $LaunchConfig
+            }
 
-                    }
-                    else {
-                        throw 'Tests have not been run'
-                    }
-                } -Parameters ($ContainerResultFile, $ResultId)
-
-                if ($GetCodeCoverage.IsPreset) {
+            Write-Host "Copy C:\BCContainerTests\$ResultId to $LastResultFile"
+            Copy-Item -FromSession $Session -Path "C:\BCContainerTests\$ResultId" -Destination $ResultFile
+            Copy-Item -Path $ResultFile -Destination $LastResultFile
+        }
+        else {
+            if (Test-Path $ContainerResultFile) {
+                if ($GetCodeCoverage.IsPresent) {
                     Get-CodeCoverage -LaunchConfig $LaunchConfig
                 }
 
@@ -125,51 +137,56 @@ function Invoke-RunTests {
                     Get-PerformanceProfile -LaunchConfig $LaunchConfig
                 }
 
-                Write-Host "Copy C:\BCContainerTests\$ResultId to $LastResultFile"
-                Copy-Item -FromSession $Session -Path "C:\BCContainerTests\$ResultId" -Destination $ResultFile
+                Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath $ResultFile
                 Copy-Item -Path $ResultFile -Destination $LastResultFile
             }
             else {
-                if (Test-Path $ContainerResultFile) {
-                    if ($GetCodeCoverage.IsPresent) {
-                        Get-CodeCoverage -LaunchConfig $LaunchConfig
-                    }
-
-                    if ($GetPerformanceProfile.IsPresent) {
-                        Get-PerformanceProfile -LaunchConfig $LaunchConfig
-                    }
-                    
-                    Copy-FileFromBCContainer -containerName $ContainerName -containerPath $ContainerResultFile -localPath $ResultFile
-                    Copy-Item -Path $ResultFile -Destination $LastResultFile
-                }
-                else {
-                    throw 'Tests have not been run'
-                }
-            }
-
-            Merge-ALTestRunnerTestResults -ResultsFile $ResultFile -ToPath (Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) 'Results')
-            Remove-Item $ResultFile
-
-            if (!(Get-DockerHostIsRemote)) {
-                Remove-Item $ContainerResultFile
-            }
-            $BreakTestLoop = $true
-        }
-        catch {
-            $AttemptNo++
-            Write-Host "Error occurred ($_)" -ForegroundColor Magenta
-            Write-Host "Testing company set in config file exists in the container" -ForegroundColor Cyan
-            $NewCompanyName = Test-CompanyExists -LaunchConfig $LaunchConfig
-
-            if (![string]::IsNullOrEmpty($NewCompanyName)) {
-                $Params.Remove('companyName')
-                $Params.Add('companyName', $NewCompanyName)
-            }
-
-            if ($AttemptNo -ge 3) {
-                $BreakTestLoop = $true
+                throw 'Tests have not been run'
             }
         }
+
+        Merge-ALTestRunnerTestResults -ResultsFile $ResultFile -ToPath (Join-Path (Split-Path (Get-ALTestRunnerConfigPath) -Parent) 'Results')
+        Remove-Item $ResultFile
+
+        if (!(Get-DockerHostIsRemote)) {
+            Remove-Item $ContainerResultFile
+        }
+    }
+    catch {
+        # Ensure we always create a results file, even on error
+        # This prevents the extension from hanging indefinitely
+        Write-Host "Error during test execution: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "Stack trace: $($_.ScriptStackTrace)" -ForegroundColor Red
+
+        # Escape XML special characters (ampersand must be first to avoid double-escaping)
+        $ErrorMessage = $_.Exception.Message -replace '&', '&amp;' -replace '<', '&lt;' -replace '>', '&gt;' -replace '"', '&quot;'
+        $ErrorStackTrace = $_.ScriptStackTrace -replace '&', '&amp;' -replace '<', '&lt;' -replace '>', '&gt;' -replace '"', '&quot;'
+
+        $errorXml = @"
+<?xml version="1.0" encoding="utf-8"?>
+<assemblies>
+  <assembly name="AL Test Runner Error" total="0" passed="0" failed="1" skipped="0" time="0" errors="1" run-date="$(Get-Date -Format 'yyyy-MM-dd')" run-time="$(Get-Date -Format 'HH:mm:ss')">
+    <collection>
+      <test name="PowerShell Execution Error" type="Error" method="ExecutionError" time="0" result="Fail">
+        <failure exception-type="PowerShellExecutionError">
+          <message><![CDATA[$ErrorMessage]]></message>
+          <stack-trace><![CDATA[$ErrorStackTrace]]></stack-trace>
+        </failure>
+      </test>
+    </collection>
+  </assembly>
+</assemblies>
+"@
+
+        # Ensure the results directory exists
+        if (!(Test-Path $ResultsPath)) {
+            New-Item -Path $ResultsPath -ItemType Directory -Force | Out-Null
+        }
+
+        # Write error result to last.xml
+        $errorXml | Out-File -FilePath $LastResultFile -Encoding UTF8 -Force
+
+        # Do not re-throw - error is already recorded in XML for processing
     }
 }
 

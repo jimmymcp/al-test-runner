@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
 import { getALObjectOfDocument, getALFileForALObject, getTestFolderPath } from './alFileHelper';
-import { copyFileSync, existsSync, readFileSync } from 'fs';
+import { copyFileSync, existsSync, readFileSync, mkdirSync } from 'fs';
 import { ALFile, ALObject, CodeCoverageDisplay, CodeCoverageLine, CodeCoverageObject, enableCodeCoverage } from './types';
-import { activeEditor, passingTestDecorationType, outputWriter } from './extension';
+import { activeEditor, codeCoverageDecorationType, outputWriter } from './extension';
 import { join, basename, dirname } from 'path';
 import { getALTestRunnerConfig, getCurrentWorkspaceConfig } from './config';
 import { testItemIsPageScript } from './pageScripting';
+import { safeParseJson } from './jsonHelper';
 
 let codeCoverageStatusBarItem: vscode.StatusBarItem;
 let codeCoverageDisplay: CodeCoverageDisplay = CodeCoverageDisplay.Off;
@@ -32,23 +33,35 @@ export async function updateCodeCoverageDecoration() {
         });
     }
 
-    activeEditor.setDecorations(passingTestDecorationType, testedRanges);
+    activeEditor.setDecorations(codeCoverageDecorationType, testedRanges);
 }
 
 export function readCodeCoverage(codeCoverageDisplay?: CodeCoverageDisplay, testRun?: vscode.TestRun): Promise<CodeCoverageLine[]> {
     return new Promise(async (resolve) => {
         let codeCoverage: CodeCoverageLine[] = [];
-        let codeCoveragePath;
-        if (testRun) {
-            codeCoveragePath = getCoveragePathForTestRun(testRun);
-        }
-        else {
-            codeCoveragePath = await getCodeCoveragePath(codeCoverageDisplay);
-        }
-        if (codeCoveragePath) {
-            if (existsSync(codeCoveragePath)) {
-                codeCoverage = JSON.parse(readFileSync(codeCoveragePath, { encoding: 'utf-8' }));
+        let codeCoveragePath: string | null | undefined;
+        try {
+            if (testRun) {
+                codeCoveragePath = getCoveragePathForTestRun(testRun);
             }
+            else {
+                codeCoveragePath = await getCodeCoveragePath(codeCoverageDisplay);
+            }
+            if (codeCoveragePath) {
+                if (existsSync(codeCoveragePath)) {
+                    const data = readFileSync(codeCoveragePath, { encoding: 'utf-8' });
+                    const parsed = safeParseJson(data, codeCoveragePath);
+                    if (parsed) {
+                        codeCoverage = parsed;
+                    } else {
+                        outputWriter.writeError(`Failed to parse code coverage file: ${codeCoveragePath}`);
+                    }
+                }
+            }
+        } catch (error) {
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            const pathInfo = codeCoveragePath || 'unknown path';
+            outputWriter.writeError(`Error reading code coverage from "${pathInfo}": ${errorMsg}`);
         }
 
         resolve(codeCoverage);
@@ -61,6 +74,7 @@ export async function getCodeCoveragePath(codeCoverageType?: CodeCoverageDisplay
             const path = await getCodeCoveragePath(CodeCoverageDisplay.Previous);
             if (path) {
                 resolve(join(dirname(path), 'codeCoverageAll.json'));
+                return;
             }
         }
         let config = vscode.workspace.getConfiguration('al-test-runner');
@@ -78,25 +92,55 @@ export async function getCodeCoveragePath(codeCoverageType?: CodeCoverageDisplay
 }
 
 export async function saveAllTestsCodeCoverage(): Promise<void> {
-    return new Promise(async () => {
-        const path = await getCodeCoveragePath(CodeCoverageDisplay.Previous);
-        if (path) {
-            const allTestsPath = await getCodeCoveragePath(CodeCoverageDisplay.All);
-            if (allTestsPath) {
-                copyFileSync(path, allTestsPath);
+    return new Promise(async (resolve, reject) => {
+        let path: string | null = null;
+        try {
+            path = await getCodeCoveragePath(CodeCoverageDisplay.Previous);
+            if (path) {
+                if (!existsSync(path)) {
+                    outputWriter.writeError(`Code coverage file was not generated: ${path}. This may indicate that:\n  - The Test Runner Service app is not installed in BC (run: AL Test Runner: Install Test Runner Service)\n  - The testRunnerServiceUrl in .altestrunner/config.json is incorrect or unreachable\n  - The codeCoveragePath in .altestrunner/config.json and "al-test-runner.codeCoveragePath" in VS Code settings do not point to the same file\n  - The PowerShell test runner failed to download coverage data`);
+                    resolve();
+                    return;
+                }
+                const allTestsPath = await getCodeCoveragePath(CodeCoverageDisplay.All);
+                if (allTestsPath) {
+                    const targetDir = dirname(allTestsPath);
+                    if (!existsSync(targetDir)) {
+                        mkdirSync(targetDir, { recursive: true });
+                    }
+                    copyFileSync(path, allTestsPath);
+                }
             }
+            resolve();
+        } catch (error) {
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            const pathInfo = path || 'unknown path';
+            outputWriter.writeError(`Error saving code coverage to "${pathInfo}": ${errorMsg}`);
+            resolve(); // Resolve instead of reject to prevent unhandled promise rejection
         }
     });
 }
 
 export async function saveTestRunCoverage(testRun: vscode.TestRun): Promise<void> {
     return new Promise(async resolve => {
-        const path = await getCodeCoveragePath(CodeCoverageDisplay.Previous);
-        if (path) {
-            let testRunCoveragePath = getCoveragePathForTestRun(testRun);
-            copyFileSync(path, testRunCoveragePath);
+        try {
+            const path = await getCodeCoveragePath(CodeCoverageDisplay.Previous);
+            if (path && existsSync(path)) {
+                // Only copy if the source file exists (error already logged by saveAllTestsCodeCoverage if missing)
+                let testRunCoveragePath = getCoveragePathForTestRun(testRun);
+                const targetDir = dirname(testRunCoveragePath);
+                if (!existsSync(targetDir)) {
+                    mkdirSync(targetDir, { recursive: true });
+                }
+                copyFileSync(path, testRunCoveragePath);
+            }
+            resolve();
+        } catch (error) {
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            const testRunCoveragePath = getCoveragePathForTestRun(testRun);
+            outputWriter.writeError(`Error saving test run coverage to "${testRunCoveragePath}": ${errorMsg}`);
+            resolve(); // Resolve instead of reject to prevent unhandled promise rejection
         }
-        resolve();
     });
 }
 

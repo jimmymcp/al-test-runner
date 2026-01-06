@@ -1,45 +1,12 @@
 # Change Log
 
-## 0.12.4
-- Fix calculation of URL to run tests against
-
-## 0.12.3
-- Improve testRunnerServiceUrl suggestion for Alpaca containers (and other containers which are served other port 443 behind a Traefik proxy)
-
-## 0.12.2
-- Option to export test steps (GIVEN, WHEN, THEN) to CSV in a format that can be imported to an Azure DevOps test plan. [Issue 160](https://github.com/jimmymcp/al-test-runner/issues/160). See [https://jimmymcp.github.io/al-test-runner-docs/articles/export-test-to-csv.html](https://jimmymcp.github.io/al-test-runner-docs/articles/export-test-to-csv.html)
-
-## 0.12.1
-
-- Fix for issue with attempting to save code coverage to the test run when it hadn't been enabled
-- Update build to use @vscode/vsce
-
-## 0.12.0
-- Initial support for running page scripts
-  - Load page scripts into test explorer, support for running page scripts
-  - New command, "View Page Scripting Report", to show playwright report from page script test run
-- Include company name in URL to launch when using "Show Table Data"
-- "Run Tests via URL" option to connect from PowerShell to client service using the URL - support for Alpaca containers and other development scenarios
-- "Enable Code Coverage" option switched to enum to allow for downloading code coverage "When running all tests" (new default option). Improves dev experience when quickly running individual tests or test codeunits
-
-## 0.11.1
-- Don't test if the Test Runner Service app is installed (Get-BCContainerAppInfo is slow), just attempt to install the app if the service URL is not populated in config.json
-- enableCodeCoverage by default
-
-## 0.11.0
-- Extend range for object declarations (better support for namespaces). [Issue 135](https://github.com/jimmymcp/al-test-runner/issues/135)
-- Support for using SOAP endpoint for interacting with test runner service (workaround for issue downloading code coverage / performance profile in BC24 containers using REST) [Issue 134](https://github.com/jimmymcp/al-test-runner/issues/134)
-- Implement VS Code's Code Coverage API: [Docs](https://code.visualstudio.com/api/extension-guides/testing#test-coverage)
-
-## 0.10.3
-- Fixed code coverage status bar cannot be toggled [issue 127](https://github.com/jimmymcp/al-test-runner/issues/127)
-
-## 0.10.2
-- Lots of contributions from [jwikman](https://github.com/jwikman) - thanks very much!
-  - Handling utf-8 + BOM encoding in app.json
-  - Tidying up package dependencies
-  - Launch config for PowerShell debugging
-- Rediscovering test when a test codeunit is renamed
+## 0.16.0
+- Enhanced error handling for test execution failures
+- Real-time test progress updates in Test Results panel
+- New dedicated color setting for code coverage decorations (`coveredLinesColor`)
+- Improved code coverage error handling with better warning messages
+- Updated minimum VS Code version to 1.93.0
+- Better error reporting when code coverage configuration is missing
 
 ## 0.10.1
 - Do not require restart of tests after selecting launch configuration to use, [issue 113](https://github.com/jimmymcp/al-test-runner/issues/113)
@@ -268,7 +235,7 @@
 
 ## 0.1.15
 - Set PowerShell location before running tests (to work correctly with multi-root workspaces)
-- Optionally call AL command to publish / rapid publish app before running tests 
+- Optionally call AL command to publish / rapid publish app before running tests
 
 ## 0.1.14
 - Sanitize filenames (for test codeunits that have illegal file name chars) - thanks Leon

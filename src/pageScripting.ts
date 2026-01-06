@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { existsSync, readFileSync } from 'fs';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { exec } from 'child_process';
 import { getALTestRunnerConfig, getALTestRunnerLaunchConfig, getALTestRunnerPath, getContainerPasswordFromALTestRunnerConfig, getCurrentWorkspaceConfig } from './config';
-import { ALTestAssembly, ALTestCollection, ALTestResult } from './types';
+import { ALTestAssembly, ALTestCollection, ALTestResult, PageScript } from './types';
 import { join } from 'path';
 import * as xml2js from 'xml2js';
 import { getALTestRunnerTerminal } from './extension';
@@ -62,6 +62,8 @@ export async function runPageScript(testItem: vscode.TestItem): Promise<ALTestAs
             server += `?tenant=${launchConfig.tenant}`;
         }
 
+        let pageScripts: PageScript[] = [];
+        injectRandomValues(testItem, pageScripts);
         let testsPath: string = '';
         if (testItem.parent) {
             testsPath = testItem.uri!.fsPath;
@@ -95,6 +97,7 @@ export async function runPageScript(testItem: vscode.TestItem): Promise<ALTestAs
         }
 
         resolve(await getResults());
+        restorePageScriptContent(pageScripts);
     });
 }
 
@@ -121,7 +124,7 @@ function uriIsPageScript(uri: vscode.Uri): boolean {
 
 async function getResults(): Promise<ALTestAssembly[]> {
     return new Promise(async resolve => {
-        const resultPath = `${getALTestRunnerPath()}\\results.xml`;
+        const resultPath = path.join(getALTestRunnerPath(), 'results.xml');
         if (!existsSync(resultPath)) {
             resolve([]);
             return;
@@ -190,5 +193,40 @@ async function getResults(): Promise<ALTestAssembly[]> {
         });
 
         resolve(results);
+    });
+}
+
+// prior to running the test look for random placeholders in the test item and replace them with random values
+function injectRandomValues(testItem: vscode.TestItem, pageScripts: PageScript[]) {
+    testItem.children.forEach(child => {
+        injectRandomValues(child, pageScripts);
+    });
+
+    if (!testItem.uri || !existsSync(testItem.uri.fsPath)) {
+        return;
+    }
+
+    let content = readFileSync(testItem.uri!.fsPath, { encoding: 'utf-8' });
+    const originalContent = content;
+
+    // Replace all RandText(x) with random strings of length x
+    content = content.replace(/RandText\((\d+)\)/g, (_, len) => {
+        const length = parseInt(len, 10);
+        const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        let result = '';
+        for (let i = 0; i < length; i++) {
+            result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+    });
+
+    writeFileSync(testItem.uri!.fsPath, content, { encoding: 'utf-8' });
+
+    pageScripts.push({ testItem: testItem, content: originalContent })
+}
+
+function restorePageScriptContent(pageScripts: PageScript[]) {
+    pageScripts.forEach(pageScript => {
+        writeFileSync(pageScript.testItem.uri!.fsPath, pageScript.content, { encoding: 'utf-8' });
     });
 }

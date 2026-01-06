@@ -2,13 +2,14 @@ import * as vscode from 'vscode';
 import { readFileSync, existsSync, unlinkSync } from 'fs';
 import * as xml2js from 'xml2js';
 import * as types from './types';
-import { CodelensProvider } from './codeLensProvider';
+import { safeParseJson } from './jsonHelper';
+import { CodelensProvider } from './CodelensProvider';
 import { updateCodeCoverageDecoration, createCodeCoverageStatusBarItem } from './coverage';
-import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getTestFolderPath, getTestMethodRangesFromDocument } from './alFileHelper';
-import { getALTestRunnerPath, getCurrentWorkspaceConfig, getDebugConfigurationsFromLaunchJson, getLaunchJsonPath } from './config';
+import { documentIsTestCodeunit, getALFilesInWorkspace, getDocumentIdAndName, getTestMethodRangesFromDocument } from './alFileHelper';
+import { getALTestRunnerPath, getCurrentWorkspaceConfig, getDebugConfigurationsFromLaunchJson, getLaunchJsonPath, getTestFolderFromConfig, getWorkspaceFolder } from './config';
 import { getOutputWriter, OutputWriter } from './output';
 import { createTestController, discoverTests, discoverTestsInDocument } from './testController';
-import { onChangeAppFile, publishApp } from './publish';
+import { publishApp } from './publish';
 import { awaitFileExistence } from './file';
 import { join } from 'path';
 import TelemetryReporter from '@vscode/extension-telemetry';
@@ -18,6 +19,8 @@ import { CodeCoverageCodeLensProvider } from './codeCoverageCodeLensProvider';
 import { registerCommands } from './commands';
 import { createHEADFileWatcherForTestWorkspaceFolder } from './git';
 import { createPerformanceStatusBarItem } from './performance';
+import { executeWithShellIntegration } from './terminalExecutor';
+import { ensureTestCoverageLoaded } from './testCoverage';
 
 let terminal: vscode.Terminal;
 export let activeEditor = vscode.window.activeTextEditor;
@@ -26,20 +29,22 @@ const config = vscode.workspace.getConfiguration('al-test-runner');
 const passingTestColor = 'rgba(' + config.passingTestsColor.red + ',' + config.passingTestsColor.green + ',' + config.passingTestsColor.blue + ',' + config.passingTestsColor.alpha + ')';
 const failingTestColor = 'rgba(' + config.failingTestsColor.red + ',' + config.failingTestsColor.green + ',' + config.failingTestsColor.blue + ',' + config.failingTestsColor.alpha + ')';
 const untestedTestColor = 'rgba(' + config.untestedTestsColor.red + ',' + config.untestedTestsColor.green + ',' + config.untestedTestsColor.blue + ',' + config.untestedTestsColor.alpha + ')';
+const coveredLinesColor = 'rgba(' + config.coveredLinesColor.red + ',' + config.coveredLinesColor.green + ',' + config.coveredLinesColor.blue + ',' + config.coveredLinesColor.alpha + ')';;
 export const outputWriter: OutputWriter = getOutputWriter(vscode.workspace.getConfiguration('al-test-runner').testOutputLocation);
 export const channelWriter: OutputWriter = getOutputWriter(types.OutputType.Channel);
 
-const testFolderPath = getTestFolderPath();
-if (testFolderPath) {
-	const testAppsPath = join(testFolderPath, '*.app');
-	const appFileWatcher = vscode.workspace.createFileSystemWatcher(testAppsPath, false, false, true);
-	appFileWatcher.onDidChange(e => {
-		onChangeAppFile(e);
-	});
+function getTestFolderPath(): string | undefined {
+	const config = getCurrentWorkspaceConfig(false);
+	return getTestFolderFromConfig(config) || getWorkspaceFolder();
 }
 
+export const codeCoverageDecorationType = vscode.window.createTextEditorDecorationType({
+	isWholeLine: true,
+	overviewRulerColor: coveredLinesColor,
+	backgroundColor: coveredLinesColor
+});
 
-export const passingTestDecorationType = vscode.window.createTextEditorDecorationType({
+const passingTestDecorationType = vscode.window.createTextEditorDecorationType({
 	backgroundColor: passingTestColor
 });
 
@@ -56,8 +61,8 @@ const failingLineDecorationType = vscode.window.createTextEditorDecorationType({
 });
 
 export const outputChannel = vscode.window.createOutputChannel(getTerminalName());
-let updateDecorationsTimeout: NodeJS.Timer | undefined = undefined;
-let discoverTestsTimeout: NodeJS.Timer | undefined = undefined;
+let updateDecorationsTimeout: ReturnType<typeof setTimeout> | undefined = undefined;
+let discoverTestsTimeout: ReturnType<typeof setTimeout> | undefined = undefined;
 
 export let alTestController: vscode.TestController;
 export let telemetryReporter: TelemetryReporter;
@@ -81,15 +86,19 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(createCodeCoverageStatusBarItem());
 	context.subscriptions.push(createPerformanceStatusBarItem());
 
+	// Pre-load test coverage data asynchronously to avoid delays in code lens provider
+	ensureTestCoverageLoaded().catch(err => {
+		// Silently fail - ensureTestCoverageLoaded handles error display internally
+		console.log('Test coverage pre-load completed (may have been empty or failed)');
+	});
+
 	vscode.window.onDidChangeActiveTextEditor(editor => {
 		activeEditor = editor;
 		if (editor) {
 			if (documentIsTestCodeunit(activeEditor!.document)) {
 				triggerUpdateDecorations();
 			}
-			else {
-				updateCodeCoverageDecoration();
-			}
+			updateCodeCoverageDecoration();
 		}
 	}, null, context.subscriptions);
 
@@ -142,10 +151,17 @@ export async function invokeTestRunner(command: string, options: types.invokeTes
 
 		const result = await publishApp(publishType);
 		if (!result.success) {
-			const results: types.ALTestAssembly[] = [];
-			resolve(results);
+			const errorResult = createErrorAssembly(
+				'AL Test Runner Publish Error',
+				'PublishError',
+				'Publish Failed',
+				result.message || 'Failed to publish the application. Tests cannot run without a successful publish.'
+			);
+			resolve([errorResult]);
 			return;
 		}
+
+		command += ` -ResultsPath "${getALTestRunnerPath()}"`;
 
 		if (options.enableCodeCoverage) {
 			command += ' -GetCodeCoverage';
@@ -155,27 +171,92 @@ export async function invokeTestRunner(command: string, options: types.invokeTes
 			command += ' -GetPerformanceProfile';
 		}
 
+		if (config.verbosePowerShell) {
+			command += ' -Verbose';
+		}
+
 		if (existsSync(getLastResultPath())) {
 			unlinkSync(getLastResultPath());
 		}
 
 		terminal = getALTestRunnerTerminal(getTerminalName());
-		terminal.sendText(' ');
-		terminal.show(true);
-		terminal.sendText('cd "' + getTestFolderPath() + '"');
-		invokeCommand(config.preTestCommand);
-		terminal.sendText(command);
-		invokeCommand(config.postTestCommand);
 
-		awaitFileExistence(getLastResultPath(), 0).then(async resultsAvailable => {
-			if (resultsAvailable) {
-				const results: types.ALTestAssembly[] = await readTestResults(vscode.Uri.file(getLastResultPath()));
-				resolve(results);
+		// Execute command using shell integration with real-time output parsing
+		try {
+			await executeWithShellIntegration(terminal, command, {
+				workingDirectory: getTestFolderPath(),
+				preCommand: config.preTestCommand,
+				postCommand: config.postTestCommand,
+				onOutput: options.onOutput,
+				showTerminal: true // Show terminal initially so users can see PowerShell setup and publishing
+				// Focus will switch to Test Results output when first test starts (handled by testOutputParser)
+			});
 
-				triggerUpdateDecorations();
-			}
-		});
+			// Wait for command to complete and results file to be created
+			awaitFileExistence(getLastResultPath(), 0).then(async resultsAvailable => {
+				if (resultsAvailable) {
+					const results: types.ALTestAssembly[] = await readTestResults(vscode.Uri.file(getLastResultPath()));
+					resolve(results);
+					triggerUpdateDecorations();
+				} else {
+					const errorResult = createErrorAssembly(
+						'AL Test Runner Timeout',
+						'TimeoutError',
+						'Test Execution Timeout',
+						'Test results file was not created. Check the terminal output for errors.'
+					);
+					resolve([errorResult]);
+				}
+			});
+		} catch (error) {
+			const errorResult = createErrorAssembly(
+				'AL Test Runner Execution Error',
+				'ExecutionError',
+				'Command Execution Failed',
+				error instanceof Error ? error.message : String(error)
+			);
+			resolve([errorResult]);
+		}
 	});
+}
+
+function createErrorAssembly(assemblyName: string, errorMethod: string, errorName: string, errorMessage: string): types.ALTestAssembly {
+	return {
+		'$': {
+			name: assemblyName,
+			total: '0',
+			passed: '0',
+			failed: '1',
+			skipped: '0',
+			time: '0',
+			'run-time': new Date().toTimeString().split(' ')[0],
+			'run-date': new Date().toISOString().split('T')[0],
+			'test-framework': 'AL Test Runner',
+			errors: '1'
+		},
+		collection: [{
+			'$': {
+				name: 'Error Collection',
+				total: '1',
+				passed: '0',
+				failed: '1',
+				skipped: '0',
+				time: '0'
+			},
+			test: [{
+				'$': {
+					name: errorName,
+					method: errorMethod,
+					time: '0',
+					result: 'Fail'
+				},
+				failure: [{
+					message: errorMessage,
+					'stack-trace': ''
+				}]
+			}]
+		}]
+	};
 }
 
 async function readTestResults(uri: vscode.Uri): Promise<types.ALTestAssembly[]> {
@@ -184,6 +265,22 @@ async function readTestResults(uri: vscode.Uri): Promise<types.ALTestAssembly[]>
 		const resultXml = readFileSync(uri.fsPath, { encoding: 'utf-8' });
 		const resultObj = await xmlParser.parseStringPromise(resultXml);
 		const assemblies: types.ALTestAssembly[] = resultObj.assemblies.assembly;
+
+		// Convert xml2js arrays to strings for failure messages and stack traces
+		assemblies.forEach(assembly => {
+			assembly.collection?.forEach(collection => {
+				collection.test?.forEach(test => {
+					if (test.failure && test.failure[0]) {
+						if (Array.isArray(test.failure[0].message)) {
+							test.failure[0].message = test.failure[0].message[0] || '';
+						}
+						if (Array.isArray(test.failure[0]['stack-trace'])) {
+							test.failure[0]['stack-trace'] = test.failure[0]['stack-trace'][0] || '';
+						}
+					}
+				});
+			});
+		});
 
 		resolve(assemblies);
 	});
@@ -247,7 +344,7 @@ function updateDecorations() {
 
 	let testMethodRanges: types.ALMethodRange[] = getTestMethodRangesFromDocument(activeEditor!.document);
 
-	let resultFileName = getALTestRunnerPath() + '\\Results\\' + sanitize(getDocumentIdAndName(activeEditor!.document)) + '.xml';
+	let resultFileName = join(getALTestRunnerPath(), 'Results', sanitize(getDocumentIdAndName(activeEditor!.document)) + '.xml');
 	if (!(existsSync(resultFileName))) {
 		setDecorations(passingTests, failingTests, getUntestedTestDecorations(testMethodRanges));
 		return;
@@ -260,6 +357,18 @@ function updateDecorations() {
 		const collection = resultObj.assembly.collection;
 		const tests = collection.shift()!.test as Array<types.ALTestResult>;
 
+		// Convert xml2js arrays to strings for failure messages and stack traces
+		tests.forEach(test => {
+			if (test.failure && test.failure[0]) {
+				if (Array.isArray(test.failure[0].message)) {
+					test.failure[0].message = test.failure[0].message[0] || '';
+				}
+				if (Array.isArray(test.failure[0]['stack-trace'])) {
+					test.failure[0]['stack-trace'] = test.failure[0]['stack-trace'][0] || '';
+				}
+			}
+		});
+
 		tests.forEach(test => {
 			const testMethod = testMethodRanges.find(element => element.name === test.$.method);
 			if ((null !== testMethod) && (undefined !== testMethod)) {
@@ -271,16 +380,19 @@ function updateDecorations() {
 
 				switch (test.$.result) {
 					case 'Pass':
-						decoration = { range: new vscode.Range(startPos, endPos), hoverMessage: 'Test passing 👍' };
+						const testTime = parseFloat(test.$.time);
+						decoration = { range: new vscode.Range(startPos, endPos), hoverMessage: new vscode.MarkdownString('Test passing 👍' + '\n\nExecution time: ' + testTime.toFixed(2) + 's')  };
 						passingTests.push(decoration);
 						break;
 					case 'Fail':
-						const hoverMessage: string = test.failure[0].message + "\n\n" + test.failure[0]["stack-trace"];
+						const message = test.failure[0].message;
+						const stackTrace = test.failure[0]['stack-trace'];
+						const hoverMessage: string = message + "\n\n" + stackTrace;
 						decoration = { range: new vscode.Range(startPos, endPos), hoverMessage: hoverMessage };
 						failingTests.push(decoration);
 
 						if (config.highlightFailingLine) {
-							const failingLineRange = getRangeOfFailingLineFromCallstack(test.failure[0]["stack-trace"][0], test.$.method, activeEditor!.document);
+							const failingLineRange = getRangeOfFailingLineFromCallstack(stackTrace, test.$.method, activeEditor!.document);
 							if (failingLineRange) {
 								const decoration: vscode.DecorationOptions = { range: failingLineRange, hoverMessage: hoverMessage };
 								failingLines.push(decoration);
@@ -363,7 +475,7 @@ export function getALTestRunnerTerminal(terminalName: string = getTerminalName()
 		terminal = vscode.window.createTerminal(terminalName);
 	}
 
-	let PSPath = getExtension()!.extensionPath + '\\PowerShell\\ALTestRunner.psm1';
+	let PSPath = join(getExtension()!.extensionPath, 'PowerShell', 'ALTestRunner.psm1');
 	terminal.sendText('if ($null -eq (Get-Module ALTestRunner)) {Import-Module "' + PSPath + '" -DisableNameChecking}');
 	return terminal;
 }
@@ -408,23 +520,30 @@ export function getCodeunitIdFromAssemblyName(assemblyName: string): number {
 export function getLaunchJson() {
 	const launchPath = getLaunchJsonPath();
 	const data = readFileSync(launchPath, { encoding: 'utf-8' });
-	return JSON.parse(data);
+	const parsed = safeParseJson(data, launchPath);
+	if (!parsed) {
+		vscode.window.showErrorMessage(`Failed to parse launch.json. Please check ${launchPath} for syntax errors.`);
+		return { configurations: [] };
+	}
+	return parsed;
 }
 
 export function getAppJsonKey(keyName: string) {
 	sendDebugEvent('getAppJsonKey-start', { keyName: keyName });
-	const appJsonPath = getTestFolderPath() + '\\app.json';
+	const appJsonPath = join(getTestFolderPath()!, 'app.json');
 	const data = readFileSync(appJsonPath, { encoding: 'utf-8' });
-	const appJson = JSON.parse(data.charCodeAt(0) === 0xfeff
-		? data.slice(1) // Remove BOM
-		: data);
+	const appJson = safeParseJson(data, appJsonPath);
+	if (!appJson) {
+		vscode.window.showErrorMessage(`Failed to parse app.json. Please check ${appJsonPath} for syntax errors.`);
+		return undefined;
+	}
 
 	sendDebugEvent('getAppJsonKey-end', { keyName: keyName, keyValue: appJson[keyName] });
 	return appJson[keyName];
 }
 
 function getLastResultPath(): string {
-	return getALTestRunnerPath() + '\\last.xml';
+	return join(getALTestRunnerPath(), 'last.xml');
 }
 
 // this method is called when your extension is deactivated

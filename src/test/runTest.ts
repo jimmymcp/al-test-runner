@@ -12,6 +12,13 @@ async function main() {
 		// Passed to --extensionTestsPath
 		const extensionTestsPath = path.resolve(__dirname, './suite/index');
 
+		// Pass grep pattern via environment variable if provided as command line arg
+		// Usage: npm test -- --grep "pattern"
+		const grepIndex = process.argv.indexOf('--grep');
+		if (grepIndex !== -1 && process.argv.length > grepIndex + 1) {
+			process.env.TEST_GREP = process.argv[grepIndex + 1];
+		}
+
 		// Download VS Code, unzip it and run the integration test
 		await runTests({ extensionDevelopmentPath, extensionTestsPath, platform: 'win32-x64-archive' });
 	} catch (err) {

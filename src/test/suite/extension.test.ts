@@ -10,7 +10,7 @@ import { getMaxLengthOfPropertyFromArray } from '../../output';
 import { join } from 'path';
 import { getGitFolderPathForFolder } from '../../git';
 import { getParentFolderPathForFolder } from '../../file';
-import { getCommentLinesForTestItem, getDevOpsTestStepsForTestItems } from '../../devOpsTestSteps';
+import { getCommentLinesForTestItem, getDevOpsTestStepsForTestItems, pasalCaseToSentenceCase } from '../../devOpsTestSteps';
 import { DevOpsTestStep } from '../../types';
 
 const tempDir: string = os.tmpdir() + '\\ALTR';
@@ -733,5 +733,24 @@ suite('Extension Test Suite', () => {
         const testSteps: DevOpsTestStep[] = await getDevOpsTestStepsForTestItems(testItem);
 
         assert.strictEqual(testSteps.length, 4);
+    });
+
+    test('pascalSentenceToSentenceCase converts pascalCase to sentence case', () => {
+        assert.strictEqual(pasalCaseToSentenceCase('thisIsASentence'), 'this Is A Sentence');
+    });
+
+    test('pasalCaseToSentenceCase does not preserve acronyms when none specified', () => {
+        //have to pass a value otherwise the default value from package.json will apply
+        assert.strictEqual(pasalCaseToSentenceCase('calculateVATForDocument', ['none']), 'calculate V A T For Document');
+    });
+
+    test('pascalSentenceToSentenceCase preserves single acronym', () => {
+        assert.strictEqual(pasalCaseToSentenceCase('calculateVATForDocument', ['VAT']), 'calculate VAT For Document');
+    });
+
+    test('pascalSentenceToSentenceCase preserves multiple acronyms', () => {
+        assert.strictEqual(pasalCaseToSentenceCase('testERPVATSupport', ['ERP', 'VAT']), 'test ERP VAT Support');
+        assert.strictEqual(pasalCaseToSentenceCase('testCurrencyIsEMUOrLCY', ['EMU', 'LCY']), 'test Currency Is EMU Or LCY');
+        assert.strictEqual(pasalCaseToSentenceCase('convertDocumentAmountIncVATFromLCYToFCY', ['FCY', 'LCY', 'VAT']), 'convert Document Amount Inc VAT From LCY To FCY');
     });
 });

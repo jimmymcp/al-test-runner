@@ -28,6 +28,7 @@ export type ALTestAssembly = {
 		'run-date': string;
 		'test-framework': string;
 		name: string;
+		errors?: string;
 	};
 	collection: ALTestCollection[];
 };
@@ -148,7 +149,8 @@ export enum enableCodeCoverage {
 }
 
 export type invokeTestRunnerOptions = {
-	enableCodeCoverage: boolean
+	enableCodeCoverage: boolean;
+	onOutput?: (data: string) => void;
 }
 
 export type DevOpsTestStep = {
@@ -158,4 +160,9 @@ export type DevOpsTestStep = {
 	'Test Step': string;
 	'Step Action': string;
 	'Step Expected': string;
+}
+
+export type PageScript = {
+	testItem: vscode.TestItem;
+	content: string;
 }

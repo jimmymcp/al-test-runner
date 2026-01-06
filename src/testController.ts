@@ -6,9 +6,10 @@ import { ALTestAssembly, ALTestResult, ALMethod, DisabledTest, ALFile, launchCon
 import * as path from 'path';
 import { sendDebugEvent, sendTestDebugStartEvent, sendTestRunFinishedEvent, sendTestRunStartEvent } from './telemetry';
 import { buildTestCoverageFromTestItem } from './testCoverage';
-import { getALFilesInCoverage, getCoverageEnabledForTestRunRequest, getFileCoverage, getStatementCoverage, readCodeCoverage, saveAllTestsCodeCoverage, saveTestRunCoverage } from './coverage';
+import { getALFilesInCoverage, getCoverageEnabledForTestRunRequest, getFileCoverage, getStatementCoverage, readCodeCoverage, saveAllTestsCodeCoverage, saveTestRunCoverage, updateCodeCoverageDecoration } from './coverage';
 import { readyToDebug } from './debug';
 import { discoverPageScripts, runPageScript, testItemIsPageScript } from './pageScripting';
+import { createOutputParser, testItemWasMarkedByParser, clearMarkedTestItems } from './testOutputParser';
 
 export let numberOfTests: number;
 
@@ -91,60 +92,105 @@ export async function discoverTestsInDocument(document: vscode.TextDocument) {
 
 export async function runTestHandler(request: vscode.TestRunRequest) {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    clearMarkedTestItems();
+    outputWriter.clear();
     const run = alTestController.createTestRun(request, timestamp);
     sendTestRunStartEvent(request);
 
-    let results: ALTestAssembly[];
-    if (request.include === undefined) {
-        results = await runAllTests(request);
-        saveAllTestsCodeCoverage();
-    }
-    else if (request.include.length > 1) {
-        results = await runSelectedTests(request);
-    }
-    else {
-        const testItem = request.include![0];
+    // Tests are enqueued by the output parser when BC is ready ("Connecting to...")
 
-        if (testItemIsPageScript(testItem)) {
-            results = await runPageScript(testItem);
+    try {
+        let results: ALTestAssembly[];
+        if (request.include === undefined) {
+            results = await runAllTests(request, run);
+            if (getCoverageEnabledForTestRunRequest(request)) {
+                await saveAllTestsCodeCoverage();
+                updateCodeCoverageDecoration();
+            }
+        }
+        else if (request.include.length > 1) {
+            results = await runSelectedTests(request, run);
         }
         else {
-            let lineNumber: number = 0;
-            let filename: string;
-            if (testItem.parent) {
-                lineNumber = testItem.range!.start.line;
-                filename = testItem.parent!.uri!.fsPath;
+            const testItem = request.include![0];
+
+            if (testItemIsPageScript(testItem)) {
+                results = await runPageScript(testItem);
             }
             else {
-                filename = testItem.uri!.fsPath;
+                let lineNumber: number = 0;
+                let filename: string;
+                if (testItem.parent) {
+                    lineNumber = testItem.range!.start.line;
+                    filename = testItem.parent!.uri!.fsPath;
+                }
+                else {
+                    filename = testItem.uri!.fsPath;
+                }
+
+                results = await runTest(request, filename, lineNumber, undefined, undefined, run);
+                await buildTestCoverageFromTestItem(testItem);
             }
-
-            results = await runTest(request, filename, lineNumber);
-            buildTestCoverageFromTestItem(testItem);
         }
-    }
 
-    setResultsForTestItems(results, request, run);
+        setResultsForTestItems(results, request, run);
 
-    if (getCoverageEnabledForTestRunRequest(request)) {
-        await saveTestRunCoverage(run);
-        const codeCoverage = await readCodeCoverage(CodeCoverageDisplay.All, run);
-        getALFilesInCoverage(codeCoverage).forEach(alFile => {
-            run.addCoverage(getFileCoverage(codeCoverage, alFile));
-        });
-    }
+        if (getCoverageEnabledForTestRunRequest(request)) {
+            await saveTestRunCoverage(run);
+            const codeCoverage = await readCodeCoverage(CodeCoverageDisplay.All, run);
+            getALFilesInCoverage(codeCoverage).forEach(alFile => {
+                run.addCoverage(getFileCoverage(codeCoverage, alFile));
+            });
+            updateCodeCoverageDecoration();
+        }
 
-    run.end();
-    sendTestRunFinishedEvent(request);
-    if (results.length > 0) {
-        outputTestResults(results);
+        if (results.length > 0) {
+            // Add blank line if there was content before test results (e.g., warnings)
+            if (outputWriter.hasContent) {
+                outputWriter.write('');
+            }
+            outputTestResults(results);
+        }
+    } catch (error) {
+        // Ensure errors don't prevent the test run from ending
+        outputWriter.write('⚠️ Error during test execution: ' + (error instanceof Error ? error.message : String(error)));
+        outputWriter.show();
+    } finally {
+        // Always end the test run, even if there were errors
+        run.end();
+        sendTestRunFinishedEvent(request);
     }
+}
+
+/**
+ * Enqueues tests when BC is ready to execute them.
+ * Called by the output parser when "Connecting to..." appears.
+ */
+export function enqueueTestsForRun(request: vscode.TestRunRequest, run: vscode.TestRun) {
+    const itemsToEnqueue = request.include ? request.include : Array.from(alTestController.items).filter(item => !testItemIsPageScript(item[1])).map(item => item[1]);
+
+    itemsToEnqueue.forEach(testItem => {
+        if (testItem.parent) {
+            // This is an individual test function - enqueue it
+            run.enqueued(testItem);
+        } else {
+            // This is a codeunit - enqueue all its children
+            testItem.children.forEach(test => {
+                run.enqueued(test);
+            });
+        }
+    });
 }
 
 function setResultsForTestItems(results: ALTestAssembly[], request: vscode.TestRunRequest, run: vscode.TestRun) {
     if (results.length == 0) {
         return;
     }
+
+    // Check if this is an error result by looking at the errors flag
+    const isErrorResult = results.length === 1 &&
+                         results[0].$.errors &&
+                         parseInt(results[0].$.errors) > 0;
 
     let testItems: vscode.TestItem[] = [];
     if (request.include) {
@@ -161,15 +207,27 @@ function setResultsForTestItems(results: ALTestAssembly[], request: vscode.TestR
     }
 
     testItems!.forEach(testItem => {
-        if (testItem.parent) {
-            const result = getResultForTestItem(results, testItem, testItem.parent)
-            setResultForTestItem(result, testItem, run);
-        }
-        else {
-            testItem.children.forEach(test => {
-                const result = getResultForTestItem(results, test, testItem);
-                setResultForTestItem(result, test, run);
-            });
+        if (isErrorResult) {
+            // Mark all tests as failed with the error message
+            const errorMessage = results[0].collection[0].test[0].failure[0].message;
+            if (testItem.parent) {
+                run.failed(testItem, new vscode.TestMessage(errorMessage));
+            } else {
+                testItem.children.forEach(test => {
+                    run.failed(test, new vscode.TestMessage(errorMessage));
+                });
+            }
+        } else {
+            if (testItem.parent) {
+                const result = getResultForTestItem(results, testItem, testItem.parent)
+                setResultForTestItem(result, testItem, run);
+            }
+            else {
+                testItem.children.forEach(test => {
+                    const result = getResultForTestItem(results, test, testItem);
+                    setResultForTestItem(result, test, run);
+                });
+            }
         }
     });
 }
@@ -198,7 +256,7 @@ export function readyToRunTests(): Promise<Boolean> {
     });
 }
 
-export async function runTest(request: vscode.TestRunRequest, filename?: string, selectionStart?: number, extensionId?: string, extensionName?: string): Promise<ALTestAssembly[]> {
+export async function runTest(request: vscode.TestRunRequest, filename?: string, selectionStart?: number, extensionId?: string, extensionName?: string, run?: vscode.TestRun): Promise<ALTestAssembly[]> {
     sendDebugEvent('runTest-start', { filename: filename ? filename : 'undefined', selectionStart: selectionStart ? selectionStart.toString() : '0', extensionId: extensionId ? extensionId : 'undefined', extensionName: extensionName ? extensionName : 'undefined' });
     return new Promise(async (resolve) => {
         await readyToRunTests().then(async ready => {
@@ -223,7 +281,10 @@ export async function runTest(request: vscode.TestRunRequest, filename?: string,
 
                 const codeCoverageEnabled = getCoverageEnabledForTestRunRequest(request);
 
-                const results: ALTestAssembly[] = await invokeTestRunner(command, { enableCodeCoverage: codeCoverageEnabled });
+                const results: ALTestAssembly[] = await invokeTestRunner(command, {
+                    enableCodeCoverage: codeCoverageEnabled,
+                    onOutput: run ? createOutputParser(run, request) : undefined
+                });
                 resolve(results);
             }
             else {
@@ -233,7 +294,7 @@ export async function runTest(request: vscode.TestRunRequest, filename?: string,
     });
 };
 
-export async function runAllTests(request: vscode.TestRunRequest, extensionId?: string, extensionName?: string): Promise<ALTestAssembly[]> {
+export async function runAllTests(request: vscode.TestRunRequest, run?: vscode.TestRun, extensionId?: string, extensionName?: string): Promise<ALTestAssembly[]> {
     return new Promise(async (resolve) => {
         await readyToRunTests().then(async ready => {
             if (ready) {
@@ -252,7 +313,10 @@ export async function runAllTests(request: vscode.TestRunRequest, extensionId?: 
 
                 const codeCoverageEnabled = getCoverageEnabledForTestRunRequest(request);
 
-                const results: ALTestAssembly[] = await invokeTestRunner(command, {enableCodeCoverage: codeCoverageEnabled});
+                const results: ALTestAssembly[] = await invokeTestRunner(command, {
+                    enableCodeCoverage: codeCoverageEnabled,
+                    onOutput: run ? createOutputParser(run, request) : undefined
+                });
                 resolve(results);
             }
             else {
@@ -262,7 +326,7 @@ export async function runAllTests(request: vscode.TestRunRequest, extensionId?: 
     });
 }
 
-export async function runSelectedTests(request: vscode.TestRunRequest, extensionId?: string, extensionName?: string): Promise<ALTestAssembly[]> {
+export async function runSelectedTests(request: vscode.TestRunRequest, run?: vscode.TestRun, extensionId?: string, extensionName?: string): Promise<ALTestAssembly[]> {
     return new Promise(async (resolve) => {
         await readyToRunTests().then(async ready => {
             if (ready) {
@@ -284,7 +348,10 @@ export async function runSelectedTests(request: vscode.TestRunRequest, extension
 
                 const codeCoverageEnabled = getCoverageEnabledForTestRunRequest(request);
 
-                const results: ALTestAssembly[] = await invokeTestRunner(command, { enableCodeCoverage: codeCoverageEnabled });
+                const results: ALTestAssembly[] = await invokeTestRunner(command, {
+                    enableCodeCoverage: codeCoverageEnabled,
+                    onOutput: run ? createOutputParser(run, request) : undefined
+                });
                 resolve(results);
             }
             else {
@@ -297,10 +364,6 @@ export async function runSelectedTests(request: vscode.TestRunRequest, extension
 function addOptionalRunTestParameters(command: string): string {
     if (getCurrentWorkspaceConfig().runTestsViaUrl) {
         command += ' -RunViaURL';
-    }
-
-    if (getCurrentWorkspaceConfig().bcCompilerFolder) {
-        command += ` -BCCompilerFolder "${getCurrentWorkspaceConfig().bcCompilerFolder}"`;
     }
 
     return command;
@@ -346,11 +409,18 @@ export async function debugTest(filename: string, selectionStart: number) {
 }
 
 function setResultForTestItem(result: ALTestResult, testItem: vscode.TestItem, run: vscode.TestRun) {
+    // Skip if this test was already marked by the real-time parser
+    if (testItemWasMarkedByParser(testItem)) {
+        return;
+    }
+
     if (result.$.result == 'Pass') {
         run.passed(testItem);
     }
     else {
-        run.failed(testItem, new vscode.TestMessage(`${result.failure[0].message[0]}\n\n${result.failure[0]["stack-trace"][0]}`));
+        const message = result.failure[0].message;
+        const stackTrace = result.failure[0]['stack-trace'];
+        run.failed(testItem, new vscode.TestMessage(`${message}\n\n${stackTrace}`));
     }
 }
 
@@ -402,8 +472,12 @@ export async function getTestItemFromFileNameAndSelection(filename?: string, sel
 
             if (testMethodRanges.length > 0) {
                 const testMethod = testMethodRanges.pop();
-                const testItem = codeunitItem!.children.get(testMethod!.name);
-                resolve(testItem);
+                if (codeunitItem) {
+                    const testItem = codeunitItem.children.get(testMethod!.name);
+                    resolve(testItem);
+                } else {
+                    resolve(undefined);
+                }
             }
         }
         else {
@@ -514,6 +588,7 @@ export function getTestItemForMethod(method: ALMethod): vscode.TestItem | undefi
     if (testCodeunit) {
         return testCodeunit.children.get(method.methodName);
     }
+    return undefined;
 }
 
 async function outputTestResults(assemblies: ALTestAssembly[]): Promise<Boolean> {
@@ -523,11 +598,27 @@ async function outputTestResults(assemblies: ALTestAssembly[]): Promise<Boolean>
         let noOfSkips: number = 0;
         let totalTime: number = 0;
 
-        if (assemblies.length > 0) {
-            outputWriter.clear();
-        }
-
         for (let assembly of assemblies) {
+            // Check if this is an error assembly
+            const isError = assembly.$.errors && parseInt(assembly.$.errors) > 0;
+
+            if (isError) {
+                // For error assemblies, output the error message directly
+                outputWriter.write('❌ ' + assembly.$.name);
+                if (assembly.collection[0] && assembly.collection[0].test[0]) {
+                    const errorTest = assembly.collection[0].test[0];
+                    if (errorTest.failure && errorTest.failure[0]) {
+                        outputWriter.write('\t' + errorTest.failure[0].message);
+                        const stackTrace = errorTest.failure[0]['stack-trace'];
+                        if (stackTrace) {
+                            outputWriter.write('\t' + stackTrace);
+                        }
+                    }
+                }
+                noOfFailures += 1;
+                continue;
+            }
+
             noOfTests += parseInt(assembly.$.total);
             const assemblyTime = parseFloat(assembly.$.time);
             totalTime += assemblyTime;
@@ -587,6 +678,7 @@ async function outputTestResults(assemblies: ALTestAssembly[]): Promise<Boolean>
             statusBarItem.dispose();
         }, 10000);
 
+        outputWriter.flushWarnings();
         outputWriter.show();
         resolve(true);
     });

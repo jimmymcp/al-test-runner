@@ -13,20 +13,48 @@ export function getOutputWriter(outputType: OutputType): OutputWriter {
 
 export interface OutputWriter {
     content: string;
+    hasContent: boolean;
+    warnings: string[];
     write(contentLine: string): void;
+    writeError(errorMessage: string): void;
+    flushWarnings(): void;
     clear(): void;
     show(): void;
 }
 
 class OutputChannel implements OutputWriter {
     content: string = "";
+    hasContent: boolean = false;
+    warnings: string[] = [];
 
     write(contentLine: string) {
         outputChannel.appendLine(contentLine);
+        this.hasContent = true;
+    }
+
+    writeError(errorMessage: string) {
+        this.warnings.push(errorMessage);
+    }
+
+    flushWarnings(): void {
+        if (this.warnings.length > 0) {
+            this.write('');
+            this.write('⚠️  Warnings (details can be found in the terminal):');
+            this.write('─'.repeat(80));
+            this.warnings.forEach(warning => {
+                // Remove existing ⚠️ prefix and surrounding blanks to avoid duplication
+                const cleanWarning = warning.replace(/^\s*⚠️\s*/, '');
+                this.write(`⚠️  ${cleanWarning}`);
+            });
+
+            this.warnings = [];
+        }
     }
 
     clear() {
         outputChannel.clear();
+        this.hasContent = false;
+        this.warnings = [];
     }
 
     show() {
@@ -36,19 +64,43 @@ class OutputChannel implements OutputWriter {
 
 class OutputEditor implements OutputWriter {
     content: string = "";
+    hasContent: boolean = false;
+    warnings: string[] = [];
     document?: vscode.TextDocument;
 
     write(contentLine: string) {
         this.content += contentLine + "\n";
+        this.hasContent = true;
+    }
+
+    writeError(errorMessage: string) {
+        this.warnings.push(errorMessage);
+    }
+
+    flushWarnings(): void {
+        if (this.warnings.length > 0) {
+            this.write('');
+            this.write('⚠️  Warnings (details can be found in the terminal):');
+            this.write('─'.repeat(80));
+            this.warnings.forEach(warning => {
+                // Remove existing ⚠️ prefix and surrounding blanks to avoid duplication
+                const cleanWarning = warning.replace(/^\s*⚠️\s*/, '');
+                this.write(`⚠️  ${cleanWarning}`);
+            });
+
+            this.warnings = [];
+        }
     }
 
     clear() {
         this.content = "";
+        this.hasContent = false;
+        this.warnings = [];
     }
 
     async show() {
         this.document = await vscode.workspace.openTextDocument({ content: this.content });
-        vscode.window.showTextDocument(this.document);
+        await vscode.window.showTextDocument(this.document);
     }
 }
 

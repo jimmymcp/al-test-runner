@@ -2,11 +2,12 @@
 .vscode-test/**
 out/test/**
 src/**
-.gitignore
+**/.gitignore
 vsc-extension-quickstart.md
 **/tsconfig.json
 **/tslint.json
 **/*.map
 **/*.ts
 PowerShell/Tests/**
+PowerShell/TestClient/Newtonsoft.Json.*/**
 .github/**

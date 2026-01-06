@@ -4,9 +4,16 @@ import * as glob from 'glob';
 
 export function run(): Promise<void> {
 	// Create the mocha test
-	const mocha = new Mocha({
+	const options: Mocha.MochaOptions = {
 		ui: 'tdd',
-	});
+	};
+	
+	// Support grep pattern from environment variable (set by runTest.ts)
+	if (process.env.TEST_GREP) {
+		options.grep = process.env.TEST_GREP;
+	}
+	
+	const mocha = new Mocha(options);
 
 	const testsRoot = path.resolve(__dirname, '..');
 

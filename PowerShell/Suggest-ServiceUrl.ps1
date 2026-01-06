@@ -8,7 +8,7 @@ function Suggest-ServiceUrl {
 
     $ContainerName = Get-ContainerName -LaunchConfig $LaunchConfig
     $ServerInstance = Get-ValueFromLaunchJson -KeyName 'serverInstance' -LaunchConfig $LaunchConfig
-    $LaunchPort = Get-ValueFromLaunchJson -KeyName 'port' -LaunchConfig $LaunchConfig
+    $LaunchPort = Get-ValueFromLaunchJson -KeyName 'port' -LaunchConfig $LaunchConfig -DefaultValue 0
     $Protocol = "http://"
     $CompanyName = Get-ValueFromALTestRunnerConfig -KeyName 'companyName'
 
