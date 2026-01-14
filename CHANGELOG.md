@@ -1,5 +1,8 @@
 # Change Log
 
+## 10.16.6
+- Move glob into dependencies
+
 ## 10.16.5
 - Revert changes to Node timer
 
