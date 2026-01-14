@@ -61,8 +61,8 @@ const failingLineDecorationType = vscode.window.createTextEditorDecorationType({
 });
 
 export const outputChannel = vscode.window.createOutputChannel(getTerminalName());
-let updateDecorationsTimeout: ReturnType<typeof setTimeout> | undefined = undefined;
-let discoverTestsTimeout: ReturnType<typeof setTimeout> | undefined = undefined;
+let updateDecorationsTimeout: NodeJS.Timer | undefined = undefined;
+let discoverTestsTimeout: NodeJS.Timer | undefined = undefined;
 
 export let alTestController: vscode.TestController;
 export let telemetryReporter: TelemetryReporter;
