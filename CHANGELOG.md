@@ -1,5 +1,8 @@
 # Change Log
 
+## 0.16.5
+- Revert changes to Node timer
+
 ## 0.16.0
 - Enhanced error handling for test execution failures
 - Real-time test progress updates in Test Results panel
