@@ -189,8 +189,8 @@ function setResultsForTestItems(results: ALTestAssembly[], request: vscode.TestR
 
     // Check if this is an error result by looking at the errors flag
     const isErrorResult = results.length === 1 &&
-                         results[0].$.errors &&
-                         parseInt(results[0].$.errors) > 0;
+        results[0].$.errors &&
+        parseInt(results[0].$.errors) > 0;
 
     let testItems: vscode.TestItem[] = [];
     if (request.include) {

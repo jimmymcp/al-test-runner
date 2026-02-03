@@ -12,6 +12,15 @@ function Get-ValueFromLaunchJson {
         $DefaultValue
     )
 
+    if ($LaunchConfig -is [System.Management.Automation.PSCustomObject]) {
+        if ($null -ne $LaunchConfig.$KeyName) {
+            return $LaunchConfig.$KeyName
+        }
+        elseif ($null -ne $DefaultValue) {
+            return $DefaultValue
+        }
+    }
+
     if (![String]::IsNullOrEmpty($LaunchConfig)) {
         if ($null -ne $LaunchConfig.$KeyName) {
             return $LaunchConfig.$KeyName
