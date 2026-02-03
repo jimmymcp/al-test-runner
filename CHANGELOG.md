@@ -1,5 +1,8 @@
 # Change Log
 
+## 10.16.7
+- Fixed handling launchConfig as a PS custom object
+
 ## 10.16.6
 - Move glob into dependencies
 
