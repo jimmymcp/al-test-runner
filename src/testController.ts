@@ -14,7 +14,7 @@ import { createOutputParser, testItemWasMarkedByParser, clearMarkedTestItems } f
 export let numberOfTests: number;
 
 export function createTestController(controllerId: string = 'alTestController'): vscode.TestController {
-    const alTestController = vscode.tests.createTestController(controllerId, 'AL Tests');
+    const alTestController = vscode.tests.createTestController(controllerId, 'AL Test Runner');
     const profile = alTestController.createRunProfile('Run', vscode.TestRunProfileKind.Run, request => {
         runTestHandler(request);
     });
