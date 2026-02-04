@@ -1,5 +1,8 @@
 # Change Log
 
+## 10.16.8
+- Rename test profile to AL Test Runner to avoid confusion with AL Tests profile created by AL Language extension
+
 ## 10.16.7
 - Fixed handling launchConfig as a PS custom object
 
