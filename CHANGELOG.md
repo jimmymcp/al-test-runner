@@ -1,5 +1,14 @@
 # Change Log
 
+## 0.16.8
+- Rename test profile to AL Test Runner to avoid confusion with AL Tests profile created by AL Language extension
+
+## 0.16.7
+- Fixed handling launchConfig as a PS custom object
+
+## 0.16.6
+- Move glob into dependencies
+
 ## 0.16.5
 - Revert changes to Node timer
 
