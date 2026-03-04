@@ -459,7 +459,7 @@
 		"@types/node": "^10.17.60",
 		"@types/sinon": "^7.5.2",
 		"@types/vscode": "^1.93.0",
-		"@vscode/test-electron": "^2.3.9",
+		"@vscode/test-electron": "^2.5.2",
 		"glob": "^7.1.7",
 		"mocha": "^10.8.2",
 		"sinon": "^7.5.0",
